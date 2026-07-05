@@ -2,6 +2,19 @@
   command = "npm run build"
   publish = "dist"
 
+# Force HTTP → HTTPS
+[[redirects]]
+  from = "http://thepainterboys.com/*"
+  to   = "https://thepainterboys.com/:splat"
+  status = 301
+  force  = true
+
+[[redirects]]
+  from = "http://www.thepainterboys.com/*"
+  to   = "https://thepainterboys.com/:splat"
+  status = 301
+  force  = true
+
 # SPA fallback — all routes serve index.html
 [[redirects]]
   from = "/*"

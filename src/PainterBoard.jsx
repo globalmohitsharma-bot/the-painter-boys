@@ -211,8 +211,9 @@ function PainterGateScreen({ onAuth }) {
 
 // ── Painter Select Screen ─────────────────────────────────────────
 function PainterSelectScreen({ onSelect }) {
-  const [query,  setQuery]  = useState('');
-  const [copied, setCopied] = useState(null);
+  const [query,       setQuery]       = useState('');
+  const [copied,      setCopied]      = useState(null);
+  const [copiedCard,  setCopiedCard]  = useState(null);
   const painters = getAllPainters();
   const filtered = query.trim()
     ? painters.filter(p => p.toLowerCase().includes(query.toLowerCase()))
@@ -225,9 +226,22 @@ function PainterSelectScreen({ onSelect }) {
       navigator.clipboard.writeText(url).then(() => {
         setCopied(name);
         setTimeout(() => setCopied(null), 2500);
-      }).catch(() => window.prompt(`Link for ${name}:`, url));
+      }).catch(() => window.prompt(`Board link for ${name}:`, url));
     } else {
-      window.prompt(`Link for ${name}:`, url);
+      window.prompt(`Board link for ${name}:`, url);
+    }
+  };
+
+  const copyCardLink = (name) => {
+    const tok = getPainterToken(name);
+    const url = `${window.location.origin}/card?pid=${tok}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopiedCard(name);
+        setTimeout(() => setCopiedCard(null), 2500);
+      }).catch(() => window.prompt(`Card link for ${name}:`, url));
+    } else {
+      window.prompt(`Card link for ${name}:`, url);
     }
   };
 
@@ -249,20 +263,25 @@ function PainterSelectScreen({ onSelect }) {
       </div>
       <div className="pp-select-grid">
         {filtered.map(p => {
-          const tok = getPainterToken(p);
           return (
             <div key={p} className="pp-name-card">
               <button className="pp-name-btn" onClick={() => onSelect(p)}>
                 <span className="pp-name-avatar" style={{ background: avatarBg(p) }}>{p[0]}</span>
                 <div className="pp-name-info">
                   <span className="pp-name-label">{p}</span>
-                  <span className="pp-name-pid">Tap 🔗 to copy link</span>
+                  <span className="pp-name-pid">Tap 🔗 board · 🪪 card link</span>
                 </div>
               </button>
-              <button className="pp-link-btn" onClick={() => copyLink(p)}
-                title={`Copy unique private link for ${p}`}>
-                {copied === p ? '✓' : '🔗'}
-              </button>
+              <div className="pp-name-actions">
+                <button className="pp-link-btn" onClick={() => copyLink(p)}
+                  title={`Copy board link for ${p}`}>
+                  {copied === p ? '✓' : '🔗'}
+                </button>
+                <button className="pp-card-btn" onClick={() => copyCardLink(p)}
+                  title={`Copy visiting card link for ${p}`}>
+                  {copiedCard === p ? '✓' : '🪪'}
+                </button>
+              </div>
             </div>
           );
         })}
@@ -270,7 +289,7 @@ function PainterSelectScreen({ onSelect }) {
           <div className="pp-no-match">No painter named "{query}"</div>
         )}
       </div>
-      <p className="pp-link-hint">🔗 Tap to copy each painter's unique private link</p>
+      <p className="pp-link-hint">🔗 Board link &nbsp;·&nbsp; 🪪 Visiting card link</p>
     </div>
   );
 }
@@ -823,6 +842,12 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
               {f.l}
             </button>
           ))}
+          <a className="pp-card-chip"
+            href={`/card?pid=${getPainterToken(painter)}`}
+            target="_blank" rel="noopener noreferrer"
+            title="View and share your business card">
+            🪪 My Card
+          </a>
         </div>
       </header>
 

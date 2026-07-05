@@ -1,0 +1,236 @@
+/* PainterCard — Luxury gold/black visiting card for painters */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.pc-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at top, #1a1506 0%, #0d0d0d 60%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px 48px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pc-preview-label {
+  color: rgba(212,175,55,.5);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-weight: 700;
+  margin-bottom: 22px;
+}
+
+/* ── Card ── */
+.pc-card {
+  width: 100%;
+  max-width: 370px;
+  background: linear-gradient(160deg, #1c1610 0%, #0d0d0d 45%, #131008 100%);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(212,175,55,.25),
+    0 0 0 3px rgba(212,175,55,.06),
+    0 24px 80px rgba(0,0,0,.85),
+    inset 0 1px 0 rgba(212,175,55,.15),
+    inset 0 -1px 0 rgba(212,175,55,.08);
+  position: relative;
+}
+
+.pc-gold-stripe {
+  height: 5px;
+  background: linear-gradient(90deg, #6b4c00, #c8a020, #ffd700, #e6c000, #c8a020, #6b4c00);
+}
+
+.pc-card-inner { padding: 24px 26px 18px; }
+
+/* Brand row */
+.pc-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.pc-logo-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(212,175,55,.5));
+}
+.pc-brand-block { flex: 1; }
+.pc-the {
+  font-size: .92rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: #ffd700;
+  text-shadow: 0 1px 8px rgba(212,175,55,.4);
+  line-height: 1.2;
+}
+.pc-brand-sub {
+  font-size: .65rem;
+  color: rgba(212,175,55,.5);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Dividers */
+.pc-divider {
+  margin: 16px 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.35) 30%, rgba(212,175,55,.35) 70%, transparent);
+}
+.pc-divider-thin { margin: 14px 0; height: 1px; opacity: .6; }
+
+/* Name & designation */
+.pc-name {
+  font-size: 2.1rem;
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: .03em;
+  text-shadow: 0 0 30px rgba(212,175,55,.3), 0 2px 4px rgba(0,0,0,.8);
+  line-height: 1.1;
+}
+.pc-designation {
+  font-size: .78rem;
+  color: rgba(255,255,255,.55);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.pc-tagline {
+  font-size: .82rem;
+  color: rgba(212,175,55,.55);
+  font-style: italic;
+  letter-spacing: .03em;
+  margin-top: 10px;
+}
+
+/* Contact rows */
+.pc-contacts { display: flex; flex-direction: column; gap: 8px; }
+.pc-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pc-c-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #c8a020;
+  flex-shrink: 0;
+}
+.pc-c-label {
+  font-size: .67rem;
+  color: rgba(212,175,55,.5);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  min-width: 38px;
+  flex-shrink: 0;
+}
+.pc-c-val {
+  font-size: .82rem;
+  color: rgba(255,255,255,.78);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+/* Footer strip inside card */
+.pc-card-footer {
+  background: rgba(212,175,55,.06);
+  border-top: 1px solid rgba(212,175,55,.1);
+  padding: 9px 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pc-footer-txt {
+  font-size: .65rem;
+  color: rgba(212,175,55,.45);
+  letter-spacing: .05em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.pc-footer-sep {
+  color: rgba(212,175,55,.25);
+  font-size: .7rem;
+}
+
+/* ── Share button ── */
+.pc-share-btn {
+  margin-top: 30px;
+  width: 100%;
+  max-width: 370px;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #9a6f00, #c8a020, #ffd700, #c8a020, #9a6f00);
+  background-size: 200% 100%;
+  color: #111;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: .02em;
+  box-shadow: 0 6px 28px rgba(212,175,55,.4), 0 2px 8px rgba(0,0,0,.5);
+  transition: transform .15s, box-shadow .15s, background-position .4s;
+}
+.pc-share-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 36px rgba(212,175,55,.5), 0 4px 12px rgba(0,0,0,.5);
+}
+.pc-share-btn:active:not(:disabled) { transform: scale(.97); }
+.pc-share-btn:disabled { opacity: .7; cursor: not-allowed; }
+.pc-share-btn.pc-shared {
+  background: linear-gradient(135deg, #065f46, #059669, #10b981);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(16,185,129,.3);
+}
+
+.pc-hint {
+  margin-top: 14px;
+  color: rgba(255,255,255,.28);
+  font-size: .76rem;
+  text-align: center;
+  letter-spacing: .03em;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.pc-website-link {
+  margin-top: 28px;
+  color: rgba(212,175,55,.35);
+  text-decoration: none;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  transition: color .2s;
+}
+.pc-website-link:hover { color: rgba(212,175,55,.6); }
+
+/* Error state */
+.pc-error-page {
+  min-height: 100vh;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.pc-error-icon  { font-size: 3.5rem; }
+.pc-error-brand { font-size: 1.4rem; font-weight: 900; color: #ffd700; }
+.pc-error-msg   { color: rgba(255,255,255,.4); font-size: .9rem; line-height: 1.6; }
+.pc-error-home  {
+  margin-top: 10px;
+  color: #c8a020;
+  text-decoration: none;
+  font-size: .88rem;
+  font-weight: 600;
+  border: 1px solid rgba(212,175,55,.3);
+  padding: 10px 24px;
+  border-radius: 8px;
+}

@@ -328,7 +328,7 @@ export default function Home() {
                   </div>
                   <div className="reasons-photo">
                     <div className="rp-img-crop">
-                      <img src="/images/painter-boy.png" alt="Expert Painter" className="rp-img"
+                      <img src="/images/painter-boy.png" alt="Expert Painter" className="rp-img" loading="lazy"
                         onError={e => { e.target.parentElement.style.display='none'; e.target.parentElement.nextSibling.style.display='flex'; }} />
                     </div>
                     <div className="rp-fallback" style={{display:'none'}}>
@@ -395,7 +395,7 @@ export default function Home() {
                 <div className="team-grid">
                   {TEAM.map(t => (
                     <div key={t.name} className="team-card" onClick={() => setSelectedMember(t)}>
-                      {t.img && <img src={t.img} alt={t.name} className="team-photo"
+                      {t.img && <img src={t.img} alt={t.name} className="team-photo" loading="lazy"
                         onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />}
                       <div className="team-avatar" style={{ background: t.color, display: t.img ? 'none' : 'flex' }}>{t.initials}</div>
                       <h3 className="team-name">{t.name}</h3>

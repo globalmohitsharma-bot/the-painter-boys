@@ -292,6 +292,48 @@
   font-size: .95rem;
 }
 
+/* ── QR Code ── */
+.cv-qr-card { text-align: center; }
+.cv-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 0; }
+.cv-qr-img  { width: 160px; height: 160px; border-radius: 10px; border: 1.5px solid #e2e8f0; display: block; }
+.cv-qr-hint { font-size: .78rem; color: #94a3b8; line-height: 1.5; max-width: 220px; }
+
+/* ── Floating WhatsApp widget ── */
+.cv-wa-float {
+  position: fixed;
+  bottom: 22px;
+  right: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  z-index: 999;
+  text-decoration: none;
+}
+.cv-wa-float-bubble {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(34,197,94,.45);
+  transition: transform .15s, box-shadow .15s;
+}
+.cv-wa-float:active .cv-wa-float-bubble {
+  transform: scale(.92);
+  box-shadow: 0 2px 8px rgba(34,197,94,.3);
+}
+.cv-wa-float-svg { width: 28px; height: 28px; color: #fff; }
+.cv-wa-float-label {
+  font-size: .68rem;
+  font-weight: 700;
+  color: #22c55e;
+  letter-spacing: .04em;
+  text-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+
 @media (prefers-color-scheme: dark) {
   .cv-root { background: #0f172a; }
   .cv-card { background: #1e293b; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
@@ -305,4 +347,6 @@
   .cv-error { background: #0f172a; }
   .cv-error-brand { color: #e2e8f0; }
   .cv-error-brand .cv-the { color: #94a3b8; }
+  .cv-qr-img { border-color: #334155; }
+  .cv-qr-hint { color: #64748b; }
 }

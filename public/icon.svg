@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="90" fill="#0d2137"/>
+  <rect width="512" height="6" y="0" rx="0" fill="#f97316"/>
+  <text x="256" y="210" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
+        font-weight="900" font-size="130" fill="#f97316">PB</text>
+  <text x="256" y="300" text-anchor="middle" font-family="Arial, sans-serif"
+        font-weight="600" font-size="52" fill="rgba(255,255,255,0.65)" letter-spacing="6">PAINTERS</text>
+  <circle cx="196" cy="370" r="18" fill="#f97316"/>
+  <circle cx="256" cy="370" r="18" fill="#22c55e"/>
+  <circle cx="316" cy="370" r="18" fill="#0ea5e9"/>
+  <rect width="512" height="6" y="506" rx="0" fill="#f97316"/>
+</svg>

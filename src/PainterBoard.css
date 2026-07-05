@@ -128,7 +128,7 @@
   grid-template-columns:repeat(2,1fr);
   gap:12px; padding:0 16px;
 }
-.pp-name-card { position:relative; }
+.pp-name-card { position:relative; display:flex; flex-direction:column; gap:4px; }
 .pp-name-btn {
   display:flex; flex-direction:column; align-items:center;
   gap:10px; padding:20px 12px; width:100%;
@@ -150,15 +150,22 @@
 .pp-name-info { display:flex; flex-direction:column; align-items:center; gap:2px; }
 .pp-name-label { font-size:.95rem; font-weight:700; text-align:center; color:#111827; }
 .pp-name-pid   { font-size:.65rem; font-weight:600; color:#6b7280; letter-spacing:.04em; }
-.pp-link-btn {
-  position:absolute; top:6px; right:6px;
-  width:28px; height:28px; border-radius:7px;
-  background:#dbeafe; border:1px solid #93c5fd;
-  color:#2563eb; font-size:.8rem; cursor:pointer;
+.pp-name-actions { display:flex; gap:6px; }
+.pp-link-btn, .pp-card-btn {
+  flex:1; height:32px; border-radius:8px;
+  border:1px solid #93c5fd; cursor:pointer;
+  font-size:.8rem;
   display:flex; align-items:center; justify-content:center;
   -webkit-tap-highlight-color:transparent;
+  transition:background .15s;
 }
+.pp-link-btn { background:#dbeafe; color:#2563eb; }
 .pp-link-btn:active { background:#bfdbfe; }
+.pp-card-btn {
+  background:linear-gradient(135deg,#1a1406,#2e2209);
+  border-color:rgba(212,175,55,.4); color:#ffd700;
+}
+.pp-card-btn:active { background:#1c1608; }
 .pp-no-match { grid-column:1/-1; text-align:center; color:rgba(255,255,255,.5); padding:24px; }
 .pp-link-hint { text-align:center; color:rgba(255,255,255,.4); font-size:.72rem; padding:12px 16px 0; }
 
@@ -295,6 +302,17 @@
   transition:all .15s; -webkit-tap-highlight-color:transparent;
 }
 .pp-filter-active { background:rgba(255,255,255,.28); color:#ffffff; border-color:rgba(255,255,255,.5); }
+.pp-card-chip {
+  padding:5px 12px; border-radius:99px;
+  background:linear-gradient(135deg,#1a1406,#2e2209);
+  border:1px solid rgba(212,175,55,.45); color:#ffd700;
+  font-size:.78rem; font-weight:700; cursor:pointer;
+  white-space:nowrap; text-decoration:none;
+  display:inline-flex; align-items:center;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-color .15s;
+}
+.pp-card-chip:hover { border-color:rgba(212,175,55,.7); }
 
 /* ── Main content ────────────────────────────────────────────────── */
 .pp-main {

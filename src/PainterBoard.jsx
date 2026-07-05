@@ -715,7 +715,7 @@ function JobCard({ row, headers, onClick }) {
 }
 
 // ── Main Painter Dashboard ────────────────────────────────────────
-function PainterDashboard({ painter, onChangePainter }) {
+function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
   const [headers,    setHeaders]   = useState([]);
   const [rows,       setRows]      = useState([]);
   const [loading,    setLoading]   = useState(true);
@@ -802,7 +802,10 @@ function PainterDashboard({ painter, onChangePainter }) {
           <div className="pp-header-right">
             <button className="pp-icon-btn" onClick={fetchData} title="Refresh"
               style={loading ? {animation:'pp-spin .7s linear infinite'} : {}}>↻</button>
-            <button className="pp-icon-btn pp-change-btn" onClick={onChangePainter} title="Change painter">👤</button>
+            {isDirectLink
+              ? <a className="pp-icon-btn pp-home-btn" href="/" title="Go to website">🏠</a>
+              : <button className="pp-icon-btn pp-change-btn" onClick={onChangePainter} title="Change painter">👤</button>
+            }
           </div>
         </div>
         <div className="pp-header-meta">
@@ -916,5 +919,5 @@ export default function PainterBoard() {
     if (!gateAuth) return <PainterGateScreen onAuth={() => setGateAuth(true)} />;
     return <PainterSelectScreen onSelect={select} />;
   }
-  return <PainterDashboard painter={painter} onChangePainter={clear} />;
+  return <PainterDashboard painter={painter} onChangePainter={clear} isDirectLink={isDirectLink} />;
 }

@@ -236,6 +236,7 @@
 }
 .pp-icon-btn:active { background:rgba(255,255,255,.28); }
 .pp-change-btn { font-size:.95rem; }
+.pp-home-btn   { font-size:.95rem; display:flex; align-items:center; justify-content:center; text-decoration:none; }
 
 /* ── PIN Dialog ──────────────────────────────────────────────── */
 .pp-pin-overlay {

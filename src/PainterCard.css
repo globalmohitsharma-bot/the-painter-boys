@@ -199,15 +199,55 @@
   line-height: 1.5;
 }
 
-.pc-website-link {
-  margin-top: 28px;
-  color: rgba(212,175,55,.35);
-  text-decoration: none;
-  font-size: .78rem;
-  letter-spacing: .04em;
-  transition: color .2s;
+/* ── Action buttons (live on the page, not in captured image) ── */
+.pc-actions {
+  width: 100%;
+  max-width: 370px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
 }
-.pc-website-link:hover { color: rgba(212,175,55,.6); }
+
+.pc-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: .95rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: opacity .15s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pc-action:active { transform: scale(.97); opacity: .85; }
+
+.pc-action-wa {
+  background: #22c55e;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(34,197,94,.35);
+}
+.pc-action-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.pc-action-web {
+  background: rgba(212,175,55,.1);
+  border-color: rgba(212,175,55,.35);
+  color: #ffd700;
+}
+
+.pc-action-portal {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.15);
+  color: rgba(255,255,255,.6);
+  font-size: .88rem;
+}
 
 /* Error state */
 .pc-error-page {

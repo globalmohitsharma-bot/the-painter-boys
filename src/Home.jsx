@@ -283,8 +283,12 @@ export default function Home() {
               ))}
             </div>
             <div className="reasons-photo">
-              <img src="/images/mascot.png" alt="The Painter Boys" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'20px'}}
-                onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+              {/* painter-boy.png is a 2-panel image — CSS crops to show only the left boy */}
+              <div className="rp-img-crop">
+                <img src="/images/painter-boy.png" alt="The Painter Boys — Expert Painter"
+                  className="rp-img"
+                  onError={e => { e.target.parentElement.style.display='none'; e.target.parentElement.nextSibling.style.display='flex'; }} />
+              </div>
               <div className="rp-fallback" style={{display:'none'}}>
                 <div className="rp-fallback-icon">🎨</div>
                 <div className="rp-fallback-text">The Painter Boys<br/>Home Painting Professionals<br/>Delhi NCR Since 2010</div>
@@ -376,7 +380,7 @@ export default function Home() {
           </div>
           <div className="contact-body">
             <div className="contact-mascot">
-              <img src="/images/mascot-studio.png" alt="The Painter Boys Mascot"
+              <img src="/images/mascot.png" alt="The Painter Boys Mascot"
                 onError={e => {
                   e.target.style.display='none';
                   e.target.nextSibling.style.display='flex';

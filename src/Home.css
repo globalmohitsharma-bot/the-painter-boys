@@ -325,8 +325,19 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   position: relative;
 }
 .reasons-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; }
+.rp-img-crop {
+  width: 100%; height: 100%; border-radius: 20px; overflow: hidden;
+  position: absolute; inset: 0;
+}
+.rp-img {
+  /* image is 2 boys side by side — show only the left half */
+  width: 200%; height: 100%;
+  object-fit: cover; object-position: left center;
+  display: block;
+}
 .rp-fallback {
   text-align: center; color: #fff; padding: 40px;
+  flex-direction: column; align-items: center; justify-content: center;
 }
 .rp-fallback-icon { font-size: 5rem; margin-bottom: 20px; }
 .rp-fallback-text { font-size: 1.1rem; font-weight: 700; line-height: 1.6; opacity: .85; }

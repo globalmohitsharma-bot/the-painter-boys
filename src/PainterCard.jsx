@@ -21,7 +21,7 @@ function getNameByToken(token) {
 }
 
 const DESIGNATIONS = {
-  'Rajeev':  'Director — Delivery & Operations',
+  'Rajeev':  'Senior Manager : Marketing and Delivery',
   'Fariyad': 'Senior Expert Painter',
   'Jabbar':  'Senior Expert Painter',
   'Raju':    'Expert Painter',

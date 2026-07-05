@@ -819,6 +819,10 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
             </div>
           </div>
           <div className="pp-header-right">
+            <a className="pp-icon-btn pp-mycard-btn"
+              href={`/card?pid=${getPainterToken(painter)}`}
+              target="_blank" rel="noopener noreferrer"
+              title="My visiting card">🪪</a>
             <button className="pp-icon-btn" onClick={fetchData} title="Refresh"
               style={loading ? {animation:'pp-spin .7s linear infinite'} : {}}>↻</button>
             {isDirectLink
@@ -842,12 +846,6 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
               {f.l}
             </button>
           ))}
-          <a className="pp-card-chip"
-            href={`/card?pid=${getPainterToken(painter)}`}
-            target="_blank" rel="noopener noreferrer"
-            title="View and share your business card">
-            🪪 My Card
-          </a>
         </div>
       </header>
 

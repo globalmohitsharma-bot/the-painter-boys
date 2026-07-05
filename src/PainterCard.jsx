@@ -76,8 +76,8 @@ export default function PainterCard() {
   const cardPhone    = personalPhone ? personalPhone.display : CORPORATE.display;
 
   const waShareText = personalPhone
-    ? `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📱 Direct: ${personalPhone.display}\n📞 Office: ${CORPORATE.display}\n\n💬 WhatsApp Us: https://wa.me/${CORPORATE.wa}\n🌐 Website: https://www.thepainterboys.com\n🔐 Portal: https://thepainterboys.com/pb\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR!`
-    : `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📞 ${CORPORATE.display}\n\n💬 WhatsApp Us: https://wa.me/${CORPORATE.wa}\n🌐 Website: https://www.thepainterboys.com\n🔐 Portal: https://thepainterboys.com/pb\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR!`;
+    ? `*The Painter Boys* 🎨\n\n*${name}*\n${designation}\n\n📱 ${personalPhone.display}\n📞 ${CORPORATE.display}\n🌐 www.thepainterboys.com`
+    : `*The Painter Boys* 🎨\n\n*${name}*\n${designation}\n\n📞 ${CORPORATE.display}\n🌐 www.thepainterboys.com`;
 
   const handleShare = async () => {
     if (!cardRef.current || sharing) return;

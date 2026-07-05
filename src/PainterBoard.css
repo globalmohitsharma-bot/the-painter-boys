@@ -242,8 +242,15 @@
   transition:all .15s;
 }
 .pp-icon-btn:active { background:rgba(255,255,255,.28); }
-.pp-change-btn { font-size:.95rem; }
-.pp-home-btn   { font-size:.95rem; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.pp-change-btn  { font-size:.95rem; }
+.pp-home-btn    { font-size:.95rem; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.pp-mycard-btn  {
+  font-size:.95rem; display:flex; align-items:center; justify-content:center; text-decoration:none;
+  background:linear-gradient(135deg,#2a1e00,#3d2c00) !important;
+  border-color:rgba(212,175,55,.5) !important;
+  color:#ffd700 !important;
+  box-shadow:0 2px 8px rgba(212,175,55,.2);
+}
 
 /* ── PIN Dialog ──────────────────────────────────────────────── */
 .pp-pin-overlay {

@@ -1,12 +1,7 @@
 /* ── Painter Portal ─ Mobile-first ─────────────────────────────── */
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 
-html, body {
-  overscroll-behavior-y: none;
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
-}
+/* portal html/body: no global overrides — Home.css handles body styles */
 
 /* ── Select screen ───────────────────────────────────────────────── */
 .pp-select-root {
@@ -78,6 +73,7 @@ html, body {
 
 /* ── Dashboard ───────────────────────────────────────────────────── */
 .pp-root {
+  height:100vh;
   height:100dvh;
   background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%);
   color:#ffffff;
@@ -210,7 +206,7 @@ html, body {
 
 /* ── Main content ────────────────────────────────────────────────── */
 .pp-main {
-  flex:1; overflow-y:auto;
+  flex:1; min-height:0; overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   padding:12px 12px 80px;
   display:flex; flex-direction:column; gap:10px;

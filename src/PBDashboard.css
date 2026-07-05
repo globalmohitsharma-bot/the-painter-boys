@@ -1,16 +1,10 @@
 /* ── PB Dashboard — Mobile-first ────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  background: #02061e;
-  overscroll-behavior-y: none;
-  overflow-x: hidden;
-  scroll-padding-top: 130px;
-  width: 100%;
-  max-width: 100vw;
-}
+/* portal html/body: no global overrides — Home.css handles body styles */
 
 .pb-root {
+  height: 100vh;
   height: 100dvh;
   background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%);
   color: #ffffff;
@@ -160,6 +154,7 @@ html, body {
 /* ── Main content ───────────────────────────────────────────── */
 .pb-main {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 12px 12px 80px;

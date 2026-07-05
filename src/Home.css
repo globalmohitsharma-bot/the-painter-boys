@@ -1,6 +1,6 @@
 /* ── The Painter Boys — Home ──────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow-x: hidden; }
 .home { position: relative; }
 
@@ -23,7 +23,12 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   font-size: .95rem; font-weight: 900; color: #fff; letter-spacing: -.02em;
   box-shadow: 0 3px 10px rgba(249,115,22,.4);
 }
-.topbar-name { font-size: 1.05rem; font-weight: 800; color: #fff; white-space: nowrap; }
+.topbar-name { font-size: 1.1rem; font-weight: 900; white-space: nowrap; letter-spacing: .01em; }
+.tn-the { color: rgba(255,255,255,.85); font-weight: 700; }
+.tn-p  { color: #ff6b6b; } .tn-a  { color: #ff9f43; } .tn-i  { color: #feca57; }
+.tn-n  { color: #48dbfb; } .tn-t  { color: #ff6b6b; } .tn-e  { color: #a29bfe; }
+.tn-r  { color: #fd79a8; } .tn-sp { color: #fff; }
+.tn-b  { color: #6c5ce7; } .tn-o  { color: #00cec9; } .tn-y  { color: #fdcb6e; } .tn-s  { color: #e17055; }
 .topbar-phone {
   font-size: .95rem; font-weight: 700; color: rgba(255,255,255,.9);
   text-decoration: none; display: flex; align-items: center; gap: 6px;
@@ -393,7 +398,44 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
 }
 .team-name { font-size: 1.15rem; font-weight: 800; color: #0d2137; margin-bottom: 4px; }
 .team-role { font-size: .75rem; font-weight: 700; color: #f97316; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 14px; }
-.team-bio { font-size: .88rem; color: #64748b; line-height: 1.7; }
+.team-bio { font-size: .88rem; color: #64748b; line-height: 1.7; margin-bottom: 12px; }
+.team-click-hint { font-size: .72rem; color: #f97316; font-weight: 700; letter-spacing: .04em; margin-top: auto; }
+.team-card { cursor: pointer; }
+.team-card:hover .team-click-hint { text-decoration: underline; }
+
+/* ── Team modal ── */
+.team-modal-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.team-modal {
+  background: #fff; border-radius: 24px; padding: 40px 32px;
+  max-width: 420px; width: 100%; text-align: center; position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,.3);
+  animation: popIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from { opacity:0; transform: scale(.85); } to { opacity:1; transform: scale(1); } }
+.team-modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: #f1f5f9; border: none; border-radius: 50%;
+  width: 32px; height: 32px; font-size: 1rem; cursor: pointer; color: #64748b;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.team-modal-close:hover { background: #e2e8f0; }
+.team-modal-photo {
+  width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+  border: 4px solid #0d2137; margin: 0 auto 16px; display: block;
+}
+.team-modal-avatar {
+  width: 120px; height: 120px; border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 900; color: #fff; margin: 0 auto 16px;
+}
+.team-modal-name { font-size: 1.35rem; font-weight: 900; color: #0d2137; margin-bottom: 6px; }
+.team-modal-role { font-size: .78rem; font-weight: 700; color: #f97316; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 18px; }
+.team-modal-bio { font-size: .95rem; color: #64748b; line-height: 1.75; }
 
 /* ── Contact ── */
 .contact-sec {

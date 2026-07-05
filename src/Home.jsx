@@ -60,13 +60,14 @@ const REASONS = [
   { title: 'All Property Types Covered',        desc: 'Houses, flats, villas, societies, hospitals, offices, temples — our expert teams are fully equipped for every scale and type of project.' },
 ];
 
-const NAV_LINKS = [['about','About'],['services','Services'],['colors','Colours'],['howitworks','How It Works'],['team','Team'],['contact','Contact']];
+const NAV_LINKS = [['about','About'],['services','Services'],['howitworks','How It Works'],['team','Team'],['contact','Contact']];
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled,  setScrolled]  = useState(false);
   const [activeTab, setActiveTab] = useState('Reds');
   const [form, setForm] = useState({ name:'', phone:'', area:'Ghaziabad', msg:'' });
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 60);
@@ -97,7 +98,12 @@ export default function Home() {
         <div className="topbar-inner">
           <div className="topbar-brand">
             <div className="pb-badge-nav">PB</div>
-            <span className="topbar-name">The Painter Boys</span>
+            <span className="topbar-name">
+              <span className="tn-the">The </span>
+              <span className="tn-p">P</span><span className="tn-a">a</span><span className="tn-i">i</span><span className="tn-n">n</span><span className="tn-t">t</span><span className="tn-e">e</span><span className="tn-r">r</span>
+              <span className="tn-sp"> </span>
+              <span className="tn-b">B</span><span className="tn-o">o</span><span className="tn-y">y</span><span className="tn-s">s</span>
+            </span>
           </div>
           <a className="topbar-phone" href={`tel:${PHONE}`}>📞 +91 78388 88509</a>
           <a className="topbar-cta" href={WA_LINK} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
@@ -132,7 +138,7 @@ export default function Home() {
         <div className="hero-content">
           <div className="hero-badge">⭐ Trusted Since 2010 · 10+ Years of Excellence</div>
           <h1 className="hero-title">
-            Paint Your Home<br /><span className="hero-accent">The Smart Way</span>
+            Home Painting Professionals<br /><span className="hero-accent">With Decades of Experience</span>
           </h1>
           <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
           <p className="hero-desc">
@@ -211,34 +217,6 @@ export default function Home() {
           </div>
           <div className="sec-cta">
             <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Discuss Your Project</a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Colour Catalog ── */}
-      <section id="colors" className="color-sec">
-        <div className="container">
-          <div className="sec-head">
-            <span className="sec-tag">Colour Palette</span>
-            <h2 className="sec-title">Explore Our Colours</h2>
-            <p className="sec-sub">2500+ shades to transform your space. Our experts help you choose the perfect one.</p>
-          </div>
-          <div className="color-tabs">
-            {COLOR_TABS.map(tab => (
-              <button key={tab} className={`ctab${activeTab === tab ? ' active' : ''}`}
-                onClick={() => setActiveTab(tab)}>{tab}</button>
-            ))}
-          </div>
-          <div className="color-grid">
-            {COLORS[activeTab].map(c => (
-              <div key={c.name} className="cswatch">
-                <div className="cs-rect" style={{ background: c.hex }} />
-                <div className="cs-name">{c.name}</div>
-              </div>
-            ))}
-          </div>
-          <div className="sec-cta">
-            <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">🎨 Get Colour Consultation</a>
           </div>
         </div>
       </section>
@@ -358,15 +336,36 @@ export default function Home() {
           </div>
           <div className="team-grid">
             {TEAM.map(t => (
-              <div key={t.name} className="team-card">
+              <div key={t.name} className="team-card" onClick={() => setSelectedMember(t)} title="Click to learn more">
                 {t.img && <img src={t.img} alt={t.name} className="team-photo" onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />}
                 <div className="team-avatar" style={{ background: t.color, display: t.img ? 'none' : 'flex' }}>{t.initials}</div>
                 <h3 className="team-name">{t.name}</h3>
                 <div className="team-role">{t.role}</div>
                 <p className="team-bio">{t.bio}</p>
+                <div className="team-click-hint">Tap to know more →</div>
               </div>
             ))}
           </div>
+
+          {/* Team member modal */}
+          {selectedMember && (
+            <div className="team-modal-overlay" onClick={() => setSelectedMember(null)}>
+              <div className="team-modal" onClick={e => e.stopPropagation()}>
+                <button className="team-modal-close" onClick={() => setSelectedMember(null)}>✕</button>
+                {selectedMember.img
+                  ? <img src={selectedMember.img} alt={selectedMember.name} className="team-modal-photo"
+                      onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                  : null
+                }
+                <div className="team-modal-avatar" style={{ background: selectedMember.color, display: selectedMember.img ? 'none' : 'flex' }}>
+                  {selectedMember.initials}
+                </div>
+                <h3 className="team-modal-name">{selectedMember.name}</h3>
+                <div className="team-modal-role">{selectedMember.role}</div>
+                <p className="team-modal-bio">{selectedMember.bio}</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

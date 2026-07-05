@@ -75,10 +75,9 @@ export default function PainterCard() {
   const personalPhone = PAINTER_PHONES[name] || null;
   const cardPhone    = personalPhone ? personalPhone.display : CORPORATE.display;
 
-  // Share text: personal number if available, always include corporate WhatsApp
   const waShareText = personalPhone
-    ? `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📱 Direct: ${personalPhone.display}\n📞 Corporate WhatsApp: ${CORPORATE.display}\n🌐 www.thepainterboys.com\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR — call or WhatsApp us!`
-    : `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📞 ${CORPORATE.display}\n🌐 www.thepainterboys.com\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR — call or WhatsApp us!`;
+    ? `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📱 Direct: ${personalPhone.display}\n📞 Office: ${CORPORATE.display}\n\n💬 WhatsApp Us: https://wa.me/${CORPORATE.wa}\n🌐 Website: https://www.thepainterboys.com\n🔐 Portal: https://thepainterboys.com/pb\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR!`
+    : `Hi! I'm *${name}*, ${designation} at *The Painter Boys* 🎨\n\n📞 ${CORPORATE.display}\n\n💬 WhatsApp Us: https://wa.me/${CORPORATE.wa}\n🌐 Website: https://www.thepainterboys.com\n🔐 Portal: https://thepainterboys.com/pb\n\n✦ ${tagline} ✦\n\nFor premium home painting in Ghaziabad, Noida & Delhi NCR!`;
 
   const handleShare = async () => {
     if (!cardRef.current || sharing) return;

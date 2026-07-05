@@ -9,32 +9,47 @@ const LS_PAINTERS = 'pb_custom_painters';
 
 const DEFAULT_PAINTERS = ['Fariyad','Jabbar','Rajeev','Raju','Sushant'];
 
-// ── Painter unique ID system ──────────────────────────────────────
-// Default painters have fixed IDs 1-5 (alphabetical order matching sort())
-const DEFAULT_PAINTER_IDS = { 'Fariyad':1, 'Jabbar':2, 'Rajeev':3, 'Raju':4, 'Sushant':5 };
-const LS_PID_MAP = 'pb_painter_id_map'; // {id: name} for custom painters
+// ── Painter unique token system ───────────────────────────────────
+// Fixed opaque tokens for default painters (not sequential — hard to guess)
+const DEFAULT_PAINTER_TOKENS = {
+  'Fariyad': 'f8r2k9',
+  'Jabbar':  'j4x7b1',
+  'Rajeev':  'r9c3m6',
+  'Raju':    'q5t8n2',
+  'Sushant': 's2w6p4',
+};
+const LS_PID_MAP = 'pb_painter_token_map'; // {token: name} for custom painters
 
-function getPainterById(id) {
-  const n = parseInt(id, 10);
-  const def = Object.entries(DEFAULT_PAINTER_IDS).find(([,v]) => v === n);
+function randomToken() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let t = '';
+  for (let i = 0; i < 6; i++) t += chars[Math.floor(Math.random() * chars.length)];
+  return t;
+}
+
+function getPainterByToken(token) {
+  // Check default painters
+  const def = Object.entries(DEFAULT_PAINTER_TOKENS).find(([,v]) => v === token);
   if (def) return def[0];
+  // Check custom painters
   try {
     const m = JSON.parse(localStorage.getItem(LS_PID_MAP) || '{}');
-    return m[String(n)] || null;
+    return m[token] || null;
   } catch { return null; }
 }
 
-function getPainterPid(name) {
-  if (DEFAULT_PAINTER_IDS[name]) return DEFAULT_PAINTER_IDS[name];
+function getPainterToken(name) {
+  if (DEFAULT_PAINTER_TOKENS[name]) return DEFAULT_PAINTER_TOKENS[name];
   try {
     const m = JSON.parse(localStorage.getItem(LS_PID_MAP) || '{}');
     const found = Object.entries(m).find(([,v]) => v === name);
-    if (found) return parseInt(found[0], 10);
-    const usedIds = Object.keys(m).map(Number);
-    const newId = usedIds.length > 0 ? Math.max(...usedIds) + 1 : 6;
-    m[String(newId)] = name;
+    if (found) return found[0];
+    // Assign new random token
+    let tok = randomToken();
+    while (m[tok]) tok = randomToken(); // avoid collision
+    m[tok] = name;
     localStorage.setItem(LS_PID_MAP, JSON.stringify(m));
-    return newId;
+    return tok;
   } catch { return null; }
 }
 
@@ -152,7 +167,7 @@ function PainterGateScreen({ onAuth }) {
   const [show, setShow] = useState(false);
 
   const tryAuth = () => {
-    if (pwd === 'PB') {
+    if (pwd === 'PB2026') {
       sessionStorage.setItem(LS_PB_GATE, 'PB');
       onAuth();
     } else {
@@ -204,8 +219,8 @@ function PainterSelectScreen({ onSelect }) {
     : painters;
 
   const copyLink = (name) => {
-    const pid = getPainterPid(name);
-    const url = `${window.location.origin}/painter?pid=${pid}`;
+    const tok = getPainterToken(name);
+    const url = `${window.location.origin}/painter?pid=${tok}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(() => {
         setCopied(name);
@@ -234,18 +249,18 @@ function PainterSelectScreen({ onSelect }) {
       </div>
       <div className="pp-select-grid">
         {filtered.map(p => {
-          const pid = getPainterPid(p);
+          const tok = getPainterToken(p);
           return (
             <div key={p} className="pp-name-card">
               <button className="pp-name-btn" onClick={() => onSelect(p)}>
                 <span className="pp-name-avatar" style={{ background: avatarBg(p) }}>{p[0]}</span>
                 <div className="pp-name-info">
                   <span className="pp-name-label">{p}</span>
-                  <span className="pp-name-pid">ID #{pid}</span>
+                  <span className="pp-name-pid">Tap 🔗 to copy link</span>
                 </div>
               </button>
               <button className="pp-link-btn" onClick={() => copyLink(p)}
-                title={`Copy unique link for ${p} (ID #${pid})`}>
+                title={`Copy unique private link for ${p}`}>
                 {copied === p ? '✓' : '🔗'}
               </button>
             </div>
@@ -864,9 +879,9 @@ export default function PainterBoard() {
   const isDirectLink = !!(urlPid || urlName);
 
   const [painter, setPainter] = useState(() => {
-    // ?pid=NUMBER → look up name
+    // ?pid=TOKEN → look up painter name (opaque token, not guessable)
     if (urlPid) {
-      const name = getPainterById(urlPid);
+      const name = getPainterByToken(urlPid);
       if (name) { localStorage.setItem(LS_PAINTER, name); return name; }
     }
     // ?name=NAME → backwards compat

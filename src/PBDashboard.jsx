@@ -1021,16 +1021,31 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                 <div className="pb-share-customer-hd">Share job link</div>
                 {(() => {
                   const url = buildCustomerUrl(row, headers, tokenData);
+                  const societyK  = headers.find(h => h.toLowerCase().includes('society')) || '';
+                  const progressK = headers.find(h => h.toLowerCase().includes('progress')) || '';
+                  const soc = societyK  ? row[societyK]  : '';
+                  const prg = progressK ? row[progressK] : '';
                   const msg = [
                     `🎨 *The Painter Boys*`,
+                    `_Professional Painting Services_`,
+                    `━━━━━━━━━━━━━━━━━━━━━━`,
                     ``,
                     `Dear ${name ? pbWithMr(name) : 'Customer'},`,
-                    `Here are your job details:`,
+                    ``,
+                    `Thank you for choosing *The Painter Boys*! 🙏`,
+                    ``,
+                    soc ? `🏘️ *Society:* ${soc}` : '',
+                    prg ? `📊 *Status:* ${prg}` : '',
+                    ``,
+                    `📋 *View your complete job details & payment summary here:*`,
                     url,
                     ``,
-                    `📞 Corporate: 7838888509`,
+                    `For any queries, feel free to reach us:`,
+                    `📞 *Corporate:* +91 7838888509`,
                     `🌐 www.thepainterboys.com`,
-                  ].join('\n');
+                    `━━━━━━━━━━━━━━━━━━━━━━`,
+                    `_The Painter Boys — Trusted Since 2010_`,
+                  ].filter(l => l !== '').join('\n');
                   const waUrl = phone
                     ? `https://wa.me/${phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`
                     : `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -1236,7 +1251,7 @@ function PBPasswordGate({ onSuccess }) {
 
   const submit = (e) => {
     e.preventDefault();
-    if (value === 'PB') {
+    if (value === 'PB2026') {
       sessionStorage.setItem('pb_auth', '1');
       onSuccess();
     } else {
@@ -1377,7 +1392,10 @@ export default function PBDashboard() {
   };
 
   const handleAdd = async (form) => {
-    if (!scriptUrl) { setSheet('setup'); return; }
+    if (!scriptUrl) {
+      showToast('⚙️ Apps Script URL not set — tap Settings to configure', false);
+      return; // keep AddSheet open, don't navigate away
+    }
     setSaving(true);
     const values = headers.map(h => form[h] ?? '');
     await callScript(scriptUrl, { action: 'append', values });

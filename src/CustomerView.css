@@ -173,6 +173,20 @@
 }
 .cv-total-row strong { color: #047857; font-size: 1rem; font-weight: 800; }
 
+.cv-pending-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 9px;
+  font-size: .9rem;
+  color: #92400e;
+  margin-top: 8px;
+}
+.cv-pending-row strong { color: #c2410c; font-size: 1rem; font-weight: 800; }
+
 .cv-grand-total {
   display: flex;
   justify-content: space-between;

@@ -63,7 +63,16 @@ export default function CustomerView() {
     ? new Date(sharedAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
     : '';
 
-  const totalPaid = tokens.reduce((sum, t) => sum + (t.total || 0), 0);
+  // Separate "received" tokens from "pending" tokens
+  const receivedTokens = tokens.filter(t =>
+    !t.label.toLowerCase().includes('pending')
+  );
+  const pendingTokens  = tokens.filter(t =>
+    t.label.toLowerCase().includes('pending')
+  );
+  const totalPaid    = receivedTokens.reduce((s, t) => s + (t.total || 0), 0);
+  const totalPending = pendingTokens.reduce((s, t)  => s + (t.total || 0), 0);
+  const hasPaymentData = tokens.some(t => t.total > 0 || t.history?.length > 0);
 
   const copyPage = () => {
     navigator.clipboard?.writeText(window.location.href).then(() => {
@@ -124,36 +133,40 @@ export default function CustomerView() {
         </div>
 
         {/* Payment card — only if data exists */}
-        {tokens.length > 0 && tokens.some(t => t.total > 0 || t.history?.length > 0) && (
+        {hasPaymentData && (
           <div className="cv-card">
             <div className="cv-card-hd">💰 Payment Summary</div>
-            {tokens.map((t, i) => (
-              t.total > 0 || t.history?.length > 0 ? (
+
+            {/* Payment history rows */}
+            {receivedTokens.map((t, i) => (
+              t.history?.length > 0 ? (
                 <div key={i} className="cv-token-block">
-                  {tokens.length > 1 && <div className="cv-token-lbl">{t.label}</div>}
-                  {t.history?.length > 0 && (
-                    <div className="cv-history">
-                      {t.history.map((e, j) => (
-                        <div key={j} className="cv-hist-row">
-                          <span className="cv-hist-date">📅 {e.date}</span>
-                          <span className="cv-hist-amt">₹{(e.amount || 0).toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {t.total > 0 && (
-                    <div className="cv-total-row">
-                      <span>Total Received</span>
-                      <strong>₹{(t.total || 0).toLocaleString()}</strong>
-                    </div>
-                  )}
+                  {receivedTokens.length > 1 && <div className="cv-token-lbl">{t.label}</div>}
+                  <div className="cv-history">
+                    {t.history.map((e, j) => (
+                      <div key={j} className="cv-hist-row">
+                        <span className="cv-hist-date">📅 {e.date}</span>
+                        <span className="cv-hist-amt">₹{(e.amount || 0).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null
             ))}
-            {tokens.length > 1 && totalPaid > 0 && (
-              <div className="cv-grand-total">
-                <span>Grand Total Received</span>
+
+            {/* Total paid */}
+            {totalPaid > 0 && (
+              <div className="cv-total-row">
+                <span>✅ Total Paid</span>
                 <strong>₹{totalPaid.toLocaleString()}</strong>
+              </div>
+            )}
+
+            {/* Pending amount */}
+            {totalPending > 0 && (
+              <div className="cv-pending-row">
+                <span>⏳ Pending Amount</span>
+                <strong>₹{totalPending.toLocaleString()}</strong>
               </div>
             )}
           </div>

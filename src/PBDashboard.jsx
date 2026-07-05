@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import LZString from 'lz-string';
 import './PBDashboard.css';
 
 const CSV_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSRHqp1TWLyAEgydJ19b6vCJcTGCCxGrLcB1Mccw95xndfc9mbC1y5y3ev5T1njzE0evlvGIHA6OGH1/pub?gid=1417050744&single=true&output=csv';
@@ -147,9 +148,19 @@ async function callScript(url, payload) {
 
 // ── Customer link encoder ─────────────────────────────────────────
 function encodeCustomerData(data) {
-  const bytes = new TextEncoder().encode(JSON.stringify(data));
-  const chars = Array.from(bytes, b => String.fromCharCode(b)).join('');
-  return btoa(chars);
+  // Compact keys + lz-string compression → much shorter URL
+  const compact = {
+    n:  data.name,      p:  data.phone,
+    s:  data.society,   a:  data.address,
+    pr: data.progress,  pt: data.paintType,
+    pn: data.painters,  d:  data.date,
+    t:  (data.tokens || []).map(t => ({
+      l: t.label, a: t.total,
+      h: (t.history || []).map(e => ({ d: e.date, a: e.amount })),
+    })),
+    sa: data.sharedAt,
+  };
+  return LZString.compressToEncodedURIComponent(JSON.stringify(compact));
 }
 function buildCustomerUrl(row, headers, tokenData) {
   const name       = row['Contact Name'] || row['Name'] || row['name'] || '';
@@ -174,7 +185,7 @@ function buildCustomerUrl(row, headers, tokenData) {
     date:      dateK     ? row[dateK]     : '',
     tokens, sharedAt: new Date().toISOString(),
   };
-  return `${window.location.origin}/customer?r=${encodeCustomerData(data)}`;
+  return `${window.location.origin}/job/${encodeCustomerData(data)}`;
 }
 
 // ── Combo field — custom filtered dropdown ────────────────────────

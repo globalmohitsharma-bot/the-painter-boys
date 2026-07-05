@@ -12,6 +12,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/pb" element={<PBDashboard />} />
         <Route path="/painter" element={<PainterBoard />} />
+        <Route path="/job/:code" element={<CustomerView />} />
         <Route path="/customer" element={<CustomerView />} />
         <Route path="/card" element={<PainterCard />} />
         <Route path="*" element={<Navigate to="/" replace />} />

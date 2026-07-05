@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
+import LZString from 'lz-string';
 import './CustomerView.css';
 
 const PHONE     = '+91 78388 88509';
@@ -7,12 +9,37 @@ const WA_CORP   = 'https://wa.me/917838888509';
 const WEBSITE   = 'https://www.thepainterboys.com';
 
 function decodeData(str) {
+  if (!str) return null;
+  // Try new format: lz-string compressed with compact keys
+  try {
+    const json = LZString.decompressFromEncodedURIComponent(str);
+    if (json) {
+      const c = JSON.parse(json);
+      // Expand compact keys back to full field names
+      if (c.n !== undefined) {
+        return {
+          name:      c.n,  phone:    c.p,
+          society:   c.s,  address:  c.a,
+          progress:  c.pr, paintType:c.pt,
+          painters:  c.pn, date:     c.d,
+          tokens: (c.t || []).map(t => ({
+            label: t.l, total: t.a,
+            history: (t.h || []).map(e => ({ date: e.d, amount: e.a })),
+          })),
+          sharedAt: c.sa,
+        };
+      }
+      return JSON.parse(json); // already full keys
+    }
+  } catch {}
+  // Fall back to old base64 format (backward compat for existing shared links)
   try {
     const binary = atob(str);
     const bytes  = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return JSON.parse(new TextDecoder().decode(bytes));
-  } catch { return null; }
+  } catch {}
+  return null;
 }
 
 function progressStyle(p = '') {
@@ -26,14 +53,17 @@ function progressStyle(p = '') {
 }
 
 export default function CustomerView() {
+  const { code }  = useParams();           // new: /job/:code
   const [data,   setData]   = useState(null);
   const [copied, setCopied] = useState(false);
   const [qrUrl,  setQrUrl]  = useState('');
 
   useEffect(() => {
-    const r = new URLSearchParams(window.location.search).get('r');
-    if (r) setData(decodeData(r));
-  }, []);
+    // New format: path param /job/:code
+    // Old format: query param /customer?r=
+    const str = code || new URLSearchParams(window.location.search).get('r');
+    if (str) setData(decodeData(str));
+  }, [code]);
 
   useEffect(() => {
     if (!data) return;

@@ -3,6 +3,95 @@
 
 /* portal html/body: no global overrides — Home.css handles body styles */
 
+/* ── Gate screen ─────────────────────────────────────────────────── */
+.pp-gate-root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+.pp-gate-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 24px;
+  padding: 40px 28px 32px;
+  text-align: center;
+}
+.pp-gate-icon  { font-size: 3rem; margin-bottom: 16px; }
+.pp-gate-title { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.pp-gate-sub   { font-size: .88rem; color: rgba(255,255,255,.5); margin-bottom: 28px; line-height: 1.5; }
+
+.pp-gate-input-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,.1);
+  border: 1.5px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  padding: 0 12px;
+  margin-bottom: 10px;
+  transition: border-color .2s;
+}
+.pp-gate-input-wrap:focus-within { border-color: rgba(255,255,255,.5); }
+.pp-gate-input-wrap.pp-gate-err { border-color: #ef4444; }
+
+.pp-gate-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1rem;
+  padding: 13px 0;
+  letter-spacing: .08em;
+}
+.pp-gate-input::placeholder { color: rgba(255,255,255,.3); letter-spacing: 0; }
+.pp-gate-eye {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.5);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.pp-gate-errmsg {
+  color: #fca5a5;
+  font-size: .82rem;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.pp-gate-btn {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: .02em;
+  box-shadow: 0 4px 18px rgba(249,115,22,.4);
+  transition: opacity .2s;
+}
+.pp-gate-btn:disabled { opacity: .4; cursor: not-allowed; }
+.pp-gate-btn:not(:disabled):hover { opacity: .9; }
+.pp-gate-hint {
+  margin-top: 20px;
+  font-size: .75rem;
+  color: rgba(255,255,255,.3);
+  line-height: 1.5;
+}
+
 /* ── Select screen ───────────────────────────────────────────────── */
 .pp-select-root {
   min-height:100vh;
@@ -58,7 +147,9 @@
   font-size:1.6rem; font-weight:700; color:#fff;
   box-shadow:0 4px 14px rgba(0,0,0,.25);
 }
+.pp-name-info { display:flex; flex-direction:column; align-items:center; gap:2px; }
 .pp-name-label { font-size:.95rem; font-weight:700; text-align:center; color:#111827; }
+.pp-name-pid   { font-size:.65rem; font-weight:600; color:#6b7280; letter-spacing:.04em; }
 .pp-link-btn {
   position:absolute; top:6px; right:6px;
   width:28px; height:28px; border-radius:7px;

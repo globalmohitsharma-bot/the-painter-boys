@@ -145,6 +145,38 @@ async function callScript(url, payload) {
   });
 }
 
+// ── Customer link encoder ─────────────────────────────────────────
+function encodeCustomerData(data) {
+  const bytes = new TextEncoder().encode(JSON.stringify(data));
+  const chars = Array.from(bytes, b => String.fromCharCode(b)).join('');
+  return btoa(chars);
+}
+function buildCustomerUrl(row, headers, tokenData) {
+  const name       = row['Contact Name'] || row['Name'] || row['name'] || '';
+  const phone      = row['Phone'] || row['phone'] || '';
+  const societyK   = headers.find(h => h.toLowerCase().includes('society')) || '';
+  const addressK   = headers.find(h => h.toLowerCase().trim() === 'address') || '';
+  const progressK  = headers.find(h => h.toLowerCase().includes('progress')) || '';
+  const paintK     = headers.find(h => h.toLowerCase().includes('type of paint') || h.toLowerCase().includes('paint type')) || '';
+  const painterK   = headers.find(h => isPainterField(h)) || '';
+  const dateK      = headers.find(h => h.toLowerCase().includes('date')) || '';
+  const tokens = headers.filter(pbIsAmountField).map(h => {
+    const td = tokenData[h] || { total:0, history:[] };
+    return { label: h, total: td.total, history: td.history };
+  });
+  const data = {
+    name, phone,
+    society:   societyK  ? row[societyK]  : '',
+    address:   addressK  ? row[addressK]  : '',
+    progress:  progressK ? row[progressK] : '',
+    paintType: paintK    ? row[paintK]    : '',
+    painters:  painterK  ? row[painterK]  : '',
+    date:      dateK     ? row[dateK]     : '',
+    tokens, sharedAt: new Date().toISOString(),
+  };
+  return `${window.location.origin}/customer?r=${encodeCustomerData(data)}`;
+}
+
 // ── Combo field — custom filtered dropdown ────────────────────────
 function ComboField({ fieldName, value, onChange, options }) {
   const [open, setOpen]   = useState(false);
@@ -234,6 +266,7 @@ function PainterField({ value, onChange }) {
     const s = new Set(selected);
     s.has(name) ? s.delete(name) : s.add(name);
     onChange([...s].join(', '));
+    setOpen(false); // auto-close after each tap — re-open to add more
   };
 
   const addNew = () => {
@@ -497,7 +530,11 @@ function FilterSheet({ headers, rows, filters, onApply, onClose }) {
       const names = rows.flatMap(r => parsePainters(r[col] || ''));
       return [...new Set([...allPainterOptions(), ...names])].sort();
     }
-    return [...new Set(rows.map(r => r[col]).filter(Boolean))].sort();
+    if (col.toLowerCase().includes('society')) {
+      return allSocietyOptions(rows, col);
+    }
+    return [...new Set(rows.map(r => r[col]).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
   };
   return (
     <div className="pb-sheet-overlay" onClick={onClose}>
@@ -581,10 +618,11 @@ function pbToday() {
 }
 function pbWithMr(n) { return n && n !== '—' ? 'Mr. ' + n : n; }
 
-// ── Thank You Modal (Inquiry customers) ──────────────────────────
-function PBThankYouModal({ name, phone, onClose }) {
+// ── Thank You Modal ──────────────────────────────────────────────
+function PBThankYouModal({ name, phone, customerUrl, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
+  const [copied,    setCopied]    = useState(false);
 
   async function shareCard() {
     if (!cardRef.current || capturing) return;
@@ -599,14 +637,42 @@ function PBThankYouModal({ name, phone, onClose }) {
           try { await navigator.share({ files: [file], title: 'The Painter Boys' }); } catch {}
         } else {
           const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'thankyou-thepainterboys.png'; a.click();
+          const a = document.createElement('a'); a.href = url;
+          a.download = 'thankyou-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
         }
         setCapturing(false);
       }, 'image/png');
     } catch { setCapturing(false); }
   }
+
+  const shareCustomer = () => {
+    if (!customerUrl) return;
+    const msg = [
+      `🎨 *The Painter Boys*`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `Dear ${(name && name !== '—') ? pbWithMr(name) : 'Customer'},`,
+      ``,
+      `Thank you for reaching out to *The Painter Boys*.`,
+      `Our team will contact you shortly.`,
+      ``,
+      `📋 View your job details here:`,
+      customerUrl,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `🌐 www.thepainterboys.com`,
+      `📞 Corporate: 7838888509`,
+    ].join('\n');
+    const waUrl = `https://wa.me/${phone ? phone.replace(/\D/g,'') : ''}?text=${encodeURIComponent(msg)}`;
+    window.open(phone ? waUrl : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const copyLink = () => {
+    if (!customerUrl) return;
+    navigator.clipboard?.writeText(customerUrl).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2200);
+    }).catch(() => window.prompt('Copy customer link:', customerUrl));
+  };
 
   return (
     <div className="pr-overlay" onClick={onClose}>
@@ -634,13 +700,21 @@ function PBThankYouModal({ name, phone, onClose }) {
           </div>
           <div className="ty-bottom-strip" />
         </div>
+
         <div className="pr-actions">
-          <a className="ty-visit-btn" href="https://www.thepainterboys.com" target="_blank" rel="noopener noreferrer">
-            🌐 Visit www.thepainterboys.com
-          </a>
           <button className="pr-wa-btn pr-wa-share" onClick={shareCard} disabled={capturing}>
-            {capturing ? '⏳ Preparing…' : '📤 Share on WhatsApp'}
+            {capturing ? '⏳ Preparing…' : '📤 Share Thank You Card'}
           </button>
+          {customerUrl && (
+            <>
+              <button className="pr-wa-btn" style={{background:'#25d366'}} onClick={shareCustomer}>
+                💬 Send Job Link on WhatsApp
+              </button>
+              <button className="pr-wa-btn" style={{background:'#334155'}} onClick={copyLink}>
+                {copied ? '✓ Copied!' : '🔗 Copy Customer Link'}
+              </button>
+            </>
+          )}
           <button className="pr-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
@@ -778,11 +852,13 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
     amountHeaders.forEach(h => { init[h] = { total: parseFloat(row[h]) || 0, history }; });
     return init;
   });
-  const [addAmounts,  setAddAmounts]  = useState(() => { const i={}; amountHeaders.forEach(h=>{i[h]=''}); return i; });
-  const [tokSaving,   setTokSaving]   = useState(false);
-  const [tokSaved,    setTokSaved]    = useState(false);
-  const [receiptFor,  setReceiptFor]  = useState(null);
-  const [showThankYou, setShowThankYou] = useState(false);
+  const [addAmounts,    setAddAmounts]    = useState(() => { const i={}; amountHeaders.forEach(h=>{i[h]=''}); return i; });
+  const [tokSaving,     setTokSaving]     = useState(false);
+  const [tokSaved,      setTokSaved]      = useState(false);
+  const [receiptFor,    setReceiptFor]    = useState(null);
+  const [showThankYou,  setShowThankYou]  = useState(false);
+  const [shareCustomer, setShareCustomer] = useState(false);
+  const [custCopied,    setCustCopied]    = useState(false);
 
   const progressKey = headers.find(h => h.toLowerCase().includes('progress')) || '';
   const progress    = row[progressKey] || '';
@@ -925,10 +1001,59 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
           </div>
         )}
 
+        {/* Thank You — inquiry only */}
         {!editing && isInquiry && (
           <button className="pp-ty-btn" onClick={() => setShowThankYou(true)}>
             💌 Share Thank You Card
           </button>
+        )}
+
+        {/* Share job link with customer — always available */}
+        {!editing && (
+          <div className="pb-share-customer-wrap">
+            {!shareCustomer ? (
+              <button className="pb-share-customer-btn"
+                onClick={() => setShareCustomer(true)}>
+                📤 Share Job Details with Customer
+              </button>
+            ) : (
+              <div className="pb-share-customer-panel">
+                <div className="pb-share-customer-hd">Share job link</div>
+                {(() => {
+                  const url = buildCustomerUrl(row, headers, tokenData);
+                  const msg = [
+                    `🎨 *The Painter Boys*`,
+                    ``,
+                    `Dear ${name ? pbWithMr(name) : 'Customer'},`,
+                    `Here are your job details:`,
+                    url,
+                    ``,
+                    `📞 Corporate: 7838888509`,
+                    `🌐 www.thepainterboys.com`,
+                  ].join('\n');
+                  const waUrl = phone
+                    ? `https://wa.me/${phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`
+                    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                  return (
+                    <div className="pb-share-customer-btns">
+                      <a className="pb-share-wa" href={waUrl} target="_blank" rel="noopener noreferrer">
+                        💬 Send on WhatsApp
+                      </a>
+                      <button className="pb-share-copy"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(url).then(() => {
+                            setCustCopied(true); setTimeout(() => setCustCopied(false), 2200);
+                          }).catch(() => window.prompt('Copy link:', url));
+                        }}>
+                        {custCopied ? '✓ Copied!' : '🔗 Copy Link'}
+                      </button>
+                      <button className="pb-share-cancel" onClick={() => setShareCustomer(false)}>✕</button>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
         )}
 
         {editing && (
@@ -951,7 +1076,11 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
       />
     )}
     {showThankYou && (
-      <PBThankYouModal name={name} phone={phone} onClose={() => setShowThankYou(false)} />
+      <PBThankYouModal
+        name={name} phone={phone}
+        customerUrl={buildCustomerUrl(row, headers, tokenData)}
+        onClose={() => setShowThankYou(false)}
+      />
     )}
     </>
   );

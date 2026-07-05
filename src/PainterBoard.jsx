@@ -9,6 +9,37 @@ const LS_PAINTERS = 'pb_custom_painters';
 
 const DEFAULT_PAINTERS = ['Fariyad','Jabbar','Rajeev','Raju','Sushant'];
 
+// ── Painter unique ID system ──────────────────────────────────────
+// Default painters have fixed IDs 1-5 (alphabetical order matching sort())
+const DEFAULT_PAINTER_IDS = { 'Fariyad':1, 'Jabbar':2, 'Rajeev':3, 'Raju':4, 'Sushant':5 };
+const LS_PID_MAP = 'pb_painter_id_map'; // {id: name} for custom painters
+
+function getPainterById(id) {
+  const n = parseInt(id, 10);
+  const def = Object.entries(DEFAULT_PAINTER_IDS).find(([,v]) => v === n);
+  if (def) return def[0];
+  try {
+    const m = JSON.parse(localStorage.getItem(LS_PID_MAP) || '{}');
+    return m[String(n)] || null;
+  } catch { return null; }
+}
+
+function getPainterPid(name) {
+  if (DEFAULT_PAINTER_IDS[name]) return DEFAULT_PAINTER_IDS[name];
+  try {
+    const m = JSON.parse(localStorage.getItem(LS_PID_MAP) || '{}');
+    const found = Object.entries(m).find(([,v]) => v === name);
+    if (found) return parseInt(found[0], 10);
+    const usedIds = Object.keys(m).map(Number);
+    const newId = usedIds.length > 0 ? Math.max(...usedIds) + 1 : 6;
+    m[String(newId)] = name;
+    localStorage.setItem(LS_PID_MAP, JSON.stringify(m));
+    return newId;
+  } catch { return null; }
+}
+
+const LS_PB_GATE = 'pb_select_gate'; // sessionStorage key for painter select password
+
 
 const AVATAR_PALETTES = [
   'linear-gradient(135deg,#f59e0b,#ef4444)',  // amber→red
@@ -114,6 +145,55 @@ async function callScript(url, payload) {
   });
 }
 
+// ── Gate screen — PB access only ─────────────────────────────────
+function PainterGateScreen({ onAuth }) {
+  const [pwd, setPwd]   = useState('');
+  const [err, setErr]   = useState(false);
+  const [show, setShow] = useState(false);
+
+  const tryAuth = () => {
+    if (pwd === 'PB') {
+      sessionStorage.setItem(LS_PB_GATE, 'PB');
+      onAuth();
+    } else {
+      setErr(true);
+      setPwd('');
+      setTimeout(() => setErr(false), 2000);
+    }
+  };
+
+  return (
+    <div className="pp-gate-root">
+      <div className="pp-gate-card">
+        <div className="pp-gate-icon">🔐</div>
+        <div className="pp-gate-title">Painter Portal</div>
+        <div className="pp-gate-sub">Enter PB access password to manage painters</div>
+        <div className={`pp-gate-input-wrap${err ? ' pp-gate-err' : ''}`}>
+          <input
+            className="pp-gate-input"
+            type={show ? 'text' : 'password'}
+            placeholder="Password"
+            value={pwd}
+            autoComplete="current-password"
+            onChange={e => { setPwd(e.target.value); setErr(false); }}
+            onKeyDown={e => e.key === 'Enter' && tryAuth()}
+          />
+          <button className="pp-gate-eye" onClick={() => setShow(s => !s)}>
+            {show ? '🙈' : '👁️'}
+          </button>
+        </div>
+        {err && <div className="pp-gate-errmsg">Incorrect password</div>}
+        <button className="pp-gate-btn" onClick={tryAuth} disabled={!pwd.trim()}>
+          Unlock Portal →
+        </button>
+        <div className="pp-gate-hint">
+          If you're a painter, use your personal link — not this page.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Painter Select Screen ─────────────────────────────────────────
 function PainterSelectScreen({ onSelect }) {
   const [query,  setQuery]  = useState('');
@@ -124,14 +204,15 @@ function PainterSelectScreen({ onSelect }) {
     : painters;
 
   const copyLink = (name) => {
-    const url = `${window.location.origin}/painter?name=${encodeURIComponent(name)}`;
+    const pid = getPainterPid(name);
+    const url = `${window.location.origin}/painter?pid=${pid}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(() => {
         setCopied(name);
-        setTimeout(() => setCopied(null), 2000);
-      });
+        setTimeout(() => setCopied(null), 2500);
+      }).catch(() => window.prompt(`Link for ${name}:`, url));
     } else {
-      window.prompt('Copy this link for ' + name + ':', url);
+      window.prompt(`Link for ${name}:`, url);
     }
   };
 
@@ -152,22 +233,29 @@ function PainterSelectScreen({ onSelect }) {
         />
       </div>
       <div className="pp-select-grid">
-        {filtered.map(p => (
-          <div key={p} className="pp-name-card">
-            <button className="pp-name-btn" onClick={() => onSelect(p)}>
-              <span className="pp-name-avatar" style={{ background: avatarBg(p) }}>{p[0]}</span>
-              <span className="pp-name-label">{p}</span>
-            </button>
-            <button className="pp-link-btn" onClick={() => copyLink(p)} title="Copy direct link">
-              {copied === p ? '✓' : '🔗'}
-            </button>
-          </div>
-        ))}
+        {filtered.map(p => {
+          const pid = getPainterPid(p);
+          return (
+            <div key={p} className="pp-name-card">
+              <button className="pp-name-btn" onClick={() => onSelect(p)}>
+                <span className="pp-name-avatar" style={{ background: avatarBg(p) }}>{p[0]}</span>
+                <div className="pp-name-info">
+                  <span className="pp-name-label">{p}</span>
+                  <span className="pp-name-pid">ID #{pid}</span>
+                </div>
+              </button>
+              <button className="pp-link-btn" onClick={() => copyLink(p)}
+                title={`Copy unique link for ${p} (ID #${pid})`}>
+                {copied === p ? '✓' : '🔗'}
+              </button>
+            </div>
+          );
+        })}
         {filtered.length === 0 && (
           <div className="pp-no-match">No painter named "{query}"</div>
         )}
       </div>
-      <p className="pp-link-hint">🔗 tap the link icon to copy a personal link for each painter</p>
+      <p className="pp-link-hint">🔗 Tap to copy each painter's unique private link</p>
     </div>
   );
 }
@@ -768,29 +856,50 @@ function PainterDashboard({ painter, onChangePainter }) {
 
 // ── Root ──────────────────────────────────────────────────────────
 export default function PainterBoard() {
-  const urlName = new URLSearchParams(window.location.search).get('name');
+  const params   = new URLSearchParams(window.location.search);
+  const urlPid   = params.get('pid');
+  const urlName  = params.get('name'); // backwards compat
+
+  // True if this is a painter-direct URL (bypass gate)
+  const isDirectLink = !!(urlPid || urlName);
 
   const [painter, setPainter] = useState(() => {
-    if (urlName) {
-      localStorage.setItem(LS_PAINTER, urlName);
-      return urlName;
+    // ?pid=NUMBER → look up name
+    if (urlPid) {
+      const name = getPainterById(urlPid);
+      if (name) { localStorage.setItem(LS_PAINTER, name); return name; }
     }
+    // ?name=NAME → backwards compat
+    if (urlName) { localStorage.setItem(LS_PAINTER, urlName); return urlName; }
     return localStorage.getItem(LS_PAINTER) || null;
   });
+
+  // Gate auth — not required when a direct painter URL is used
+  const [gateAuth, setGateAuth] = useState(() =>
+    isDirectLink || sessionStorage.getItem(LS_PB_GATE) === 'PB'
+  );
 
   const select = (name) => {
     localStorage.setItem(LS_PAINTER, name);
     setPainter(name);
   };
+
   const clear = () => {
     localStorage.removeItem(LS_PAINTER);
     setPainter(null);
-    // Remove name param from URL without reloading
-    const url = new URL(window.location.href);
-    url.searchParams.delete('name');
-    window.history.replaceState({}, '', url.toString());
+    const u = new URL(window.location.href);
+    u.searchParams.delete('pid');
+    u.searchParams.delete('name');
+    window.history.replaceState({}, '', u.toString());
+    // If came via direct link, go back to gate (not select screen) since they're a painter
+    if (isDirectLink) {
+      window.location.href = window.location.origin + '/painter';
+    }
   };
 
-  if (!painter) return <PainterSelectScreen onSelect={select} />;
+  if (!painter) {
+    if (!gateAuth) return <PainterGateScreen onAuth={() => setGateAuth(true)} />;
+    return <PainterSelectScreen onSelect={select} />;
+  }
   return <PainterDashboard painter={painter} onChangePainter={clear} />;
 }

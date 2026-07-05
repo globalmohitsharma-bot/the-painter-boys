@@ -100,7 +100,7 @@ export default function Home() {
                 <span className="tn-b">B</span><span className="tn-o">o</span><span className="tn-y">y</span>
                 <span className="tn-s">s</span>
               </div>
-              <div className="topbar-sub">⭐ Trusted Since 2010 · Home Painting Pros</div>
+              <div className="topbar-sub">⭐ Trusted Since 2010</div>
             </div>
           </div>
           <a className="topbar-phone" href={`tel:${PHONE}`}>
@@ -505,6 +505,7 @@ export default function Home() {
           <div className="footer-grid">
             <div className="footer-col footer-brand-col">
               <div className="footer-brand-name" onClick={() => navigate('home')}>
+                <span className="tn-the">The </span>
                 <span className="tn-p">P</span><span className="tn-a">a</span><span className="tn-i">i</span>
                 <span className="tn-n">n</span><span className="tn-t">t</span><span className="tn-e">e</span>
                 <span className="tn-r">r</span><span className="tn-sp"> </span>

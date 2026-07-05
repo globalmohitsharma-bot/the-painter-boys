@@ -477,9 +477,14 @@ html, body {
 }
 .ty-header {
   text-align:center;
-  padding:24px 20px 18px;
+  padding:14px 20px 12px;
   background:linear-gradient(180deg,rgba(162,155,254,.18) 0%,transparent 100%);
 }
+.ty-logo-img {
+  width:100%; max-width:220px; height:110px; object-fit:contain;
+  display:block; margin:0 auto 2px;
+}
+.ty-logo-fallback { display:flex; flex-direction:column; align-items:center; }
 .ty-brush { font-size:2.2rem; margin-bottom:6px; }
 .ty-brand {
   font-size:1.3rem; font-weight:900; letter-spacing:.06em; text-transform:uppercase;

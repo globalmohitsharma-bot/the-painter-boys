@@ -233,8 +233,12 @@ function ThankYouModal({ name, phone, onClose }) {
         <div className="ty-card" ref={cardRef}>
           <div className="ty-top-strip" />
           <div className="ty-header">
-            <div className="ty-brush">🎨</div>
-            <div className="ty-brand">The Painter Boys</div>
+            <img src="/images/mascot.png" alt="The Painter Boys" className="ty-logo-img"
+              onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+            <div className="ty-logo-fallback" style={{display:'none'}}>
+              <div className="ty-brush">🎨</div>
+              <div className="ty-brand">The Painter Boys</div>
+            </div>
             <div className="ty-tagline">Professional Painting Services</div>
           </div>
 

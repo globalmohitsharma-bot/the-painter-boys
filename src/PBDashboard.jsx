@@ -674,6 +674,7 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [copied,    setCopied]    = useState(false);
+  const [showLinkPreview, setShowLinkPreview] = useState(false);
 
   async function shareCard() {
     if (!cardRef.current || capturing) return;
@@ -697,23 +698,24 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
     } catch { setCapturing(false); }
   }
 
+  const linkMsgLines = [
+    `🎨 *The Painter Boys*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `Dear ${(name && name !== '—') ? pbWithMr(name) : 'Customer'},`,
+    ``,
+    `Thank you for reaching out to *The Painter Boys*.`,
+    `Our team will contact you shortly.`,
+    ``,
+    `📋 View your job details here:`,
+    customerUrl || '',
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🌐 www.thepainterboys.com`,
+    `📞 Corporate: 7838888509`,
+  ];
   const shareCustomer = () => {
     if (!customerUrl) return;
-    const msg = [
-      `🎨 *The Painter Boys*`,
-      `━━━━━━━━━━━━━━━━━━━━━━`,
-      `Dear ${(name && name !== '—') ? pbWithMr(name) : 'Customer'},`,
-      ``,
-      `Thank you for reaching out to *The Painter Boys*.`,
-      `Our team will contact you shortly.`,
-      ``,
-      `📋 View your job details here:`,
-      customerUrl,
-      ``,
-      `━━━━━━━━━━━━━━━━━━━━━━`,
-      `🌐 www.thepainterboys.com`,
-      `📞 Corporate: 7838888509`,
-    ].join('\n');
+    const msg = linkMsgLines.join('\n');
     const waUrl = `https://wa.me/${phone ? phone.replace(/\D/g,'') : ''}?text=${encodeURIComponent(msg)}`;
     window.open(phone ? waUrl : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -752,17 +754,43 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
           <div className="ty-bottom-strip" />
         </div>
 
+        {customerUrl && showLinkPreview && (
+          <div className="pb-share-customer-panel">
+            <div className="pb-share-customer-hd">Preview — what customer will see</div>
+            <div className="pb-wa-preview">
+              <div className="pb-wa-preview-bubble">
+                {linkMsgLines.map((line, i) => (
+                  <span key={i} className="pb-wa-preview-line">
+                    {line === '' ? <br /> : renderWaLine(line)}
+                  </span>
+                ))}
+              </div>
+              <div className="pb-wa-preview-hint">↑ This is exactly what the customer will receive</div>
+            </div>
+          </div>
+        )}
+
         <div className="pr-actions">
           <button className="pr-wa-btn pr-wa-share" onClick={shareCard} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Thank You Card'}
           </button>
-          {customerUrl && (
+          {customerUrl && !showLinkPreview && (
+            <>
+              <button className="pr-wa-btn" style={{background:'#25d366'}} onClick={() => setShowLinkPreview(true)}>
+                💬 Preview Job Link Message
+              </button>
+              <button className="pr-wa-btn" style={{background:'#334155'}} onClick={copyLink}>
+                {copied ? '✓ Copied!' : '🔗 Copy Customer Link'}
+              </button>
+            </>
+          )}
+          {customerUrl && showLinkPreview && (
             <>
               <button className="pr-wa-btn" style={{background:'#25d366'}} onClick={shareCustomer}>
                 💬 Send Job Link on WhatsApp
               </button>
-              <button className="pr-wa-btn" style={{background:'#334155'}} onClick={copyLink}>
-                {copied ? '✓ Copied!' : '🔗 Copy Customer Link'}
+              <button className="pr-wa-btn" style={{background:'#334155'}} onClick={() => setShowLinkPreview(false)}>
+                ← Back
               </button>
             </>
           )}

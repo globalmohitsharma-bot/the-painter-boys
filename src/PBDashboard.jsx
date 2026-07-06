@@ -20,6 +20,7 @@ function isPainterField(h) {
 }
 function displayLabel(h) {
   if (isPainterField(h)) return 'Service Partner';
+  if (h.toLowerCase().trim() === 'amount') return 'Total Project Amount';
   return h;
 }
 

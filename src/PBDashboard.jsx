@@ -115,6 +115,9 @@ function parseCSV(text) {
   return { headers, rows };
 }
 
+// Treat empty progress as Inquiry
+function normalizeProgress(val = '') { return val.trim() || 'Inquiry'; }
+
 // ── Progress colour ───────────────────────────────────────────────
 // Inquiry/Pending Visit → purple  |  Not Started → amber  |  In Progress → green
 // Completed → blue  |  Cancelled → red
@@ -409,7 +412,15 @@ function SetupSheet({ onSave }) {
   };
 
   const SCRIPT =
-`function doPost(e){
+`function doGet(e){
+  var sheet=SpreadsheetApp
+    .openById('1e729W4MXvlGXGLpmIrQugkCuCIVWWm9QqJtxONxFGo8')
+    .getSheets().filter(function(s){return s.getSheetId()==1417050744;})[0];
+  var data=sheet.getRange(1,1,sheet.getLastRow(),sheet.getLastColumn()).getValues();
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+function doPost(e){
   var sheet=SpreadsheetApp
     .openById('1e729W4MXvlGXGLpmIrQugkCuCIVWWm9QqJtxONxFGo8')
     .getSheets().filter(function(s){return s.getSheetId()==1417050744;})[0];
@@ -925,7 +936,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
   const [custCopied,    setCustCopied]    = useState(false);
 
   const progressKey = headers.find(h => h.toLowerCase().includes('progress')) || '';
-  const progress    = row[progressKey] || '';
+  const progress    = normalizeProgress(row[progressKey] || '');
   const isInquiry   = progress.toLowerCase().includes('inqu');
 
   const saveTokenToSheet = async (cellValues) => {
@@ -1199,6 +1210,9 @@ function AddSheet({ headers, rows, onClose, onSave, saving }) {
   const [form, setForm] = useState(() => {
     const f = {};
     addHeaders.forEach(h => { f[h] = ''; });
+    // Default Progress to Inquiry so new records always have a status
+    const progH = addHeaders.find(h => h.toLowerCase().includes('progress'));
+    if (progH) f[progH] = 'Inquiry';
     return f;
   });
   const [errors, setErrors] = useState({});
@@ -1253,7 +1267,7 @@ function RecordCard({ row, headers, onClick }) {
   const societyKey = headers.find(h => h.toLowerCase().includes('society')) || '';
   const society  = societyKey ? row[societyKey] : '';
   const address  = row['Address'] || row['address'] || '';
-  const progress = row['Progress'] || row['progress'] || '';
+  const progress = normalizeProgress(row['Progress'] || row['progress'] || '');
   const paint    = row['Type of Paint'] || row['Type of paint'] || '';
   const date     = row['Date Contacted'] || row['Date Started'] || '';
   const remarks  = row['Remarks'] || row['remarks'] || '';
@@ -1404,16 +1418,40 @@ export default function PBDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true); setRefreshing(true); setError(null);
     try {
-      const res  = await fetch(CSV_URL);
-      const text = await res.text();
-      if (!res.ok) throw new Error(text);
-      const { headers: h, rows: r } = parseCSV(text);
-      setHeaders(h);
-      setRows(r);
-      setLastSynced(Date.now());
-    } catch (e) { setError(e.message); }
+      let h, r;
+      if (scriptUrl) {
+        // Apps Script doGet — real-time, no Google caching
+        const res  = await fetch(scriptUrl);
+        const grid = await res.json(); // 2D array
+        h = grid[0].map(c => String(c).trim()).filter(Boolean);
+        r = grid.slice(1)
+          .filter(row => row.some(c => String(c).trim()))
+          .map((row, i) => {
+            const obj = { __row: i + 2 };
+            h.forEach((hh, j) => { obj[hh] = String(row[j] ?? '').trim(); });
+            return obj;
+          });
+      } else {
+        // Fallback: published CSV (cached up to 15 min by Google)
+        const res  = await fetch(CSV_URL);
+        const text = await res.text();
+        if (!res.ok) throw new Error(text);
+        ({ headers: h, rows: r } = parseCSV(text));
+      }
+      setHeaders(h); setRows(r); setLastSynced(Date.now());
+    } catch (e) {
+      // If Apps Script GET failed, try CSV fallback
+      if (scriptUrl) {
+        try {
+          const res  = await fetch(CSV_URL);
+          const text = await res.text();
+          const { headers: h, rows: r } = parseCSV(text);
+          setHeaders(h); setRows(r); setLastSynced(Date.now());
+        } catch { setError('Could not load data. Pull down to retry.'); }
+      } else { setError('Could not load data. Pull down to retry.'); }
+    }
     finally { setLoading(false); setRefreshing(false); }
-  }, []);
+  }, [scriptUrl]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -1461,7 +1499,7 @@ export default function PBDashboard() {
   const statusCounts = useMemo(() => {
     const c = { inquiry:0, pending:0, notStarted:0, inProgress:0, completed:0, cancelled:0 };
     rows.forEach(row => {
-      const p = (row['Progress'] || row['progress'] || '').toLowerCase();
+      const p = normalizeProgress(row['Progress'] || row['progress'] || '').toLowerCase();
       if (p.includes('inqu'))                               c.inquiry++;
       else if (p.includes('pending'))                       c.pending++;
       else if (p.includes('not s'))                         c.notStarted++;
@@ -1501,7 +1539,14 @@ export default function PBDashboard() {
       return; // keep AddSheet open, don't navigate away
     }
     setSaving(true);
-    const values = headers.map(h => form[h] ?? '');
+    // Auto-assign serial # if the sheet has a '#' column and the form left it blank
+    const hashH = headers.find(h => h.trim() === '#') || '';
+    const filledForm = { ...form };
+    if (hashH && !filledForm[hashH]?.trim()) {
+      const maxNum = Math.max(0, ...rows.map(r => parseInt(r[hashH]) || 0));
+      filledForm[hashH] = String(maxNum + 1);
+    }
+    const values = headers.map(h => filledForm[h] ?? '');
     await callScript(scriptUrl, { action: 'append', values });
     setSaving(false); setSheet(null);
     showToast('Record added — refreshing…');

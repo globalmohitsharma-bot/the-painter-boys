@@ -631,6 +631,32 @@ function pbToday() {
 }
 function pbWithMr(n) { return n && n !== '—' ? 'Mr. ' + n : n; }
 
+// Render a single WhatsApp message line with *bold* and _italic_ formatting
+function renderWaLine(line) {
+  const parts = [];
+  let remaining = line;
+  let key = 0;
+  while (remaining.length > 0) {
+    const boldIdx  = remaining.indexOf('*');
+    const italIdx  = remaining.indexOf('_');
+    const first = Math.min(boldIdx === -1 ? Infinity : boldIdx, italIdx === -1 ? Infinity : italIdx);
+    if (first === Infinity) { parts.push(<span key={key++}>{remaining}</span>); break; }
+    if (first > 0) { parts.push(<span key={key++}>{remaining.slice(0, first)}</span>); remaining = remaining.slice(first); }
+    if (remaining[0] === '*') {
+      const end = remaining.indexOf('*', 1);
+      if (end === -1) { parts.push(<span key={key++}>{remaining}</span>); break; }
+      parts.push(<strong key={key++}>{remaining.slice(1, end)}</strong>);
+      remaining = remaining.slice(end + 1);
+    } else {
+      const end = remaining.indexOf('_', 1);
+      if (end === -1) { parts.push(<span key={key++}>{remaining}</span>); break; }
+      parts.push(<em key={key++}>{remaining.slice(1, end)}</em>);
+      remaining = remaining.slice(end + 1);
+    }
+  }
+  return parts;
+}
+
 // ── Thank You Modal ──────────────────────────────────────────────
 function PBThankYouModal({ name, phone, customerUrl, onClose }) {
   const cardRef = useRef(null);
@@ -765,9 +791,9 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
-    pendingTotal > 0 ? `⏳ *Pending Amount = ₹${pendingTotal.toLocaleString()}*` : '',
-    grandTotal > 0 ? `📋 *Total Amount = ₹${grandTotal.toLocaleString()}*` : '',
+    grandTotal > 0 ? `📋 *Total Amount to Pay = ₹${grandTotal.toLocaleString()}*` : '',
+    `✅ *Total Paid = ₹${receivedTotal.toLocaleString()}*`,
+    pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -825,17 +851,17 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
           </div>
           {grandTotal > 0 && (
             <div className="pr-total pr-total-grand">
-              <span>📋 Total Amount</span>
+              <span>📋 Total Amount to Pay</span>
               <span>₹{grandTotal.toLocaleString()}</span>
             </div>
           )}
           <div className="pr-total pr-total-received">
-            <span>✅ Total Received</span>
+            <span>✅ Total Paid</span>
             <span>₹{receivedTotal.toLocaleString()}</span>
           </div>
           {pendingTotal > 0 && (
             <div className="pr-total pr-total-pending">
-              <span>⏳ Pending Amount</span>
+              <span>⏳ Pending Payment</span>
               <span>₹{pendingTotal.toLocaleString()}</span>
             </div>
           )}
@@ -1069,14 +1095,14 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
               </button>
             ) : (
               <div className="pb-share-customer-panel">
-                <div className="pb-share-customer-hd">Share job link</div>
+                <div className="pb-share-customer-hd">Preview — what customer will see</div>
                 {(() => {
                   const url = buildCustomerUrl(row, headers, tokenData);
                   const societyK  = headers.find(h => h.toLowerCase().includes('society')) || '';
                   const progressK = headers.find(h => h.toLowerCase().includes('progress')) || '';
                   const soc = societyK  ? row[societyK]  : '';
                   const prg = progressK ? row[progressK] : '';
-                  const msg = [
+                  const msgLines = [
                     `🎨 *The Painter Boys*`,
                     `_Professional Painting Services_`,
                     `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -1096,25 +1122,39 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                     `🌐 www.thepainterboys.com`,
                     `━━━━━━━━━━━━━━━━━━━━━━`,
                     `_The Painter Boys — Trusted Since 2010_`,
-                  ].filter(l => l !== '').join('\n');
+                  ].filter(l => l !== '');
+                  const msg = msgLines.join('\n');
                   const waUrl = phone
                     ? `https://wa.me/${phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`
                     : `https://wa.me/?text=${encodeURIComponent(msg)}`;
                   return (
-                    <div className="pb-share-customer-btns">
-                      <a className="pb-share-wa" href={waUrl} target="_blank" rel="noopener noreferrer">
-                        💬 Send on WhatsApp
-                      </a>
-                      <button className="pb-share-copy"
-                        onClick={() => {
-                          navigator.clipboard?.writeText(url).then(() => {
-                            setCustCopied(true); setTimeout(() => setCustCopied(false), 2200);
-                          }).catch(() => window.prompt('Copy link:', url));
-                        }}>
-                        {custCopied ? '✓ Copied!' : '🔗 Copy Link'}
-                      </button>
-                      <button className="pb-share-cancel" onClick={() => setShareCustomer(false)}>✕</button>
-                    </div>
+                    <>
+                      {/* WhatsApp-style preview bubble */}
+                      <div className="pb-wa-preview">
+                        <div className="pb-wa-preview-bubble">
+                          {msgLines.map((line, i) => (
+                            <span key={i} className="pb-wa-preview-line">
+                              {line === '' ? <br /> : renderWaLine(line)}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="pb-wa-preview-hint">↑ This is exactly what the customer will receive</div>
+                      </div>
+                      <div className="pb-share-customer-btns">
+                        <a className="pb-share-wa" href={waUrl} target="_blank" rel="noopener noreferrer">
+                          💬 Send on WhatsApp
+                        </a>
+                        <button className="pb-share-copy"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(url).then(() => {
+                              setCustCopied(true); setTimeout(() => setCustCopied(false), 2200);
+                            }).catch(() => window.prompt('Copy link:', url));
+                          }}>
+                          {custCopied ? '✓ Copied!' : '🔗 Copy Link'}
+                        </button>
+                        <button className="pb-share-cancel" onClick={() => setShareCustomer(false)}>✕</button>
+                      </div>
+                    </>
                   );
                 })()}
               </div>

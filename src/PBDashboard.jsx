@@ -736,7 +736,7 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
 }
 
 // ── PB Receipt Modal ──────────────────────────────────────────────
-function PBReceiptModal({ name, phone, society, address, fieldName, td, allTokenData = {}, onClose }) {
+function PBReceiptModal({ name, phone, society, address, fieldName, td, allTokenData = {}, totalJobAmount = 0, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const fullAddress = [society, address].filter(Boolean).join(', ');
@@ -744,9 +744,12 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
   const entries       = Object.entries(allTokenData);
   const receivedTotal = entries.filter(([k]) => !k.toLowerCase().includes('pending'))
     .reduce((s, [, v]) => s + (v.total || 0), 0) || td.total;
-  const pendingTotal  = entries.filter(([k]) => k.toLowerCase().includes('pending'))
+  const pendingFromCol= entries.filter(([k]) => k.toLowerCase().includes('pending'))
     .reduce((s, [, v]) => s + (v.total || 0), 0);
-  const grandTotal    = receivedTotal + pendingTotal;
+  // Use Pending column if set; otherwise derive from Amount column
+  const pendingTotal  = pendingFromCol > 0 ? pendingFromCol
+    : (totalJobAmount > receivedTotal ? totalJobAmount - receivedTotal : 0);
+  const grandTotal    = totalJobAmount > 0 ? totalJobAmount : receivedTotal + pendingTotal;
 
   const waText = [
     `🎨 *The Painter Boys*`,
@@ -764,7 +767,7 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
     ``,
     `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
     pendingTotal > 0 ? `⏳ *Pending Amount = ₹${pendingTotal.toLocaleString()}*` : '',
-    pendingTotal > 0 ? `📋 *Total Amount = ₹${grandTotal.toLocaleString()}*` : '',
+    grandTotal > 0 ? `📋 *Total Amount = ₹${grandTotal.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -820,6 +823,12 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
               </div>
             ))}
           </div>
+          {grandTotal > 0 && (
+            <div className="pr-total pr-total-grand">
+              <span>📋 Total Amount</span>
+              <span>₹{grandTotal.toLocaleString()}</span>
+            </div>
+          )}
           <div className="pr-total pr-total-received">
             <span>✅ Total Received</span>
             <span>₹{receivedTotal.toLocaleString()}</span>
@@ -828,12 +837,6 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
             <div className="pr-total pr-total-pending">
               <span>⏳ Pending Amount</span>
               <span>₹{pendingTotal.toLocaleString()}</span>
-            </div>
-          )}
-          {pendingTotal > 0 && (
-            <div className="pr-total pr-total-grand">
-              <span>📋 Total Amount</span>
-              <span>₹{grandTotal.toLocaleString()}</span>
             </div>
           )}
           <div className="pr-footer">
@@ -904,6 +907,16 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
     const values = headers.map(h => (h in cellValues ? cellValues[h] : (row[h] ?? '')));
     await callScript(scriptUrl, { action: 'update', rowIndex: row.__row, values });
   };
+
+  const urlSavedRef = useRef(false);
+  useEffect(() => {
+    if (!shareCustomer || urlSavedRef.current || !scriptUrl) return;
+    const urlHeader = headers.find(h => h.toLowerCase().replace(/\s+/g, '') === 'customerurl');
+    if (!urlHeader) return;
+    urlSavedRef.current = true;
+    const url = buildCustomerUrl(row, headers, tokenData);
+    saveTokenToSheet({ [urlHeader]: url });
+  }, [shareCustomer]);
 
   const handleSaveToken = async () => {
     if (!amountHeaders.some(h => parseFloat(addAmounts[h]) > 0)) return;
@@ -1010,7 +1023,10 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                     <div className="pb-token-total-row">
                       <span className="pb-token-total">Total received: <strong>₹{td.total.toLocaleString()}</strong></span>
                       {td.history.length > 0 && (
-                        <button className="pb-token-receipt-btn" onClick={() => setReceiptFor({ h, td, allTokenData: tokenData })}>🧾 Receipt</button>
+                        <button className="pb-token-receipt-btn" onClick={() => {
+                          const amtKey = headers.find(hh => hh.toLowerCase().trim() === 'amount') || '';
+                          setReceiptFor({ h, td, allTokenData: tokenData, totalJobAmount: amtKey ? parseFloat(row[amtKey]) || 0 : 0 });
+                        }}>🧾 Receipt</button>
                       )}
                     </div>
                   )}
@@ -1122,6 +1138,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
       <PBReceiptModal
         name={name} phone={phone} society={society} address={address}
         fieldName={receiptFor.h} td={receiptFor.td} allTokenData={receiptFor.allTokenData}
+        totalJobAmount={receiptFor.totalJobAmount || 0}
         onClose={() => setReceiptFor(null)}
       />
     )}

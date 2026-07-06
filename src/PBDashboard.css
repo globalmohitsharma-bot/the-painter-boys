@@ -469,6 +469,7 @@
 }
 .pb-edit-field { display: flex; flex-direction: column; gap: 4px; }
 .pb-edit-label { font-size: 0.72rem; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 0.05em; }
+.pb-edit-hint { font-size: 0.78rem; color: rgba(255,255,255,.5); margin-top: 6px; line-height: 1.4; }
 .pb-edit-input {
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.18);

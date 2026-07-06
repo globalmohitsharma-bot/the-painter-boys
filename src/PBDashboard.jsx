@@ -1078,7 +1078,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
           </div>
         ) : (
           <div className="pb-edit-fields">
-            {headers.filter(h => h && h !== '#').map(h => (
+            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h)).map(h => (
               <div key={h} className="pb-edit-field">
                 <label className="pb-edit-label">
                   {displayLabel(h)}
@@ -1088,6 +1088,9 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                   onChange={val => setForm(f => ({ ...f, [h]: val }))} />
               </div>
             ))}
+            {amountHeaders.length > 0 && (
+              <p className="pb-edit-hint">💰 Token amounts &amp; history are managed below via "Save Amount" — close editing to view/add them safely.</p>
+            )}
           </div>
         )}
 

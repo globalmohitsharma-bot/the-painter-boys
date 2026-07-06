@@ -736,10 +736,18 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
 }
 
 // ── PB Receipt Modal ──────────────────────────────────────────────
-function PBReceiptModal({ name, phone, society, address, fieldName, td, onClose }) {
+function PBReceiptModal({ name, phone, society, address, fieldName, td, allTokenData = {}, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const fullAddress = [society, address].filter(Boolean).join(', ');
+
+  const entries       = Object.entries(allTokenData);
+  const receivedTotal = entries.filter(([k]) => !k.toLowerCase().includes('pending'))
+    .reduce((s, [, v]) => s + (v.total || 0), 0) || td.total;
+  const pendingTotal  = entries.filter(([k]) => k.toLowerCase().includes('pending'))
+    .reduce((s, [, v]) => s + (v.total || 0), 0);
+  const grandTotal    = receivedTotal + pendingTotal;
+
   const waText = [
     `🎨 *The Painter Boys*`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -754,7 +762,9 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, onClose 
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    `✅ *Total Received = ₹${td.total.toLocaleString()}*`,
+    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
+    pendingTotal > 0 ? `⏳ *Pending Amount = ₹${pendingTotal.toLocaleString()}*` : '',
+    pendingTotal > 0 ? `📋 *Total Amount = ₹${grandTotal.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -810,10 +820,22 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, onClose 
               </div>
             ))}
           </div>
-          <div className="pr-total">
-            <span>Total Received</span>
-            <span>₹{td.total.toLocaleString()}</span>
+          <div className="pr-total pr-total-received">
+            <span>✅ Total Received</span>
+            <span>₹{receivedTotal.toLocaleString()}</span>
           </div>
+          {pendingTotal > 0 && (
+            <div className="pr-total pr-total-pending">
+              <span>⏳ Pending Amount</span>
+              <span>₹{pendingTotal.toLocaleString()}</span>
+            </div>
+          )}
+          {pendingTotal > 0 && (
+            <div className="pr-total pr-total-grand">
+              <span>📋 Total Amount</span>
+              <span>₹{grandTotal.toLocaleString()}</span>
+            </div>
+          )}
           <div className="pr-footer">
             <div className="pr-footer-url">🌐 www.thepainterboys.com</div>
             <div className="pr-footer-phone">📞 Corporate: 7838888509</div>
@@ -988,7 +1010,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                     <div className="pb-token-total-row">
                       <span className="pb-token-total">Total received: <strong>₹{td.total.toLocaleString()}</strong></span>
                       {td.history.length > 0 && (
-                        <button className="pb-token-receipt-btn" onClick={() => setReceiptFor({ h, td })}>🧾 Receipt</button>
+                        <button className="pb-token-receipt-btn" onClick={() => setReceiptFor({ h, td, allTokenData: tokenData })}>🧾 Receipt</button>
                       )}
                     </div>
                   )}
@@ -1099,7 +1121,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
     {receiptFor && (
       <PBReceiptModal
         name={name} phone={phone} society={society} address={address}
-        fieldName={receiptFor.h} td={receiptFor.td}
+        fieldName={receiptFor.h} td={receiptFor.td} allTokenData={receiptFor.allTokenData}
         onClose={() => setReceiptFor(null)}
       />
     )}

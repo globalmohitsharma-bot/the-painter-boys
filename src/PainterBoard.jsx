@@ -409,10 +409,18 @@ function ThankYouModal({ name, phone, onClose }) {
 }
 
 // ── Payment Receipt Card ──────────────────────────────────────────
-function PaymentReceiptModal({ name, phone, society, address, fieldName, td, onClose }) {
+function PaymentReceiptModal({ name, phone, society, address, fieldName, td, allTokenData = {}, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const fullAddress = [society, address].filter(Boolean).join(', ');
+
+  const entries       = Object.entries(allTokenData);
+  const receivedTotal = entries.filter(([k]) => !k.toLowerCase().includes('pending'))
+    .reduce((s, [, v]) => s + (v.total || 0), 0) || td.total;
+  const pendingTotal  = entries.filter(([k]) => k.toLowerCase().includes('pending'))
+    .reduce((s, [, v]) => s + (v.total || 0), 0);
+  const grandTotal    = receivedTotal + pendingTotal;
+
   const waText = [
     `🎨 *The Painter Boys*`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -427,7 +435,9 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, onC
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    `✅ *Total Received = ₹${td.total.toLocaleString()}*`,
+    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
+    pendingTotal > 0 ? `⏳ *Pending Amount = ₹${pendingTotal.toLocaleString()}*` : '',
+    pendingTotal > 0 ? `📋 *Total Amount = ₹${grandTotal.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -496,11 +506,23 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, onC
             ))}
           </div>
 
-          {/* Total */}
-          <div className="pr-total">
-            <span>Total Received</span>
-            <span>₹{td.total.toLocaleString()}</span>
+          {/* Totals */}
+          <div className="pr-total pr-total-received">
+            <span>✅ Total Received</span>
+            <span>₹{receivedTotal.toLocaleString()}</span>
           </div>
+          {pendingTotal > 0 && (
+            <div className="pr-total pr-total-pending">
+              <span>⏳ Pending Amount</span>
+              <span>₹{pendingTotal.toLocaleString()}</span>
+            </div>
+          )}
+          {pendingTotal > 0 && (
+            <div className="pr-total pr-total-grand">
+              <span>📋 Total Amount</span>
+              <span>₹{grandTotal.toLocaleString()}</span>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="pr-footer">
@@ -637,7 +659,7 @@ function JobDetailSheet({ row, headers, painter, onClose, onSaved, onRefresh }) 
                   </span>
                   {td.history.length > 0 && (
                     <button className="pp-wa-share-btn"
-                      onClick={() => setReceiptFor({ h, td })}>
+                      onClick={() => setReceiptFor({ h, td, allTokenData: tokenData })}>
                       🧾 Share Receipt
                     </button>
                   )}
@@ -685,7 +707,7 @@ function JobDetailSheet({ row, headers, painter, onClose, onSaved, onRefresh }) 
     {receiptFor && (
       <PaymentReceiptModal
         name={name} phone={phone} society={society} address={address}
-        fieldName={receiptFor.h} td={receiptFor.td}
+        fieldName={receiptFor.h} td={receiptFor.td} allTokenData={receiptFor.allTokenData}
         onClose={() => setReceiptFor(null)}
       />
     )}

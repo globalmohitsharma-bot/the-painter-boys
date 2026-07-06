@@ -728,12 +728,25 @@
 .pr-no-hist   { font-size:.82rem; color:#94a3b8; font-style:italic; }
 .pr-total {
   display:flex; justify-content:space-between; align-items:center;
-  padding:18px 20px;
-  background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%);
-  border-top:2px solid #86efac;
-  font-weight:800; font-size:.95rem; color:#166534;
+  padding:14px 20px;
+  font-weight:800; font-size:.92rem;
 }
-.pr-total span:last-child { font-size:1.2rem; }
+.pr-total span:last-child { font-size:1.1rem; font-weight:900; }
+.pr-total-received {
+  background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+  border-top:2px solid #86efac;
+  color:#166534;
+}
+.pr-total-pending {
+  background:linear-gradient(135deg,#fff7ed,#ffedd5);
+  border-top:1px solid #fed7aa;
+  color:#9a3412;
+}
+.pr-total-grand {
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border-top:1px solid #93c5fd;
+  color:#1e40af;
+}
 .pr-footer {
   background:#f8fafc; padding:16px 20px; text-align:center;
   border-top:1px solid #e2e8f0;

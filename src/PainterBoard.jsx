@@ -602,7 +602,7 @@ function JobDetailSheet({ row, headers, painter, onClose, onSaved, onRefresh }) 
       const adjHist  = colTotal > histSum && colTotal > 0
         ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
         : history;
-      init[h] = { total: colTotal, history: adjHist };
+      init[h] = { total: adjHist.reduce((s, e) => s + (e.amount || 0), 0), history: adjHist };
     });
     return init;
   }, [row, historyColHeader, amountHeaders, LS_HIST_KEY]);

@@ -977,7 +977,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
       const adjHist  = colTotal > histSum && colTotal > 0
         ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
         : history;
-      init[h] = { total: colTotal, history: adjHist };
+      init[h] = { total: adjHist.reduce((s, e) => s + (e.amount || 0), 0), history: adjHist };
     });
     return init;
   });
@@ -1000,14 +1000,15 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
   };
 
   const urlSavedRef = useRef(false);
-  useEffect(() => {
-    if (!shareCustomer || urlSavedRef.current || !scriptUrl) return;
+  // Only persists the customer URL once the user actually sends/copies it — not just on preview.
+  const saveCustomerUrlOnce = () => {
+    if (urlSavedRef.current || !scriptUrl) return;
     const urlHeader = headers.find(h => h.toLowerCase().replace(/\s+/g, '') === 'customerurl');
     if (!urlHeader) return;
     urlSavedRef.current = true;
     const url = buildCustomerUrl(row, headers, tokenData);
     saveTokenToSheet({ [urlHeader]: url });
-  }, [shareCustomer]);
+  };
 
   const handleSaveToken = async () => {
     if (!amountHeaders.some(h => parseFloat(addAmounts[h]) > 0)) return;
@@ -1213,11 +1214,13 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
                         <div className="pb-wa-preview-hint">↑ This is exactly what the customer will receive</div>
                       </div>
                       <div className="pb-share-customer-btns">
-                        <a className="pb-share-wa" href={waUrl} target="_blank" rel="noopener noreferrer">
+                        <a className="pb-share-wa" href={waUrl} target="_blank" rel="noopener noreferrer"
+                          onClick={saveCustomerUrlOnce}>
                           💬 Send on WhatsApp
                         </a>
                         <button className="pb-share-copy"
                           onClick={() => {
+                            saveCustomerUrlOnce();
                             navigator.clipboard?.writeText(url).then(() => {
                               setCustCopied(true); setTimeout(() => setCustCopied(false), 2200);
                             }).catch(() => window.prompt('Copy link:', url));
@@ -1358,7 +1361,7 @@ function RecordCard({ row, headers, onClick }) {
     const adjHist   = colTotal > histSum && colTotal > 0
       ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
       : history;
-    const total = colTotal || histSum;
+    const total = adjHist.reduce((s, e) => s + (e.amount || 0), 0);
     return { total, history: adjHist, fieldName: amtHeader };
   }, [row, historyColHeader, amountHeaders, LS_HIST_KEY]);
 

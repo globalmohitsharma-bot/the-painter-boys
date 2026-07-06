@@ -437,9 +437,9 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, all
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    grandTotal > 0 ? `📋 *Total Amount to Pay = ₹${grandTotal.toLocaleString()}*` : '',
-    `✅ *Total Paid = ₹${receivedTotal.toLocaleString()}*`,
+    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
     pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
+    totalJobAmount > 0 ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -509,20 +509,20 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, all
           </div>
 
           {/* Totals */}
-          {grandTotal > 0 && (
-            <div className="pr-total pr-total-grand">
-              <span>📋 Total Amount to Pay</span>
-              <span>₹{grandTotal.toLocaleString()}</span>
-            </div>
-          )}
           <div className="pr-total pr-total-received">
-            <span>✅ Total Paid</span>
+            <span>✅ Total Received</span>
             <span>₹{receivedTotal.toLocaleString()}</span>
           </div>
           {pendingTotal > 0 && (
             <div className="pr-total pr-total-pending">
               <span>⏳ Pending Payment</span>
               <span>₹{pendingTotal.toLocaleString()}</span>
+            </div>
+          )}
+          {totalJobAmount > 0 && (
+            <div className="pr-total pr-total-grand">
+              <span>📋 Total Project Amount</span>
+              <span>₹{totalJobAmount.toLocaleString()}</span>
             </div>
           )}
 

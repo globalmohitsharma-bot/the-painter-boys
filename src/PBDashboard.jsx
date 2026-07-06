@@ -803,9 +803,9 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    grandTotal > 0 ? `📋 *Total Amount to Pay = ₹${grandTotal.toLocaleString()}*` : '',
-    `✅ *Total Paid = ₹${receivedTotal.toLocaleString()}*`,
+    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
     pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
+    totalJobAmount > 0 ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*` : '',
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -861,20 +861,20 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
               </div>
             ))}
           </div>
-          {grandTotal > 0 && (
-            <div className="pr-total pr-total-grand">
-              <span>📋 Total Amount to Pay</span>
-              <span>₹{grandTotal.toLocaleString()}</span>
-            </div>
-          )}
           <div className="pr-total pr-total-received">
-            <span>✅ Total Paid</span>
+            <span>✅ Total Received</span>
             <span>₹{receivedTotal.toLocaleString()}</span>
           </div>
           {pendingTotal > 0 && (
             <div className="pr-total pr-total-pending">
               <span>⏳ Pending Payment</span>
               <span>₹{pendingTotal.toLocaleString()}</span>
+            </div>
+          )}
+          {totalJobAmount > 0 && (
+            <div className="pr-total pr-total-grand">
+              <span>📋 Total Project Amount</span>
+              <span>₹{totalJobAmount.toLocaleString()}</span>
             </div>
           )}
           <div className="pr-footer">
@@ -1411,9 +1411,15 @@ function PBPasswordGate({ onSuccess }) {
 export default function PBDashboard() {
   // All hooks must be at the top — no early returns before this block
   const [authed,     setAuthed]    = useState(() => sessionStorage.getItem('pb_auth') === '1');
-  const [headers,    setHeaders]   = useState([]);
-  const [rows,       setRows]      = useState([]);
-  const [loading,    setLoading]   = useState(true);
+  const [headers,    setHeaders]   = useState(() => {
+    try { const c = JSON.parse(localStorage.getItem('pb_cached_data')); return c?.h || []; } catch { return []; }
+  });
+  const [rows,       setRows]      = useState(() => {
+    try { const c = JSON.parse(localStorage.getItem('pb_cached_data')); return c?.r || []; } catch { return []; }
+  });
+  const [loading,    setLoading]   = useState(() => {
+    try { return !JSON.parse(localStorage.getItem('pb_cached_data'))?.h?.length; } catch { return true; }
+  });
   const [error,      setError]     = useState(null);
   const [search,     setSearch]    = useState('');
   const [filters,    setFilters]   = useState({});
@@ -1457,6 +1463,7 @@ export default function PBDashboard() {
         ({ headers: h, rows: r } = parseCSV(text));
       }
       setHeaders(h); setRows(r); setLastSynced(Date.now());
+      try { localStorage.setItem('pb_cached_data', JSON.stringify({ h, r })); } catch {}
     } catch (e) {
       // If Apps Script GET failed, try CSV fallback
       if (scriptUrl) {
@@ -1465,6 +1472,7 @@ export default function PBDashboard() {
           const text = await res.text();
           const { headers: h, rows: r } = parseCSV(text);
           setHeaders(h); setRows(r); setLastSynced(Date.now());
+          try { localStorage.setItem('pb_cached_data', JSON.stringify({ h, r })); } catch {}
         } catch { setError('Could not load data. Pull down to retry.'); }
       } else { setError('Could not load data. Pull down to retry.'); }
     }
@@ -1530,7 +1538,19 @@ export default function PBDashboard() {
 
   // Sorted view of filtered rows
   const displayed = useMemo(() => {
-    if (sortBy === 'default') return filtered;
+    if (sortBy === 'default') {
+      // Inquiry items float to top; everything else keeps sheet order
+      const progressKey = headers.find(h => h.toLowerCase().includes('progress')) || '';
+      return [...filtered].sort((a, b) => {
+        const pa = normalizeProgress(a[progressKey] || '').toLowerCase();
+        const pb2 = normalizeProgress(b[progressKey] || '').toLowerCase();
+        const aIsInq = pa.includes('inqu') || pa.includes('pending visit');
+        const bIsInq = pb2.includes('inqu') || pb2.includes('pending visit');
+        if (aIsInq && !bIsInq) return -1;
+        if (!aIsInq && bIsInq) return 1;
+        return 0; // keep original sheet order within each group
+      });
+    }
     const dateKey     = headers.find(h => DATE_FIELDS.some(k => h.toLowerCase().includes(k))) || '';
     const progressKey = headers.find(h => h.toLowerCase().includes('progress')) || '';
     const societyKey  = headers.find(h => h.toLowerCase().includes('society'))  || '';

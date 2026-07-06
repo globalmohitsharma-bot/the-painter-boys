@@ -1461,8 +1461,8 @@ export default function PBDashboard() {
     try {
       let h, r;
       if (scriptUrl) {
-        // Apps Script doGet — real-time, no Google caching
-        const res  = await fetch(scriptUrl);
+        // Apps Script doGet — real-time, no Google caching (bust browser cache on the URL itself)
+        const res  = await fetch(`${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}_ts=${Date.now()}`, { cache: 'no-store' });
         const grid = await res.json(); // 2D array
         h = grid[0].map(c => String(c).trim()).filter(Boolean);
         r = grid.slice(1)

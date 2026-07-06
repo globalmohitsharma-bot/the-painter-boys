@@ -159,6 +159,7 @@ function encodeCustomerData(data) {
       h: (t.history || []).map(e => ({ d: e.date, a: e.amount })),
     })),
     sa: data.sharedAt,
+    r:  data._row,
   };
   return LZString.compressToEncodedURIComponent(JSON.stringify(compact));
 }
@@ -184,6 +185,7 @@ function buildCustomerUrl(row, headers, tokenData) {
     painters:  painterK  ? row[painterK]  : '',
     date:      dateK     ? row[dateK]     : '',
     tokens, sharedAt: new Date().toISOString(),
+    _row: row.__row,
   };
   return `${window.location.origin}/job/${encodeCustomerData(data)}`;
 }
@@ -1335,6 +1337,18 @@ export default function PBDashboard() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Auto-open detail sheet when coming from customer page edit button (?edit=ROW)
+  useEffect(() => {
+    if (!authed) return;
+    const editRow = new URLSearchParams(window.location.search).get('edit');
+    if (!editRow || rows.length === 0) return;
+    const target = rows.find(r => String(r.__row) === editRow);
+    if (target) {
+      setSheet({ type: 'detail', row: target });
+      window.history.replaceState({}, '', '/pb'); // clean URL
+    }
+  }, [rows, authed]);
 
   const filtered = useMemo(() => {
     let r = rows;

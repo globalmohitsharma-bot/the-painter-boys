@@ -224,6 +224,14 @@
 }
 .cv-btn:active { transform: scale(.98); }
 
+.cv-btn-edit {
+  background: #f97316;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(249,115,22,.3);
+  font-size: .9rem;
+}
+.cv-btn-edit:hover { background: #ea6c0a; }
+
 .cv-btn-wa {
   background: #22c55e;
   color: #fff;

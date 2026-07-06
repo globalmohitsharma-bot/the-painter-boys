@@ -27,6 +27,7 @@ function decodeData(str) {
             history: (t.h || []).map(e => ({ date: e.d, amount: e.a })),
           })),
           sharedAt: c.sa,
+          _row: c.r,
         };
       }
       return JSON.parse(json); // already full keys
@@ -95,7 +96,8 @@ export default function CustomerView() {
     );
   }
 
-  const { name, phone, society, address, progress, paintType, painters, date, tokens = [], sharedAt } = data;
+  const isPBUser = sessionStorage.getItem('pb_auth') === '1';
+  const { name, phone, society, address, progress, paintType, painters, date, tokens = [], sharedAt, _row } = data;
   const ps          = progressStyle(progress);
   const fullAddress = [society, address].filter(Boolean).join(', ');
   const painterList = painters ? painters.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -225,6 +227,12 @@ export default function CustomerView() {
 
         {/* Actions */}
         <div className="cv-actions">
+          {isPBUser && (
+            <a className="cv-btn cv-btn-edit"
+              href={_row ? `/pb?edit=${_row}` : '/pb'}>
+              ✏️ Edit This Job in Portal
+            </a>
+          )}
           <a className="cv-btn cv-btn-wa"
             href={`${WA_CORP}?text=${encodeURIComponent('Hello, I have a query about my painting job.')}`}
             target="_blank" rel="noopener noreferrer">

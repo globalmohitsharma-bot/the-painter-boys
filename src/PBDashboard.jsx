@@ -893,7 +893,7 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
 }
 
 // ── Detail / Edit sheet ───────────────────────────────────────────
-function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, scriptUrl }) {
+function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, scriptUrl, onNeedScript }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm]       = useState(() => {
     const f = {};
@@ -924,7 +924,15 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
       const leg = pbParseLegacy(row[h] || '');
       if (leg.history.length > history.length) history = leg.history;
     });
-    amountHeaders.forEach(h => { init[h] = { total: parseFloat(row[h]) || 0, history }; });
+    amountHeaders.forEach(h => {
+      const colTotal = parseFloat(row[h]) || 0;
+      const histSum  = history.reduce((s, e) => s + (e.amount || 0), 0);
+      // If column total exceeds history sum, the difference was paid before the portal tracked it
+      const adjHist  = colTotal > histSum && colTotal > 0
+        ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
+        : history;
+      init[h] = { total: colTotal, history: adjHist };
+    });
     return init;
   });
   const [addAmounts,    setAddAmounts]    = useState(() => { const i={}; amountHeaders.forEach(h=>{i[h]=''}); return i; });
@@ -1002,10 +1010,14 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
             {phone && <a className="pb-detail-phone" href={`tel:${phone}`}>📞 {phone}</a>}
           </div>
           <div className="pb-detail-header-btns">
-            {scriptUrl && !editing && (
-              <button className="pb-icon-action" onClick={() => setEditing(true)}>✏️</button>
+            {!editing && (
+              <button className="pb-icon-action"
+                onClick={() => scriptUrl ? setEditing(true) : onNeedScript?.()}
+                title={scriptUrl ? 'Edit record' : 'Set up Apps Script to enable editing'}>
+                ✏️
+              </button>
             )}
-            {scriptUrl && !editing && (
+            {!editing && (
               <button className="pb-icon-action pb-icon-del" disabled title="Delete disabled">🗑️</button>
             )}
             <button className="pb-icon-action" onClick={onClose}>✕</button>
@@ -1292,8 +1304,13 @@ function RecordCard({ row, headers, onClick }) {
       });
     }
     const amtHeader = amountHeaders[0] || '';
-    const total = history.reduce((s, e) => s + e.amount, 0) || (amtHeader ? parseFloat(row[amtHeader]) || 0 : 0);
-    return { total, history, fieldName: amtHeader };
+    const colTotal  = amtHeader ? parseFloat(row[amtHeader]) || 0 : 0;
+    const histSum   = history.reduce((s, e) => s + (e.amount || 0), 0);
+    const adjHist   = colTotal > histSum && colTotal > 0
+      ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
+      : history;
+    const total = colTotal || histSum;
+    return { total, history: adjHist, fieldName: amtHeader };
   }, [row, historyColHeader, amountHeaders, LS_HIST_KEY]);
 
   const waLines = [
@@ -1709,6 +1726,7 @@ export default function PBDashboard() {
       {sheet?.type === 'detail' && (
         <DetailSheet row={sheet.row} headers={headers} rows={rows} saving={saving}
           scriptUrl={scriptUrl}
+          onNeedScript={() => setSheet('setup')}
           onClose={() => setSheet(null)}
           onSave={handleEdit}
           onDelete={handleDelete} />

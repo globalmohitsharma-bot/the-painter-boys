@@ -579,7 +579,14 @@ function JobDetailSheet({ row, headers, painter, onClose, onSaved, onRefresh }) 
         if (legacy.history.length > history.length) history = legacy.history;
       });
     }
-    amountHeaders.forEach(h => { init[h] = { total: parseFloat(row[h]) || 0, history }; });
+    amountHeaders.forEach(h => {
+      const colTotal = parseFloat(row[h]) || 0;
+      const histSum  = history.reduce((s, e) => s + (e.amount || 0), 0);
+      const adjHist  = colTotal > histSum && colTotal > 0
+        ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
+        : history;
+      init[h] = { total: colTotal, history: adjHist };
+    });
     return init;
   }, [row, historyColHeader, amountHeaders, LS_HIST_KEY]);
 

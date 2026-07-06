@@ -1073,9 +1073,11 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
 
         {!editing ? (
           <div className="pb-detail-fields">
-            {headers.filter(h => h && h !== '#').map(h => row[h] ? (
-              <DetailField key={h} label={h} value={row[h]} />
-            ) : null)}
+            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h)).map(h => {
+              const isProgressCol = h.toLowerCase().includes('progress');
+              const val = row[h] || (isProgressCol ? normalizeProgress('') : '—');
+              return <DetailField key={h} label={h} value={val} />;
+            })}
           </div>
         ) : (
           <div className="pb-edit-fields">

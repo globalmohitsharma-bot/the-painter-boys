@@ -437,9 +437,12 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, all
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
-    pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
-    totalJobAmount > 0 ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*` : '',
+    totalJobAmount > 0
+      ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*\n➖ *Total Received = ₹${receivedTotal.toLocaleString()}*\n🟰 *Pending Payment = ₹${pendingTotal.toLocaleString()}*`
+      : [
+          `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
+          pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
+        ].filter(Boolean).join('\n'),
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -509,21 +512,35 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, all
           </div>
 
           {/* Totals */}
-          <div className="pr-total pr-total-received">
-            <span>✅ Total Received</span>
-            <span>₹{receivedTotal.toLocaleString()}</span>
-          </div>
-          {pendingTotal > 0 && (
-            <div className="pr-total pr-total-pending">
-              <span>⏳ Pending Payment</span>
-              <span>₹{pendingTotal.toLocaleString()}</span>
+          {totalJobAmount > 0 ? (
+            <div className="pr-math">
+              <div className="pr-total pr-total-grand">
+                <span>📋 Total Project Amount</span>
+                <span>₹{totalJobAmount.toLocaleString()}</span>
+              </div>
+              <div className="pr-total pr-total-received">
+                <span>➖ Total Received</span>
+                <span>₹{receivedTotal.toLocaleString()}</span>
+              </div>
+              <div className="pr-math-divider" />
+              <div className="pr-total pr-total-pending pr-total-result">
+                <span>🟰 Pending Payment</span>
+                <span>₹{pendingTotal.toLocaleString()}</span>
+              </div>
             </div>
-          )}
-          {totalJobAmount > 0 && (
-            <div className="pr-total pr-total-grand">
-              <span>📋 Total Project Amount</span>
-              <span>₹{totalJobAmount.toLocaleString()}</span>
-            </div>
+          ) : (
+            <>
+              <div className="pr-total pr-total-received">
+                <span>✅ Total Received</span>
+                <span>₹{receivedTotal.toLocaleString()}</span>
+              </div>
+              {pendingTotal > 0 && (
+                <div className="pr-total pr-total-pending">
+                  <span>⏳ Pending Payment</span>
+                  <span>₹{pendingTotal.toLocaleString()}</span>
+                </div>
+              )}
+            </>
           )}
 
           {/* Footer */}
@@ -789,7 +806,7 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res  = await fetch(CSV_URL);
+      const res  = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache: 'no-store' });
       const text = await res.text();
       if (!res.ok) throw new Error(text);
       const { headers: h, rows: r } = parseCSV(text);

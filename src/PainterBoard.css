@@ -747,6 +747,13 @@
   border-top:1px solid #93c5fd;
   color:#1e40af;
 }
+.pr-math-divider {
+  height:0; margin:0 20px; border-top:2px dashed #93c5fd;
+}
+.pr-total-result {
+  border-top:2px solid #ea580c;
+}
+.pr-total-result span:last-child { font-size:1.25rem; }
 .pr-footer {
   background:#f8fafc; padding:16px 20px; text-align:center;
   border-top:1px solid #e2e8f0;

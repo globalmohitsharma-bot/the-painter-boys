@@ -803,9 +803,12 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
     ``,
     ...td.history.map(e => `📅 ${e.date}   ₹${e.amount.toLocaleString()}`),
     ``,
-    `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
-    pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
-    totalJobAmount > 0 ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*` : '',
+    totalJobAmount > 0
+      ? `📋 *Total Project Amount = ₹${totalJobAmount.toLocaleString()}*\n➖ *Total Received = ₹${receivedTotal.toLocaleString()}*\n🟰 *Pending Payment = ₹${pendingTotal.toLocaleString()}*`
+      : [
+          `✅ *Total Received = ₹${receivedTotal.toLocaleString()}*`,
+          pendingTotal > 0 ? `⏳ *Pending Payment = ₹${pendingTotal.toLocaleString()}*` : '',
+        ].filter(Boolean).join('\n'),
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
@@ -861,21 +864,35 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
               </div>
             ))}
           </div>
-          <div className="pr-total pr-total-received">
-            <span>✅ Total Received</span>
-            <span>₹{receivedTotal.toLocaleString()}</span>
-          </div>
-          {pendingTotal > 0 && (
-            <div className="pr-total pr-total-pending">
-              <span>⏳ Pending Payment</span>
-              <span>₹{pendingTotal.toLocaleString()}</span>
+          {totalJobAmount > 0 ? (
+            <div className="pr-math">
+              <div className="pr-total pr-total-grand">
+                <span>📋 Total Project Amount</span>
+                <span>₹{totalJobAmount.toLocaleString()}</span>
+              </div>
+              <div className="pr-total pr-total-received">
+                <span>➖ Total Received</span>
+                <span>₹{receivedTotal.toLocaleString()}</span>
+              </div>
+              <div className="pr-math-divider" />
+              <div className="pr-total pr-total-pending pr-total-result">
+                <span>🟰 Pending Payment</span>
+                <span>₹{pendingTotal.toLocaleString()}</span>
+              </div>
             </div>
-          )}
-          {totalJobAmount > 0 && (
-            <div className="pr-total pr-total-grand">
-              <span>📋 Total Project Amount</span>
-              <span>₹{totalJobAmount.toLocaleString()}</span>
-            </div>
+          ) : (
+            <>
+              <div className="pr-total pr-total-received">
+                <span>✅ Total Received</span>
+                <span>₹{receivedTotal.toLocaleString()}</span>
+              </div>
+              {pendingTotal > 0 && (
+                <div className="pr-total pr-total-pending">
+                  <span>⏳ Pending Payment</span>
+                  <span>₹{pendingTotal.toLocaleString()}</span>
+                </div>
+              )}
+            </>
           )}
           <div className="pr-footer">
             <div className="pr-footer-url">🌐 www.thepainterboys.com</div>
@@ -1456,8 +1473,8 @@ export default function PBDashboard() {
             return obj;
           });
       } else {
-        // Fallback: published CSV (cached up to 15 min by Google)
-        const res  = await fetch(CSV_URL);
+        // Fallback: published CSV (Google itself may cache this up to ~5 min; bust any client/CDN cache on our end)
+        const res  = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache: 'no-store' });
         const text = await res.text();
         if (!res.ok) throw new Error(text);
         ({ headers: h, rows: r } = parseCSV(text));
@@ -1468,7 +1485,7 @@ export default function PBDashboard() {
       // If Apps Script GET failed, try CSV fallback
       if (scriptUrl) {
         try {
-          const res  = await fetch(CSV_URL);
+          const res  = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache: 'no-store' });
           const text = await res.text();
           const { headers: h, rows: r } = parseCSV(text);
           setHeaders(h); setRows(r); setLastSynced(Date.now());

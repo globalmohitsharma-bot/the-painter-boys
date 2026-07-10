@@ -4,6 +4,10 @@ import LZString from 'lz-string';
 import './PBDashboard.css';
 
 const CSV_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSRHqp1TWLyAEgydJ19b6vCJcTGCCxGrLcB1Mccw95xndfc9mbC1y5y3ev5T1njzE0evlvGIHA6OGH1/pub?gid=1417050744&single=true&output=csv';
+// Baked in so every browser/incognito session gets real-time sync and editing without
+// manually pasting the Web App URL first. Known trade-off: anyone who inspects this
+// bundle gets full read/write access to the sheet, bypassing the password gate.
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhbcdl1g0N9947w05vrmS8aewit0unY35R4tFNs2JJv0KI77hgyF0f9izDdaXCe4zR-w/exec';
 const LS_KEY          = 'pb_script_url';
 const LS_SOCIETIES    = 'pb_custom_societies';
 const LS_PAINTERS     = 'pb_custom_painters';
@@ -1532,7 +1536,7 @@ export default function PBDashboard() {
   const [search,     setSearch]    = useState('');
   const [filters,    setFilters]   = useState({});
   const [sheet,      setSheet]     = useState(null);
-  const [scriptUrl,  setScriptUrl] = useState(() => localStorage.getItem(LS_KEY) || null);
+  const [scriptUrl,  setScriptUrl] = useState(() => localStorage.getItem(LS_KEY) || DEFAULT_SCRIPT_URL);
   const [saving,     setSaving]    = useState(false);
   const [toast,      setToast]     = useState(null);
   const [showDone,   setShowDone]  = useState(false);

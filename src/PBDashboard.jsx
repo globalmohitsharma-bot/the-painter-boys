@@ -153,6 +153,25 @@ async function callScript(url, payload) {
   });
 }
 
+// Apps Script POST responses are opaque (no-cors), so a "successful" callScript
+// can still mean the write silently failed server-side. Re-fetch and check the
+// sheet actually shows the expected value before trusting the write happened.
+async function pbVerifyWrite(scriptUrl, colHeader, rowNum, expectedVal, attempts = 3, delayMs = 1200) {
+  for (let i = 0; i < attempts; i++) {
+    await new Promise(res => setTimeout(res, delayMs));
+    try {
+      const url = `${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}_ts=${Date.now()}`;
+      const res  = await fetch(url, { cache: 'no-store' });
+      const grid = await res.json();
+      const hRow    = grid[0].map(c => String(c).trim());
+      const colIdx  = hRow.indexOf(colHeader);
+      const dataRow = grid[rowNum - 1]; // rowNum is the 1-based sheet row; grid[0] is the header row
+      if (colIdx !== -1 && dataRow && String(dataRow[colIdx] ?? '').trim() === expectedVal) return true;
+    } catch {}
+  }
+  return false;
+}
+
 // ── Customer link encoder ─────────────────────────────────────────
 function encodeCustomerData(data) {
   // Compact keys + lz-string compression → much shorter URL
@@ -956,7 +975,7 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
 }
 
 // ── Detail / Edit sheet ───────────────────────────────────────────
-function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, scriptUrl, onNeedScript }) {
+function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, scriptUrl, onNeedScript, showToast }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm]       = useState(() => {
     const f = {};
@@ -1029,8 +1048,10 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
 
   const handleSaveToken = async () => {
     if (!amountHeaders.some(h => parseFloat(addAmounts[h]) > 0)) return;
+    if (!scriptUrl) { onNeedScript?.(); return; }
     setTokSaving(true);
     const newTd = {}, cv = {};
+    let expectedHistory = null;
     amountHeaders.forEach(h => {
       const v = parseFloat(addAmounts[h]) || 0;
       if (!v) { newTd[h] = tokenData[h]; return; }
@@ -1039,27 +1060,44 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
       const newHistory = [...ex.history, { date: pbToday(), amount: v }];
       newTd[h] = { total: newTotal, history: newHistory };
       cv[h]    = String(newTotal);
-      if (historyColHeader) cv[historyColHeader] = pbFmtHistory(newHistory);
-      try { localStorage.setItem(LS_HIST_KEY, pbFmtHistory(newHistory)); } catch {}
+      if (historyColHeader) { cv[historyColHeader] = pbFmtHistory(newHistory); expectedHistory = cv[historyColHeader]; }
     });
-    try { await saveTokenToSheet(cv); } catch {}
-    setTokenData(p => ({ ...p, ...newTd }));
-    setAddAmounts(p => { const r={...p}; amountHeaders.forEach(h=>{r[h]=''}); return r; });
-    setTokSaved(true); setTimeout(()=>setTokSaved(false), 3000);
+    await saveTokenToSheet(cv);
+    const ok = historyColHeader
+      ? await pbVerifyWrite(scriptUrl, historyColHeader, row.__row, expectedHistory)
+      : true;
+    if (ok) {
+      amountHeaders.forEach(h => {
+        try { localStorage.setItem(LS_HIST_KEY, pbFmtHistory(newTd[h].history)); } catch {}
+      });
+      setTokenData(p => ({ ...p, ...newTd }));
+      setAddAmounts(p => { const r={...p}; amountHeaders.forEach(h=>{r[h]=''}); return r; });
+      setTokSaved(true); setTimeout(()=>setTokSaved(false), 3000);
+    } else {
+      showToast?.('⚠️ Could not confirm the save reached the sheet — please try again', false);
+    }
     setTokSaving(false);
   };
 
   const handleDelLastToken = async (h) => {
     const td = tokenData[h];
     if (!td || !td.history.length) return;
+    if (!scriptUrl) { onNeedScript?.(); return; }
     const newHistory = td.history.slice(0,-1);
     const newTotal   = Math.max(0, td.total - td.history[td.history.length-1].amount);
     const cv = { [h]: String(newTotal) };
     if (historyColHeader) cv[historyColHeader] = pbFmtHistory(newHistory);
-    try { localStorage.setItem(LS_HIST_KEY, pbFmtHistory(newHistory)); } catch {}
     setTokSaving(true);
-    try { await saveTokenToSheet(cv); } catch {}
-    setTokenData(p => ({ ...p, [h]: { total: newTotal, history: newHistory } }));
+    await saveTokenToSheet(cv);
+    const ok = historyColHeader
+      ? await pbVerifyWrite(scriptUrl, historyColHeader, row.__row, pbFmtHistory(newHistory))
+      : true;
+    if (ok) {
+      try { localStorage.setItem(LS_HIST_KEY, pbFmtHistory(newHistory)); } catch {}
+      setTokenData(p => ({ ...p, [h]: { total: newTotal, history: newHistory } }));
+    } else {
+      showToast?.('⚠️ Could not confirm the delete reached the sheet — please try again', false);
+    }
     setTokSaving(false);
   };
 
@@ -1828,7 +1866,8 @@ export default function PBDashboard() {
           onNeedScript={() => setSheet('setup')}
           onClose={() => setSheet(null)}
           onSave={handleEdit}
-          onDelete={handleDelete} />
+          onDelete={handleDelete}
+          showToast={showToast} />
       )}
     </div>
   );

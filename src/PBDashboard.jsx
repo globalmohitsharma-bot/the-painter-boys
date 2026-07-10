@@ -65,7 +65,10 @@ function parsePainters(val) {
 // ── Date display formatting ───────────────────────────────────────
 function formatDate(val) {
   if (!val) return '';
-  const d = new Date(val + 'T00:00:00');
+  // Sheet may store a plain YYYY-MM-DD (append a time to avoid UTC-midnight rollback)
+  // or a full ISO timestamp already (don't double up the time part).
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(val) ? val + 'T00:00:00' : val;
+  const d = new Date(iso);
   if (isNaN(d.getTime())) return val;
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
@@ -624,6 +627,9 @@ function pbIsAmountField(h) {
     (ht.includes('token') && !ht.includes('date'));
 }
 function pbIsHistoryField(h) { return h.toLowerCase().replace(/\s+/g,'') === 'tokenhistory'; }
+// "Pending Amount" is a legacy column that should only ever be computed (Total Project Amount − Total Received)
+// on the receipt, never hand-typed — hide it from every editable/generic-display field list.
+function pbIsLegacyPendingField(h) { return h.toLowerCase().trim() === 'pending amount'; }
 function pbParseHistory(val) {
   if (!val) return [];
   return String(val).split('|').map(e => {
@@ -681,17 +687,24 @@ function PBThankYouModal({ name, phone, customerUrl, onClose }) {
     setCapturing(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
-        scale: 3, useCORS: true, backgroundColor: null, logging: false,
+        scale: 2, useCORS: true, backgroundColor: null, logging: false,
       });
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'thankyou-thepainterboys.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); } catch {}
-        } else {
+        const downloadFallback = () => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a'); a.href = url;
           a.download = 'thankyou-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          // On mobile, navigator.share can fail if too much time passed since the
+          // tap (canvas capture eats into the activation window) — fall back to a
+          // direct download so the first attempt always produces something usable.
+          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
         }
         setCapturing(false);
       }, 'image/png');
@@ -852,13 +865,17 @@ function PBReceiptModal({ name, phone, society, address, fieldName, td, allToken
       });
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'receipt-thepainterboys.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' }); } catch {}
-        } else {
+        const downloadFallback = () => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url; a.download = 'receipt-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
         }
         setCapturing(false);
       }, 'image/png');
@@ -1073,7 +1090,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
 
         {!editing ? (
           <div className="pb-detail-fields">
-            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h)).map(h => {
+            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h) && !pbIsLegacyPendingField(h)).map(h => {
               const isProgressCol = h.toLowerCase().includes('progress');
               const val = row[h] || (isProgressCol ? normalizeProgress('') : '—');
               return <DetailField key={h} label={h} value={val} />;
@@ -1081,7 +1098,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
           </div>
         ) : (
           <div className="pb-edit-fields">
-            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h)).map(h => (
+            {headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h) && !pbIsLegacyPendingField(h)).map(h => (
               <div key={h} className="pb-edit-field">
                 <label className="pb-edit-label">
                   {displayLabel(h)}
@@ -1272,7 +1289,7 @@ function DetailSheet({ row, headers, rows, onClose, onSave, onDelete, saving, sc
 
 // ── Add sheet ─────────────────────────────────────────────────────
 function AddSheet({ headers, rows, onClose, onSave, saving }) {
-  const addHeaders = headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h));
+  const addHeaders = headers.filter(h => h && h !== '#' && !pbIsAmountField(h) && !pbIsHistoryField(h) && !pbIsLegacyPendingField(h));
   const [form, setForm] = useState(() => {
     const f = {};
     addHeaders.forEach(h => { f[h] = ''; });
@@ -1492,7 +1509,10 @@ export default function PBDashboard() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isManualRefresh = false) => {
+    // Only a user-triggered refresh (button tap / pull-to-refresh) also picks up a
+    // new app version — an automatic reload in the background would be surprising.
+    if (isManualRefresh) window.__pbCheckForUpdate?.();
     setLoading(true); setRefreshing(true); setError(null);
     try {
       let h, r;
@@ -1500,7 +1520,10 @@ export default function PBDashboard() {
         // Apps Script doGet — real-time, no Google caching (bust browser cache on the URL itself)
         const res  = await fetch(`${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}_ts=${Date.now()}`, { cache: 'no-store' });
         const grid = await res.json(); // 2D array
-        h = grid[0].map(c => String(c).trim()).filter(Boolean);
+        // Keep blank-header columns in place (don't filter them out) — every header after
+        // one would otherwise shift left relative to its actual column of data. Blank-named
+        // columns are already excluded from every display/edit list elsewhere via `h &&`.
+        h = grid[0].map(c => String(c).trim());
         r = grid.slice(1)
           .filter(row => row.some(c => String(c).trim()))
           .map((row, i) => {
@@ -1608,8 +1631,10 @@ export default function PBDashboard() {
     const progressKey = headers.find(h => h.toLowerCase().includes('progress')) || '';
     const societyKey  = headers.find(h => h.toLowerCase().includes('society'))  || '';
     const arr = [...filtered];
-    if (sortBy === 'date-desc') arr.sort((a, b) => (b[dateKey]||'').localeCompare(a[dateKey]||''));
-    else if (sortBy === 'date-asc')  arr.sort((a, b) => (a[dateKey]||'').localeCompare(b[dateKey]||''));
+    // Normalize to YYYY-MM-DD before comparing — raw values mix ISO timestamps, plain
+    // YYYY-MM-DD, and D/M/YYYY across rows, and those don't sort correctly as raw strings.
+    if (sortBy === 'date-desc') arr.sort((a, b) => (toInputDate(b[dateKey])||'').localeCompare(toInputDate(a[dateKey])||''));
+    else if (sortBy === 'date-asc')  arr.sort((a, b) => (toInputDate(a[dateKey])||'').localeCompare(toInputDate(b[dateKey])||''));
     else if (sortBy === 'status')    arr.sort((a, b) => {
       const ia = PROGRESS_OPTIONS.findIndex(o => o.toLowerCase() === (a[progressKey]||'').toLowerCase());
       const ib = PROGRESS_OPTIONS.findIndex(o => o.toLowerCase() === (b[progressKey]||'').toLowerCase());
@@ -1679,7 +1704,7 @@ export default function PBDashboard() {
           </div>
           <div className="pb-header-actions">
             {lastSynced && <span className="pb-synced">{timeAgo(lastSynced)}</span>}
-            <button className={`pb-icon-btn${refreshing ? ' pb-spin' : ''}`} onClick={fetchData} title="Refresh">↻</button>
+            <button className={`pb-icon-btn${refreshing ? ' pb-spin' : ''}`} onClick={() => fetchData(true)} title="Refresh">↻</button>
             <button className="pb-icon-btn" onClick={() => setSheet('setup')} title="Settings">⚙</button>
           </div>
         </div>
@@ -1751,7 +1776,7 @@ export default function PBDashboard() {
         onTouchStart={e => { touchStartY.current = e.touches[0].clientY; }}
         onTouchEnd={e => {
           const dy = e.changedTouches[0].clientY - touchStartY.current;
-          if (dy > 70 && mainRef.current?.scrollTop === 0 && !loading) fetchData();
+          if (dy > 70 && mainRef.current?.scrollTop === 0 && !loading) fetchData(true);
         }}>
         {loading && (
           <div className="pb-loading">

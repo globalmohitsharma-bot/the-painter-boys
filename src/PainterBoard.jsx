@@ -83,7 +83,10 @@ function parsePainters(val) {
 }
 function formatDate(val) {
   if (!val) return '';
-  const d = new Date(val + 'T00:00:00');
+  // Sheet may store a plain YYYY-MM-DD (append a time to avoid UTC-midnight rollback)
+  // or a full ISO timestamp already (don't double up the time part).
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(val) ? val + 'T00:00:00' : val;
+  const d = new Date(iso);
   if (isNaN(d.getTime())) return val;
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
@@ -117,6 +120,8 @@ function isTokenHistoryField(h) {
   const hl = h.toLowerCase().replace(/\s+/g,'');
   return hl === 'tokenhistory';
 }
+// Legacy column — should only ever be shown as computed (Amount − Received), never raw sheet text.
+function isLegacyPendingField(h) { return h.toLowerCase().trim() === 'pending amount'; }
 function isPainterAmountField(h) {
   if (isTokenHistoryField(h)) return false; // history column — not an amount input
   const hl = h.toLowerCase().trim();
@@ -329,18 +334,31 @@ function ThankYouModal({ name, phone, onClose }) {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
     try {
+      // Make sure the mascot logo has actually finished loading before rasterizing —
+      // otherwise the first capture can render blank/broken while a retry (image now cached) works.
+      const imgs = Array.from(cardRef.current.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => img.complete
+        ? Promise.resolve()
+        : new Promise(resolve => { img.onload = resolve; img.onerror = resolve; })));
       const canvas = await html2canvas(cardRef.current, {
-        scale: 3, useCORS: true, backgroundColor: null, logging: false,
+        scale: 2, useCORS: true, backgroundColor: null, logging: false,
       });
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'thankyou-thepainterboys.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); } catch {}
-        } else {
+        const downloadFallback = () => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url; a.download = 'thankyou-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+        };
+        // On mobile, navigator.share can fail if too much time passed since the tap
+        // (image-load wait + canvas capture eat into the activation window) — fall
+        // back to a direct download so the first attempt always produces something usable.
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
         }
         setCapturing(false);
       }, 'image/png');
@@ -461,15 +479,18 @@ function PaymentReceiptModal({ name, phone, society, address, fieldName, td, all
       });
       canvas.toBlob(async (blob) => {
         const file = new File([blob], 'receipt-thepainterboys.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' });
-          } catch (e) { /* user cancelled */ }
-        } else {
+        const downloadFallback = () => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url; a.download = 'receipt-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' });
+          } catch (e) { if (e?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
         }
         setCapturing(false);
       }, 'image/png');
@@ -708,7 +729,7 @@ function JobDetailSheet({ row, headers, painter, onClose, onSaved, onRefresh }) 
 
         {/* All job details (skip amount fields — shown above) */}
         <div className="pp-detail-list">
-          {headers.filter(h => h && h !== '#' && !isPainterAmountField(h) && !isTokenHistoryField(h) && !h.toLowerCase().includes('additional')).map(h => {
+          {headers.filter(h => h && h !== '#' && !isPainterAmountField(h) && !isTokenHistoryField(h) && !isLegacyPendingField(h) && !h.toLowerCase().includes('additional')).map(h => {
             const val = row[h];
             if (!val) return null;
             const isDate = h.toLowerCase().includes('date');
@@ -803,7 +824,10 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isManualRefresh = false) => {
+    // Only a user-triggered refresh (button tap / pull-to-refresh) also picks up a
+    // new app version — an automatic reload in the background would be surprising.
+    if (isManualRefresh) window.__pbCheckForUpdate?.();
     setLoading(true); setError(null);
     try {
       const res  = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache: 'no-store' });
@@ -875,7 +899,7 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
               href={`/card?pid=${getPainterToken(painter)}`}
               target="_blank" rel="noopener noreferrer"
               title="My visiting card">🪪</a>
-            <button className="pp-icon-btn" onClick={fetchData} title="Refresh"
+            <button className="pp-icon-btn" onClick={() => fetchData(true)} title="Refresh"
               style={loading ? {animation:'pp-spin .7s linear infinite'} : {}}>↻</button>
             {isDirectLink
               ? <a className="pp-icon-btn pp-home-btn" href="/" title="Go to website">🏠</a>
@@ -905,7 +929,7 @@ function PainterDashboard({ painter, onChangePainter, isDirectLink }) {
         onTouchStart={e => { touchY.current = e.touches[0].clientY; }}
         onTouchEnd={e => {
           if (e.changedTouches[0].clientY - touchY.current > 70
-            && mainRef.current?.scrollTop === 0 && !loading) fetchData();
+            && mainRef.current?.scrollTop === 0 && !loading) fetchData(true);
         }}>
 
         {loading && (

@@ -7,6 +7,99 @@ import './CustomerView.css';
 const PHONE     = '+91 78388 88509';
 const WA_CORP   = 'https://wa.me/917838888509';
 const WEBSITE   = 'https://www.thepainterboys.com';
+const CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSRHqp1TWLyAEgydJ19b6vCJcTGCCxGrLcB1Mccw95xndfc9mbC1y5y3ev5T1njzE0evlvGIHA6OGH1/pub?gid=1417050744&single=true&output=csv';
+
+function parseCSV(text) {
+  const lines = [];
+  let cur = '', inQ = false;
+  const cells = [];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQ && text[i + 1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      cells.push(cur); cur = '';
+    } else if ((c === '\n' || c === '\r') && !inQ) {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      cells.push(cur); cur = '';
+      lines.push([...cells]); cells.length = 0;
+    } else { cur += c; }
+  }
+  if (cur || cells.length) { cells.push(cur); lines.push([...cells]); }
+  if (!lines.length) return { headers: [], rows: [] };
+  const headers = lines[0].map(h => h.trim());
+  const rows = lines.slice(1)
+    .filter(r => r.some(c => c.trim()))
+    .map((r, i) => {
+      const obj = { __row: i + 2 };
+      headers.forEach((h, j) => { obj[h] = (r[j] ?? '').trim(); });
+      return obj;
+    });
+  return { headers, rows };
+}
+function isAmountField(h) {
+  const hl = h.toLowerCase().replace(/\s+/g,'');
+  if (hl === 'tokenhistory') return false;
+  const ht = h.toLowerCase().trim();
+  return ht === 'pending' || ht === 'token received' || ht === 'token amount' ||
+    (ht.includes('token') && !ht.includes('date'));
+}
+function isHistoryField(h) { return h.toLowerCase().replace(/\s+/g,'') === 'tokenhistory'; }
+function isPainterField(h) {
+  const hl = h.toLowerCase().replace(/\s+/g,'');
+  return ['paintername', 'painter'].some(k => hl.includes(k));
+}
+function parseHistory(val) {
+  if (!val) return [];
+  return String(val).split('|').map(e => {
+    const idx = e.lastIndexOf(':');
+    return idx < 0 ? null : { date: e.slice(0, idx), amount: parseFloat(e.slice(idx + 1)) || 0 };
+  }).filter(e => e && e.amount > 0);
+}
+
+// Short links (/job/r42) reference a live sheet row by number instead of encoding
+// the whole record into the URL — always fetches current data, and the link
+// itself stays short enough that customers aren't scared to tap it.
+async function fetchByRowNumber(rowNum) {
+  const res  = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache: 'no-store' });
+  const text = await res.text();
+  const { headers, rows } = parseCSV(text);
+  const row = rows.find(r => r.__row === rowNum);
+  if (!row) return null;
+
+  const societyK  = headers.find(h => h.toLowerCase().includes('society')) || '';
+  const addressK  = headers.find(h => h.toLowerCase().trim() === 'address') || '';
+  const progressK = headers.find(h => h.toLowerCase().includes('progress')) || '';
+  const paintK    = headers.find(h => h.toLowerCase().includes('type of paint') || h.toLowerCase().includes('paint type')) || '';
+  const painterK  = headers.find(isPainterField) || '';
+  const dateK     = headers.find(h => h.toLowerCase().includes('date')) || '';
+  const historyColHeader = headers.find(isHistoryField) || '';
+  const history   = historyColHeader ? parseHistory(row[historyColHeader] || '') : [];
+  const histSum   = history.reduce((s, e) => s + (e.amount || 0), 0);
+
+  const tokens = headers.filter(isAmountField).map(h => {
+    const colTotal = parseFloat(row[h]) || 0;
+    const adjHist  = colTotal > histSum && colTotal > 0
+      ? [{ date: 'Prior payment', amount: colTotal - histSum }, ...history]
+      : history;
+    const total = adjHist.reduce((s, e) => s + (e.amount || 0), 0);
+    return { label: h, total, history: adjHist };
+  });
+
+  return {
+    name:      row['Contact Name'] || row['Name'] || '',
+    phone:     row['Phone'] || '',
+    society:   societyK  ? row[societyK]  : '',
+    address:   addressK  ? row[addressK]  : '',
+    progress:  progressK ? row[progressK] : '',
+    paintType: paintK    ? row[paintK]    : '',
+    painters:  painterK  ? row[painterK]  : '',
+    date:      dateK     ? row[dateK]     : '',
+    tokens, sharedAt: null,
+    _row: rowNum,
+  };
+}
 
 function decodeData(str) {
   if (!str) return null;
@@ -55,15 +148,26 @@ function progressStyle(p = '') {
 
 export default function CustomerView() {
   const { code }  = useParams();           // new: /job/:code
-  const [data,   setData]   = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [qrUrl,  setQrUrl]  = useState('');
+  const [data,    setData]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [copied,  setCopied]  = useState(false);
+  const [qrUrl,   setQrUrl]   = useState('');
 
   useEffect(() => {
-    // New format: path param /job/:code
-    // Old format: query param /customer?r=
+    let cancelled = false;
+    // New short format: /job/r42 (live row lookup)
+    // New long format: /job/:code (compressed JSON, still supported)
+    // Old format: /customer?r=... (query param, still supported)
+    const shortMatch = code && /^r(\d+)$/.exec(code);
+    if (shortMatch) {
+      fetchByRowNumber(parseInt(shortMatch[1], 10))
+        .then(d => { if (!cancelled) { setData(d); setLoading(false); } })
+        .catch(() => { if (!cancelled) { setLoading(false); } });
+      return () => { cancelled = true; };
+    }
     const str = code || new URLSearchParams(window.location.search).get('r');
     if (str) setData(decodeData(str));
+    setLoading(false);
   }, [code]);
 
   useEffect(() => {
@@ -73,6 +177,19 @@ export default function CustomerView() {
       color: { dark: '#0d2137', light: '#ffffff' },
     }).then(setQrUrl).catch(() => {});
   }, [data]);
+
+  if (loading) {
+    return (
+      <div className="cv-error">
+        <div className="cv-error-icon">🎨</div>
+        <div className="cv-error-brand">
+          <span className="cv-the">The </span>
+          <span className="cv-pb">Painter Boys</span>
+        </div>
+        <div className="cv-error-msg">Loading your job details…</div>
+      </div>
+    );
+  }
 
   if (!data) {
     return (

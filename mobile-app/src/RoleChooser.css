@@ -1,0 +1,26 @@
+.rc-wrap {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #0d2137, #0a1826);
+  padding: 24px;
+}
+.rc-card {
+  width: 100%; max-width: 360px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.rc-logo { font-size: 2.4rem; margin-bottom: 10px; }
+.rc-title { color: #fff; font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+.rc-sub { color: rgba(255,255,255,.55); font-size: .85rem; margin-bottom: 24px; }
+.rc-btn {
+  display: block; width: 100%;
+  padding: 16px; margin-bottom: 12px;
+  border: none; border-radius: 14px;
+  font-size: 1rem; font-weight: 700;
+  color: #fff; cursor: pointer;
+}
+.rc-btn-admin   { background: linear-gradient(135deg,#2563eb,#1d4ed8); }
+.rc-btn-painter { background: linear-gradient(135deg,#16a34a,#15803d); }

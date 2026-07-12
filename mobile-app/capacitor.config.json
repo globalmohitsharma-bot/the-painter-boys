@@ -1,0 +1,17 @@
+{
+  "appId": "com.thepainterboys.team",
+  "appName": "The Painter Boys Team",
+  "webDir": "dist",
+  "backgroundColor": "#0d2137",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0d2137",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0d2137"
+    }
+  }
+}

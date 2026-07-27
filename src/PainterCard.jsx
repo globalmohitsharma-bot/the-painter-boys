@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { Helmet } from 'react-helmet-async';
 import './PainterCard.css';
 
 const DEFAULT_PAINTER_TOKENS = {
@@ -109,6 +110,11 @@ export default function PainterCard() {
 
   return (
     <div className="pc-page">
+      <Helmet>
+        <title>{name} — {designation} | The Painter Boys</title>
+        <meta name="description" content={`${name}, ${designation} at The Painter Boys. Contact: ${cardPhone}.`} />
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="pc-preview-label">Your Business Card</div>
 
       {/* ── Visual card (captured by html2canvas) ── */}

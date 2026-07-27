@@ -1,9 +1,73 @@
 import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import './Home.css';
 
+const SITE_URL = 'https://www.thepainterboys.com';
 const PHONE   = '+91 7838888509';
 const WA_LINK = 'https://wa.me/917838888509';
 const AREAS   = ['Ghaziabad', 'Noida', 'Delhi NCR', 'Haridwar', 'Dehradun'];
+// Specific Ghaziabad localities we actively target — used in visible copy and
+// structured data so local searches (e.g. "painter in Raj Nagar Extension")
+// have a matching, real on-page signal, not just a city-level mention.
+const GHAZIABAD_AREAS = ['Raj Nagar Extension', 'Raj Nagar', 'Kavi Nagar', 'RDC', 'Indirapuram', 'Vasundhara'];
+
+// Real URL per page, plus a keyword-focused title/description for search results
+// and social previews. Google's crawler executes JS and will pick these up per
+// route; crawlers/link-preview bots that don't run JS still only see the default
+// tags in index.html, since this is a client-rendered app (no server-side render).
+const PAGE_META = {
+  home: {
+    path: '/',
+    title: 'The Painter Boys — Home Painting Services in Raj Nagar Extension, Indirapuram, Kavi Nagar, Ghaziabad',
+    description: 'Expert home painting in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram & Vasundhara (Ghaziabad), plus Noida & Delhi NCR. Interior, exterior, waterproofing & premium finishes. Free on-site estimate — trusted since 2010.',
+  },
+  services: {
+    path: '/services',
+    title: 'Interior, Exterior & Waterproofing Painting Services | The Painter Boys',
+    description: 'Interior painting, exterior painting, waterproofing, royal emulsion, texture & designer finishes, putty & primer — professional painting services across Ghaziabad, Noida & Delhi NCR.',
+  },
+  about: {
+    path: '/about',
+    title: 'About Us — 10+ Years of Trusted Painting Work | The Painter Boys',
+    description: 'A decade of trust and craftsmanship painting homes, societies, hospitals, offices and temples across Delhi NCR. Zero-mess guarantee and a satisfaction promise on every job.',
+  },
+  how: {
+    path: '/how-it-works',
+    title: 'How It Works — Our Painting Process | The Painter Boys',
+    description: 'From free site consultation to colour selection, preparation, execution and final walkthrough — see how The Painter Boys deliver a stress-free painting experience.',
+  },
+  team: {
+    path: '/team',
+    title: 'Our Team — Meet The Painter Boys Leadership | The Painter Boys',
+    description: 'Meet the team behind The Painter Boys — experienced leaders in painting operations, delivery and customer service across Ghaziabad, Noida and Delhi NCR.',
+  },
+  'paint-types': {
+    path: '/paint-types',
+    title: 'Paint Types & Brands Guide — Asian Paints Royal, Tractor, Apex | The Painter Boys',
+    description: 'A guide to popular paint types we work with — Asian Paints Royal, Tractor Emulsion, Apex exterior, Royal Shyne, distemper and premium textures — and which suits your home.',
+  },
+  contact: {
+    path: '/contact',
+    title: 'Contact Us — Free Painting Estimate in Raj Nagar Ext, Indirapuram & Ghaziabad | The Painter Boys',
+    description: 'Get a free, no-obligation painting estimate in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram, Vasundhara, Noida, Delhi NCR, Haridwar or Dehradun. Call, WhatsApp, or request a callback — we respond fast.',
+  },
+};
+
+const PAINT_TYPES = [
+  { name: 'Asian Paints Royal',        tier: 'Luxury',  finish: 'Smooth matt / luxury emulsion',
+    desc: 'A premium interior emulsion known for its rich, smooth finish and long-lasting colour. Popular for living rooms and feature walls where a luxury look matters.' },
+  { name: 'Tractor Emulsion',           tier: 'Economy', finish: 'Matt emulsion',
+    desc: 'Asian Paints\' value-for-money emulsion range — a practical, washable finish for bedrooms and interiors where budget matters without giving up a clean look.' },
+  { name: 'Royal Shyne Emulsion',       tier: 'Premium', finish: 'Soft sheen luxury emulsion',
+    desc: 'A soft-sheen premium emulsion that adds subtle luster to walls, offering better stain resistance and washability than standard matt finishes.' },
+  { name: 'Apex Exterior Emulsion',     tier: 'Premium', finish: 'Weatherproof exterior',
+    desc: 'Built for exteriors — weather and UV resistant, formulated to resist algae/fungal growth and monsoon dampness on outer walls and building facades.' },
+  { name: 'Distemper',                  tier: 'Budget',  finish: 'Matt, basic',
+    desc: 'The most economical wall finish, suited for spaces needing a quick, affordable refresh — commonly used in budget-conscious interior projects.' },
+  { name: 'Texture & Designer Finishes',tier: 'Luxury',  finish: '3D texture / designer',
+    desc: 'Decorative textured finishes for feature walls — stone, fabric and abstract patterns that add a designer touch to living rooms and entryways.' },
+];
 
 const QUICK_NAV = [
   { icon:'🏠', label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#f97316' },
@@ -57,16 +121,22 @@ const TEAM = [
 ];
 
 const NAV_PAGES = [
-  ['services','Services'],['about','About Us'],['how','How It Works'],['team','Our Team'],['contact','Contact'],
+  ['services','Services'],['about','About Us'],['how','How It Works'],
+  ['team','Our Team'],['paint-types','Paint Types'],['contact','Contact'],
 ];
 
 export default function Home() {
+  const location = useLocation();
   const [menuOpen,       setMenuOpen]       = useState(false);
   const [scrolled,       setScrolled]       = useState(false);
-  const [currentPage,    setCurrentPage]    = useState('home');
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedSvc,    setSelectedSvc]    = useState(null);
   const [form,           setForm]           = useState({ name:'', phone:'', area:'Ghaziabad', msg:'' });
+
+  // The current "page" is derived from the real URL (not local-only state),
+  // so each section has its own crawlable/shareable/bookmarkable address.
+  const currentPage = Object.keys(PAGE_META).find(k => PAGE_META[k].path === location.pathname) || 'home';
+  const meta = PAGE_META[currentPage] || PAGE_META.home;
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -76,8 +146,6 @@ export default function Home() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
-  const navigate = (page) => { setCurrentPage(page); setMenuOpen(false); };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const msg = `Hi! I'd like a free estimate.\nName: ${form.name}\nPhone: ${form.phone}\nArea: ${form.area}${form.msg ? '\nMessage: '+form.msg : ''}`;
@@ -86,11 +154,39 @@ export default function Home() {
 
   return (
     <div className="home">
+      <Helmet>
+        <title>{meta.title}</title>
+        <meta name="description" content={meta.description} />
+        <link rel="canonical" href={`${SITE_URL}${meta.path}`} />
+        <meta property="og:title" content={meta.title} />
+        <meta property="og:description" content={meta.description} />
+        <meta property="og:url" content={`${SITE_URL}${meta.path}`} />
+        <meta property="og:type" content="website" />
+        {currentPage === 'home' && (
+          <script type="application/ld+json">{JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'LocalBusiness',
+            name: 'The Painter Boys',
+            image: `${SITE_URL}/images/logo.png`,
+            telephone: '+917838888509',
+            priceRange: '$$',
+            url: SITE_URL,
+            areaServed: [
+              ...GHAZIABAD_AREAS.map(a => ({ '@type': 'Place', name: `${a}, Ghaziabad` })),
+              ...AREAS.map(a => ({ '@type': 'City', name: a })),
+            ],
+            address: { '@type': 'PostalAddress', addressRegion: 'Delhi NCR', addressCountry: 'IN' },
+            geo: { '@type': 'GeoCoordinates', latitude: 28.6692, longitude: 77.4538 },
+            sameAs: [WA_LINK],
+          })}</script>
+        )}
+      </Helmet>
 
-      {/* ── Topbar ── */}
+      {/* ── Topbar + Nav (site header) ── */}
+      <header>
       <div className={`topbar${scrolled ? ' topbar-sm' : ''}`}>
         <div className="topbar-inner">
-          <div className="topbar-brand" onClick={() => navigate('home')} style={{cursor:'pointer'}}>
+          <Link to="/" className="topbar-brand" aria-label="The Painter Boys — Home">
             <div className="topbar-brand-text">
               <div className="topbar-name">
                 <span className="tn-the">The </span>
@@ -102,7 +198,7 @@ export default function Home() {
               </div>
               <div className="topbar-sub">⭐ Trusted Since 2010</div>
             </div>
-          </div>
+          </Link>
           <a className="topbar-phone" href={`tel:${PHONE}`}>
             <span className="tp-icon">📞</span>
             <span className="tp-num">+91 78388 88509</span>
@@ -118,8 +214,9 @@ export default function Home() {
       <nav className={`nav${scrolled ? ' nav-scrolled' : ''}`} style={{ top: scrolled ? '50px' : '60px' }}>
         <div className="nav-inner">
           {NAV_PAGES.map(([id, label]) => (
-            <button key={id} className={`nav-link${currentPage === id ? ' nav-link-active' : ''}`}
-              onClick={() => navigate(id)}>{label}</button>
+            <Link key={id} to={PAGE_META[id].path} className={`nav-link${currentPage === id ? ' nav-link-active' : ''}`}>
+              {label}
+            </Link>
           ))}
           <a className="nav-portal" href="/pb">🔐 Staff Portal</a>
         </div>
@@ -127,16 +224,18 @@ export default function Home() {
 
       {/* ── Mobile overlay ── */}
       <div className={`mobile-overlay${menuOpen ? ' open' : ''}`}>
-        <button className="mo-link mo-home" onClick={() => navigate('home')}>🏠 Home</button>
+        <Link to="/" className="mo-link mo-home" onClick={() => setMenuOpen(false)}>🏠 Home</Link>
         {NAV_PAGES.map(([id, label]) => (
-          <button key={id} className={`mo-link${currentPage === id ? ' mo-active' : ''}`} onClick={() => navigate(id)}>{label}</button>
+          <Link key={id} to={PAGE_META[id].path} className={`mo-link${currentPage === id ? ' mo-active' : ''}`}
+            onClick={() => setMenuOpen(false)}>{label}</Link>
         ))}
         <a className="mo-link mo-portal" href="/pb" onClick={() => setMenuOpen(false)}>🔐 Staff Portal</a>
         <a className="mo-link mo-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>💬 WhatsApp Us</a>
       </div>
+      </header>
 
       {/* ── PAGE CONTENT ── */}
-      <div key={currentPage} className="page-fade">
+      <main key={currentPage} className="page-fade">
 
         {/* ── HOME ── */}
         {currentPage === 'home' && (
@@ -149,6 +248,7 @@ export default function Home() {
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
                 <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
+                <p className="hero-cities hero-cities-local">Serving {GHAZIABAD_AREAS.join(' · ')} in Ghaziabad</p>
                 <p className="hero-desc">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
@@ -162,7 +262,7 @@ export default function Home() {
                   <div className="hero-stat"><strong>⭐ 4.9</strong><span>Customer Rating</span></div>
                 </div>
                 <div className="hero-home-btns">
-                  <button className="btn-primary" onClick={() => navigate('services')}>Our Services →</button>
+                  <Link to="/services" className="btn-primary">Our Services →</Link>
                   <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 WhatsApp Us</a>
                 </div>
               </div>
@@ -209,13 +309,12 @@ export default function Home() {
               <h2 className="hqn-title">What Can We Do For You?</h2>
               <div className="hqn-grid">
                 {QUICK_NAV.map(c => (
-                  <div key={c.label} className="hqn-card" style={{'--card-accent': c.accent}}
-                    onClick={() => navigate('services')}>
-                    <div className="hqn-icon">{c.icon}</div>
+                  <Link key={c.label} to="/services" className="hqn-card" style={{'--card-accent': c.accent}}>
+                    <div className="hqn-icon" aria-hidden="true">{c.icon}</div>
                     <div className="hqn-label">{c.label}</div>
                     <div className="hqn-sub">{c.sub}</div>
-                    <div className="hqn-arrow">→</div>
-                  </div>
+                    <div className="hqn-arrow" aria-hidden="true">→</div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -236,10 +335,10 @@ export default function Home() {
               <div className="container section">
                 <div className="svc-grid">
                   {SERVICES_PHOTO.map(s => (
-                    <div key={s.title} className="svc-card" style={{'--svc-accent': s.accent}}
+                    <article key={s.title} className="svc-card" style={{'--svc-accent': s.accent}}
                       onClick={() => setSelectedSvc(s)}>
-                      <div className="svc-photo" style={{ background: s.bg }}>
-                        <div className="svc-photo-icon">{s.icon}</div>
+                      <div className="svc-photo" style={{ background: s.bg }} role="img" aria-label={`${s.title} illustration`}>
+                        <div className="svc-photo-icon" aria-hidden="true">{s.icon}</div>
                       </div>
                       <div className="svc-body">
                         <h3 className="svc-title">{s.title}</h3>
@@ -248,15 +347,15 @@ export default function Home() {
                         </ul>
                         <div className="svc-cta-row">
                           <span className="svc-learn">Learn more →</span>
-                          <div className="svc-badge">{s.icon}</div>
+                          <div className="svc-badge" aria-hidden="true">{s.icon}</div>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
                 <div className="sec-cta">
                   <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Discuss Your Project</a>
-                  <button className="btn-secondary" onClick={() => navigate('contact')}>Get Free Quote →</button>
+                  <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
 
@@ -320,15 +419,15 @@ export default function Home() {
                 <div className="reasons-body">
                   <div className="reasons-grid">
                     {REASONS.map(r => (
-                      <div key={r.title} className="reason-card">
-                        <div className="rc-star">{r.icon}</div>
+                      <article key={r.title} className="reason-card">
+                        <div className="rc-star" aria-hidden="true">{r.icon}</div>
                         <div><div className="rc-title">{r.title}</div><div className="rc-desc">{r.desc}</div></div>
-                      </div>
+                      </article>
                     ))}
                   </div>
                   <div className="reasons-photo">
                     <div className="rp-img-crop">
-                      <img src="/images/painter-boy.png" alt="Expert Painter" className="rp-img" loading="lazy"
+                      <img src="/images/painter-boy.png" alt="Professional house painter from The Painter Boys at work in Delhi NCR" className="rp-img" loading="lazy"
                         onError={e => { e.target.parentElement.style.display='none'; e.target.parentElement.nextSibling.style.display='flex'; }} />
                     </div>
                     <div className="rp-fallback" style={{display:'none'}}>
@@ -373,7 +472,7 @@ export default function Home() {
                 </div>
                 <div className="sec-cta">
                   <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Book Your Free Consultation</a>
-                  <button className="btn-secondary" onClick={() => navigate('contact')}>Contact Us →</button>
+                  <Link to="/contact" className="btn-secondary">Contact Us →</Link>
                 </div>
               </div>
             </div>
@@ -394,15 +493,15 @@ export default function Home() {
               <div className="container section">
                 <div className="team-grid">
                   {TEAM.map(t => (
-                    <div key={t.name} className="team-card" onClick={() => setSelectedMember(t)}>
-                      {t.img && <img src={t.img} alt={t.name} className="team-photo" loading="lazy"
+                    <article key={t.name} className="team-card" onClick={() => setSelectedMember(t)}>
+                      {t.img && <img src={t.img} alt={`${t.name}, ${t.role} at The Painter Boys`} className="team-photo" loading="lazy"
                         onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />}
-                      <div className="team-avatar" style={{ background: t.color, display: t.img ? 'none' : 'flex' }}>{t.initials}</div>
+                      <div className="team-avatar" style={{ background: t.color, display: t.img ? 'none' : 'flex' }} aria-hidden="true">{t.initials}</div>
                       <h3 className="team-name">{t.name}</h3>
                       <div className="team-role">{t.role}</div>
                       <p className="team-bio">{t.bio}</p>
                       <div className="team-click-hint">Tap to know more →</div>
-                    </div>
+                    </article>
                   ))}
                 </div>
               </div>
@@ -413,7 +512,7 @@ export default function Home() {
                 <div className="team-modal" onClick={e => e.stopPropagation()}>
                   <button className="team-modal-close" onClick={() => setSelectedMember(null)}>✕</button>
                   {selectedMember.img
-                    ? <img src={selectedMember.img} alt={selectedMember.name} className="team-modal-photo"
+                    ? <img src={selectedMember.img} alt={`${selectedMember.name}, ${selectedMember.role} at The Painter Boys`} className="team-modal-photo"
                         onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
                     : null}
                   <div className="team-modal-avatar" style={{ background: selectedMember.color, display: selectedMember.img ? 'none' : 'flex' }}>
@@ -425,6 +524,43 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── PAINT TYPES ── */}
+        {currentPage === 'paint-types' && (
+          <div className="inner-page">
+            <div className="page-hero page-hero-blue">
+              <div className="ph-content">
+                <span className="sec-tag light">Paint Guide</span>
+                <h1 className="ph-title">Paint Types & Brands We Work With</h1>
+                <p className="ph-sub">Asian Paints Royal, Tractor Emulsion, Apex, Royal Shyne and more — which finish suits your home?</p>
+              </div>
+            </div>
+            <div className="page-content-white">
+              <div className="container section">
+                <div className="paint-grid">
+                  {PAINT_TYPES.map(p => (
+                    <article key={p.name} className="paint-card">
+                      <div className="paint-card-top">
+                        <h3 className="paint-name">{p.name}</h3>
+                        <span className={`paint-tier paint-tier-${p.tier.toLowerCase()}`}>{p.tier}</span>
+                      </div>
+                      <div className="paint-finish">{p.finish}</div>
+                      <p className="paint-desc">{p.desc}</p>
+                    </article>
+                  ))}
+                </div>
+                <p className="paint-note">
+                  Not sure which paint is right for your space? Our team recommends the best option for your
+                  budget and finish preference during your free on-site consultation.
+                </p>
+                <div className="sec-cta">
+                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Ask Us Which Paint Is Right For You</a>
+                  <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -460,6 +596,7 @@ export default function Home() {
                         <div>
                           <div className="cfsc-label">Areas We Serve</div>
                           <div className="cfsc-val">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</div>
+                          <div className="cfsc-val cfsc-val-sub">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</div>
                         </div>
                       </div>
                       <div className="cfs-card">
@@ -497,21 +634,21 @@ export default function Home() {
           </div>
         )}
 
-      </div>{/* end page-fade */}
+      </main>{/* end page-fade */}
 
       {/* ── Footer ── */}
       <footer className="footer">
         <div className="footer-inner">
           <div className="footer-grid">
             <div className="footer-col footer-brand-col">
-              <div className="footer-brand-name" onClick={() => navigate('home')}>
+              <Link to="/" className="footer-brand-name">
                 <span className="tn-the">The </span>
                 <span className="tn-p">P</span><span className="tn-a">a</span><span className="tn-i">i</span>
                 <span className="tn-n">n</span><span className="tn-t">t</span><span className="tn-e">e</span>
                 <span className="tn-r">r</span><span className="tn-sp"> </span>
                 <span className="tn-b">B</span><span className="tn-o">o</span><span className="tn-y">y</span>
                 <span className="tn-s">s</span>
-              </div>
+              </Link>
               <p className="footer-tagline">Home Painting Professionals<br/>Do it right, Do it once.</p>
               <a className="footer-phone" href={`tel:${PHONE}`}>📞 +91 78388 88509</a>
               <a className="footer-wa-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 WhatsApp Us</a>
@@ -520,7 +657,7 @@ export default function Home() {
               <div className="footer-col-title">Our Services</div>
               <div className="footer-col-links">
                 {['Interior Painting','Exterior Painting','Waterproofing','Royal Emulsion','Texture & Designer','Putty & Primer'].map(s => (
-                  <button key={s} className="footer-link" onClick={() => navigate('services')}>{s}</button>
+                  <Link key={s} to="/services" className="footer-link">{s}</Link>
                 ))}
               </div>
             </div>
@@ -528,7 +665,7 @@ export default function Home() {
               <div className="footer-col-title">Company</div>
               <div className="footer-col-links">
                 {NAV_PAGES.map(([id,label]) => (
-                  <button key={id} className="footer-link" onClick={() => navigate(id)}>{label}</button>
+                  <Link key={id} to={PAGE_META[id].path} className="footer-link">{label}</Link>
                 ))}
               </div>
             </div>

@@ -32,7 +32,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 100%;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
-.topbar-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; cursor: pointer; }
+.topbar-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; cursor: pointer; text-decoration: none; }
 .topbar-brand-text { display: flex; flex-direction: column; gap: 1px; }
 .topbar-name { font-size: 1.12rem; font-weight: 900; white-space: nowrap; letter-spacing: .01em; }
 .topbar-sub { font-size: .6rem; font-weight: 600; color: rgba(255,255,255,.5); letter-spacing: .06em; }
@@ -72,6 +72,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   background: none; border: none; cursor: pointer;
   color: #334155; font-size: .88rem; font-weight: 600;
   padding: 8px 14px; border-radius: 6px; transition: color .2s, background .2s;
+  text-decoration: none; display: inline-block;
 }
 .nav-link:hover { color: #f97316; background: #fff7ed; }
 .nav-link-active { color: #f97316 !important; background: #fff7ed !important; }
@@ -212,6 +213,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .hero-cities { font-size: .9rem; color: rgba(255,255,255,.5); letter-spacing: .05em; margin-bottom: 18px; font-weight: 500; }
+.hero-cities-local { font-size: .78rem; margin-top: -12px; opacity: .75; }
 .hero-desc { font-size: 1rem; color: rgba(255,255,255,.72); line-height: 1.75; margin-bottom: 32px; }
 .hero-stats { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .hero-stat { text-align: center; }
@@ -256,7 +258,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
   --card-accent: #0d2137;
   background: #fff; border: 1.5px solid #e8edf5; border-radius: 18px;
   padding: 30px 20px 24px; text-align: center; cursor: pointer;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; text-decoration: none; color: inherit;
   transition: transform .35s cubic-bezier(.34,1.1,.64,1), box-shadow .35s;
 }
 /* Color fill layer sliding up from bottom */
@@ -378,6 +380,20 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
 }
 .svc-modal-bullets li::before { content: '✓'; position: absolute; left: 0; color: var(--svc-accent); font-weight: 900; font-size: 1.1rem; }
 .svc-modal-cta { text-align: center; }
+
+/* ── Paint Types guide ── */
+.paint-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-bottom: 36px; }
+.paint-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.05); }
+.paint-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.paint-name { font-size: 1.1rem; font-weight: 800; color: #0d2137; margin: 0; }
+.paint-tier { font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.paint-tier-luxury  { background: #ede9fe; color: #6d28d9; }
+.paint-tier-premium { background: #dbeafe; color: #1d4ed8; }
+.paint-tier-economy { background: #dcfce7; color: #15803d; }
+.paint-tier-budget  { background: #f1f5f9; color: #475569; }
+.paint-finish { font-size: .8rem; color: #f97316; font-weight: 700; margin-bottom: 10px; }
+.paint-desc { font-size: .92rem; color: #475569; line-height: 1.65; }
+.paint-note { max-width: 640px; margin: 0 auto 32px; text-align: center; color: #64748b; font-size: .92rem; line-height: 1.6; }
 
 /* ── Why Us — circular icons with color hover ── */
 .why-sec { background: #f8fafc; padding: 72px 24px 80px; }
@@ -522,6 +538,7 @@ body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293
 .cfsc-icon { font-size: 1.8rem; flex-shrink: 0; }
 .cfsc-label { font-size: .68rem; font-weight: 800; color: rgba(255,255,255,.5); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 3px; }
 .cfsc-val { font-size: .95rem; font-weight: 700; color: #fff; line-height: 1.45; }
+.cfsc-val-sub { font-size: .78rem; font-weight: 500; color: rgba(255,255,255,.55); margin-top: 4px; }
 .cfs-cta-block { display: flex; flex-direction: column; gap: 20px; justify-content: center; }
 .cfs-cta-title { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900; color: #fff; line-height: 1.3; }
 .cfs-cta-sub { font-size: .95rem; color: rgba(255,255,255,.65); line-height: 1.75; }

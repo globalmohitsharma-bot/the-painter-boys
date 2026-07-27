@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import QRCode from 'qrcode';
 import LZString from 'lz-string';
 import './CustomerView.css';
@@ -244,6 +245,12 @@ export default function CustomerView() {
 
   return (
     <div className="cv-root">
+      <Helmet>
+        <title>{name ? `${name}'s Job Details` : 'Job Details'} — The Painter Boys</title>
+        <meta name="description"
+          content={`Job status${progress ? ` (${progress})` : ''}${fullAddress ? ` at ${fullAddress}` : ''} — The Painter Boys, professional home painting services.`} />
+        <meta name="robots" content="noindex" />
+      </Helmet>
       {/* ── Header ── */}
       <div className="cv-header">
         <div className="cv-header-inner">

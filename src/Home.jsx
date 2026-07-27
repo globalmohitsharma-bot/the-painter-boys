@@ -175,8 +175,16 @@ export default function Home() {
               ...GHAZIABAD_AREAS.map(a => ({ '@type': 'Place', name: `${a}, Ghaziabad` })),
               ...AREAS.map(a => ({ '@type': 'City', name: a })),
             ],
-            address: { '@type': 'PostalAddress', addressRegion: 'Delhi NCR', addressCountry: 'IN' },
+            address: {
+              '@type': 'PostalAddress',
+              streetAddress: 'KDP Grand Savanna Inner Rd, Raj Nagar Extension',
+              addressLocality: 'Ghaziabad',
+              addressRegion: 'Uttar Pradesh',
+              postalCode: '201003',
+              addressCountry: 'IN',
+            },
             geo: { '@type': 'GeoCoordinates', latitude: 28.6692, longitude: 77.4538 },
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.9', reviewCount: '120', bestRating: '5' },
             sameAs: [WA_LINK],
           })}</script>
         )}

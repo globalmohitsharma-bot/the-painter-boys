@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import Home from './Home.jsx'
+import { BlogList, BlogPost } from './Blog.jsx'
 import PBDashboard from './PBDashboard.jsx'
 import PainterBoard from './PainterBoard.jsx'
 import CustomerView from './CustomerView.jsx'
@@ -21,6 +22,8 @@ export default function App() {
           <Route path="/team" element={<Home />} />
           <Route path="/paint-types" element={<Home />} />
           <Route path="/contact" element={<Home />} />
+          <Route path="/blog" element={<BlogList />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/pb" element={<PBDashboard />} />
           <Route path="/painter" element={<PainterBoard />} />
           <Route path="/job/:code" element={<CustomerView />} />

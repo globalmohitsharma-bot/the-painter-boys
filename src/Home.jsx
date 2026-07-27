@@ -1,58 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import SiteHeader from './SiteHeader.jsx';
+import SiteFooter from './SiteFooter.jsx';
+import { SITE_URL, PHONE, WA_LINK, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
 import './Home.css';
-
-const SITE_URL = 'https://www.thepainterboys.com';
-const PHONE   = '+91 7838888509';
-const WA_LINK = 'https://wa.me/917838888509';
-const AREAS   = ['Ghaziabad', 'Noida', 'Delhi NCR', 'Haridwar', 'Dehradun'];
-// Specific Ghaziabad localities we actively target — used in visible copy and
-// structured data so local searches (e.g. "painter in Raj Nagar Extension")
-// have a matching, real on-page signal, not just a city-level mention.
-const GHAZIABAD_AREAS = ['Raj Nagar Extension', 'Raj Nagar', 'Kavi Nagar', 'RDC', 'Indirapuram', 'Vasundhara'];
-
-// Real URL per page, plus a keyword-focused title/description for search results
-// and social previews. Google's crawler executes JS and will pick these up per
-// route; crawlers/link-preview bots that don't run JS still only see the default
-// tags in index.html, since this is a client-rendered app (no server-side render).
-const PAGE_META = {
-  home: {
-    path: '/',
-    title: 'The Painter Boys — Home Painting Services in Raj Nagar Extension, Indirapuram, Kavi Nagar, Ghaziabad',
-    description: 'Expert home painting in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram & Vasundhara (Ghaziabad), plus Noida & Delhi NCR. Interior, exterior, waterproofing & premium finishes. Free on-site estimate — trusted since 2010.',
-  },
-  services: {
-    path: '/services',
-    title: 'Interior, Exterior & Waterproofing Painting Services | The Painter Boys',
-    description: 'Interior painting, exterior painting, waterproofing, royal emulsion, texture & designer finishes, putty & primer — professional painting services across Ghaziabad, Noida & Delhi NCR.',
-  },
-  about: {
-    path: '/about',
-    title: 'About Us — 10+ Years of Trusted Painting Work | The Painter Boys',
-    description: 'A decade of trust and craftsmanship painting homes, societies, hospitals, offices and temples across Delhi NCR. Zero-mess guarantee and a satisfaction promise on every job.',
-  },
-  how: {
-    path: '/how-it-works',
-    title: 'How It Works — Our Painting Process | The Painter Boys',
-    description: 'From free site consultation to colour selection, preparation, execution and final walkthrough — see how The Painter Boys deliver a stress-free painting experience.',
-  },
-  team: {
-    path: '/team',
-    title: 'Our Team — Meet The Painter Boys Leadership | The Painter Boys',
-    description: 'Meet the team behind The Painter Boys — experienced leaders in painting operations, delivery and customer service across Ghaziabad, Noida and Delhi NCR.',
-  },
-  'paint-types': {
-    path: '/paint-types',
-    title: 'Paint Types & Brands Guide — Asian Paints Royal, Tractor, Apex | The Painter Boys',
-    description: 'A guide to popular paint types we work with — Asian Paints Royal, Tractor Emulsion, Apex exterior, Royal Shyne, distemper and premium textures — and which suits your home.',
-  },
-  contact: {
-    path: '/contact',
-    title: 'Contact Us — Free Painting Estimate in Raj Nagar Ext, Indirapuram & Ghaziabad | The Painter Boys',
-    description: 'Get a free, no-obligation painting estimate in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram, Vasundhara, Noida, Delhi NCR, Haridwar or Dehradun. Call, WhatsApp, or request a callback — we respond fast.',
-  },
-};
 
 const PAINT_TYPES = [
   { name: 'Asian Paints Royal',        tier: 'Luxury',  finish: 'Smooth matt / luxury emulsion',
@@ -70,36 +22,42 @@ const PAINT_TYPES = [
 ];
 
 const QUICK_NAV = [
-  { icon:'🏠', label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#f97316' },
-  { icon:'🏗️', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#0ea5e9' },
-  { icon:'💧', label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#10b981' },
-  { icon:'👑', label:'Premium Finishes',         sub:'Royal & Luxury Paints',     accent:'#8b5cf6' },
-  { icon:'🏢', label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#f59e0b' },
-  { icon:'🕌', label:'Temples & Institutions',   sub:'All Property Types',        accent:'#ef4444' },
+  { icon:'🏠', label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#b8934a' },
+  { icon:'🏗️', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#4a6178' },
+  { icon:'💧', label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#3f6b5f' },
+  { icon:'👑', label:'Premium Finishes',         sub:'Royal & Luxury Paints',     accent:'#D4AF37' },
+  { icon:'🏢', label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#5c5650' },
+  { icon:'🕌', label:'Temples & Institutions',   sub:'All Property Types',        accent:'#6b3f52' },
 ];
 
 const SERVICES_PHOTO = [
-  { bg:'linear-gradient(135deg,#fff3e0,#ffe082,#ff8a65)', icon:'🏠', accent:'#f97316', title:'Interior Painting',
+  { bg:'linear-gradient(135deg,#1c1a17,#4a3820,#b8934a)', icon:'🏠', accent:'#b8934a', title:'Interior Painting',
     bullets:['Premium emulsion, distemper & luxury finishes','Full furniture protection — zero mess guaranteed'] },
-  { bg:'linear-gradient(135deg,#e3f2fd,#90caf9,#1565c0)', icon:'🏗️', accent:'#0ea5e9', title:'Exterior Painting',
+  { bg:'linear-gradient(135deg,#1a2128,#2d3d4a,#4a6178)', icon:'🏗️', accent:'#4a6178', title:'Exterior Painting',
     bullets:['Weather-resistant & UV-protective coatings','Surface prep, crack filling & primer included'] },
-  { bg:'linear-gradient(135deg,#e8f5e9,#a5d6a7,#2e7d32)', icon:'💧', accent:'#10b981', title:'Waterproofing',
+  { bg:'linear-gradient(135deg,#14201d,#24413a,#3f6b5f)', icon:'💧', accent:'#3f6b5f', title:'Waterproofing',
     bullets:['Eliminate seepage, dampness & wall leakages','Scientific solutions with quality materials'] },
-  { bg:'linear-gradient(135deg,#fff8e1,#ffe082,#ff6f00)', icon:'👑', accent:'#f59e0b', title:'Royal Emulsion',
+  { bg:'linear-gradient(135deg,#1c1a17,#6b4f22,#D4AF37)', icon:'👑', accent:'#D4AF37', title:'Royal Emulsion',
     bullets:['Smooth, washable, lasting premium finish','Asian Paints Royal — stays vibrant for years'] },
-  { bg:'linear-gradient(135deg,#fce4ec,#f48fb1,#ad1457)', icon:'✨', accent:'#e91e7a', title:'Texture & Designer',
+  { bg:'linear-gradient(135deg,#1e1620,#3d2a3d,#6b3f52)', icon:'✨', accent:'#6b3f52', title:'Texture & Designer',
     bullets:['Unique 3D textures and designer wall finishes','Custom patterns for a premium luxury look'] },
-  { bg:'linear-gradient(135deg,#efebe9,#d7ccc8,#8d6e63)', icon:'🔲', accent:'#8d6e63', title:'Putty & Primer',
+  { bg:'linear-gradient(135deg,#1a1a1a,#35322e,#5c5650)', icon:'🔲', accent:'#5c5650', title:'Putty & Primer',
     bullets:['Crack filling and professional wall levelling','Perfect surface prep for a flawless paint job'] },
 ];
 
 const WHY = [
-  { icon:'👷', label:'Trained Professionals',         bg:'#fff3e0', ic:'#f97316' },
-  { icon:'🔍', label:'Technical Site Evaluation',     bg:'#e3f2fd', ic:'#0ea5e9' },
-  { icon:'🎨', label:'Personalised Colour Consultation', bg:'#fce4ec', ic:'#e91e7a' },
-  { icon:'🦺', label:'Stringent Safety Protocol',     bg:'#e8f5e9', ic:'#10b981' },
-  { icon:'👁️', label:'Supervised Painting',          bg:'#f3e5f5', ic:'#8b5cf6' },
-  { icon:'⚙️', label:'Mechanized Tools',              bg:'#fff8e1', ic:'#f59e0b' },
+  { icon:'👷', label:'Trained Professionals',         bg:'rgba(184,147,74,.08)', ic:'#9c7a3c' },
+  { icon:'🔍', label:'Technical Site Evaluation',     bg:'rgba(74,97,120,.08)',  ic:'#4a6178' },
+  { icon:'🎨', label:'Personalised Colour Consultation', bg:'rgba(107,63,82,.08)', ic:'#6b3f52' },
+  { icon:'🦺', label:'Stringent Safety Protocol',     bg:'rgba(63,107,95,.08)',  ic:'#3f6b5f' },
+  { icon:'👁️', label:'Supervised Painting',          bg:'rgba(28,26,23,.06)',   ic:'#4a453e' },
+  { icon:'⚙️', label:'Mechanized Tools',              bg:'rgba(212,175,55,.1)', ic:'#9c7a3c' },
+];
+
+const TRUST_BADGES = [
+  { icon:'🎖️', title:'Asian Paints Royale Partner', desc:'Certified application of premium Asian Paints Royale & Apex ranges.' },
+  { icon:'🧹', title:'Zero-Mess Guarantee',          desc:'Full furniture & floor protection on every job — no splatters, no exceptions.' },
+  { icon:'🏆', title:'Years Trusted',                desc:'10+ years serving Ghaziabad, Noida & Delhi NCR homeowners.' },
 ];
 
 const REASONS = [
@@ -112,37 +70,43 @@ const REASONS = [
 ];
 
 const TEAM = [
-  { name:'Rajeev Kumar',    role:'Director — Delivery & Operations', img:null,                 initials:'RK', color:'#f97316',
+  { name:'Rajeev Kumar',    role:'Director — Delivery & Operations', img:null,                 initials:'RK', color:'#9c7a3c',
     bio:'With 10+ years leading painting and quality work, Rajeev heads customer relationships and operations. A passionate artist whose craftsmanship has made lasting impressions across Delhi NCR.' },
-  { name:'Sonia Gupta',     role:'Marketing & Digital Growth',        img:'/images/sonia.webp', initials:'SG', color:'#8b5cf6',
+  { name:'Sonia Gupta',     role:'Marketing & Digital Growth',        img:'/images/sonia.webp', initials:'SG', color:'#4a6178',
     bio:'With 12+ years of marketing leadership, Sonia drives The Painter Boys\' digital transformation. Former consultant for Fortune 500 companies, now helping homeowners achieve their dream spaces.' },
-  { name:'Dr. Susheel Rai', role:'Head of Operations',                img:'/images/susheel.jpg',initials:'SR', color:'#0ea5e9',
+  { name:'Dr. Susheel Rai', role:'Head of Operations',                img:'/images/susheel.jpg',initials:'SR', color:'#6b3f52',
     bio:'Overseeing operations with decades of leadership experience. His philosophy — caring for people and putting their needs first — defines The Painter Boys\' service culture throughout.' },
 ];
 
-const NAV_PAGES = [
-  ['services','Services'],['about','About Us'],['how','How It Works'],
-  ['team','Our Team'],['paint-types','Paint Types'],['contact','Contact'],
-];
+function TrustBadges() {
+  return (
+    <div className="trust-badges-sec">
+      <div className="trust-badges-grid">
+        {TRUST_BADGES.map(b => (
+          <div key={b.title} className="trust-badge">
+            <div className="trust-badge-icon" aria-hidden="true">{b.icon}</div>
+            <div>
+              <div className="trust-badge-title">{b.title}</div>
+              <div className="trust-badge-desc">{b.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const location = useLocation();
-  const [menuOpen,       setMenuOpen]       = useState(false);
-  const [scrolled,       setScrolled]       = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedSvc,    setSelectedSvc]    = useState(null);
   const [form,           setForm]           = useState({ name:'', phone:'', area:'Ghaziabad', msg:'' });
+  const [submitted,      setSubmitted]      = useState(false);
 
   // The current "page" is derived from the real URL (not local-only state),
   // so each section has its own crawlable/shareable/bookmarkable address.
   const currentPage = Object.keys(PAGE_META).find(k => PAGE_META[k].path === location.pathname) || 'home';
   const meta = PAGE_META[currentPage] || PAGE_META.home;
-
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', fn);
-    return () => window.removeEventListener('scroll', fn);
-  }, []);
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
 
@@ -150,6 +114,7 @@ export default function Home() {
     e.preventDefault();
     const msg = `Hi! I'd like a free estimate.\nName: ${form.name}\nPhone: ${form.phone}\nArea: ${form.area}${form.msg ? '\nMessage: '+form.msg : ''}`;
     window.open(`${WA_LINK}?text=${encodeURIComponent(msg)}`, '_blank');
+    setSubmitted(true);
   };
 
   return (
@@ -190,57 +155,7 @@ export default function Home() {
         )}
       </Helmet>
 
-      {/* ── Topbar + Nav (site header) ── */}
-      <header>
-      <div className={`topbar${scrolled ? ' topbar-sm' : ''}`}>
-        <div className="topbar-inner">
-          <Link to="/" className="topbar-brand" aria-label="The Painter Boys — Home">
-            <div className="topbar-brand-text">
-              <div className="topbar-name">
-                <span className="tn-the">The </span>
-                <span className="tn-p">P</span><span className="tn-a">a</span><span className="tn-i">i</span>
-                <span className="tn-n">n</span><span className="tn-t">t</span><span className="tn-e">e</span>
-                <span className="tn-r">r</span><span className="tn-sp"> </span>
-                <span className="tn-b">B</span><span className="tn-o">o</span><span className="tn-y">y</span>
-                <span className="tn-s">s</span>
-              </div>
-              <div className="topbar-sub">⭐ Trusted Since 2010</div>
-            </div>
-          </Link>
-          <a className="topbar-phone" href={`tel:${PHONE}`}>
-            <span className="tp-icon">📞</span>
-            <span className="tp-num">+91 78388 88509</span>
-          </a>
-          <a className="topbar-cta" href={WA_LINK} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
-          <button className="nav-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
-            {menuOpen ? '✕' : '☰'}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Nav bar ── */}
-      <nav className={`nav${scrolled ? ' nav-scrolled' : ''}`} style={{ top: scrolled ? '50px' : '60px' }}>
-        <div className="nav-inner">
-          {NAV_PAGES.map(([id, label]) => (
-            <Link key={id} to={PAGE_META[id].path} className={`nav-link${currentPage === id ? ' nav-link-active' : ''}`}>
-              {label}
-            </Link>
-          ))}
-          <a className="nav-portal" href="/pb">🔐 Staff Portal</a>
-        </div>
-      </nav>
-
-      {/* ── Mobile overlay ── */}
-      <div className={`mobile-overlay${menuOpen ? ' open' : ''}`}>
-        <Link to="/" className="mo-link mo-home" onClick={() => setMenuOpen(false)}>🏠 Home</Link>
-        {NAV_PAGES.map(([id, label]) => (
-          <Link key={id} to={PAGE_META[id].path} className={`mo-link${currentPage === id ? ' mo-active' : ''}`}
-            onClick={() => setMenuOpen(false)}>{label}</Link>
-        ))}
-        <a className="mo-link mo-portal" href="/pb" onClick={() => setMenuOpen(false)}>🔐 Staff Portal</a>
-        <a className="mo-link mo-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}>💬 WhatsApp Us</a>
-      </div>
-      </header>
+      <SiteHeader />
 
       {/* ── PAGE CONTENT ── */}
       <main key={currentPage} className="page-fade">
@@ -277,22 +192,36 @@ export default function Home() {
 
               <div className="hero-form-card">
                 <div className="hfc-head">Let Our Experts Help You</div>
-                <form className="hfc-form" onSubmit={handleSubmit}>
-                  <input className="hfc-input" placeholder="Enter Your Name *" required
-                    value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} />
-                  <input className="hfc-input" placeholder="Enter Your Phone No *" type="tel" required
-                    value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
-                  <select className="hfc-input" value={form.area}
-                    onChange={e => setForm(f => ({...f, area: e.target.value}))}>
-                    {AREAS.map(a => <option key={a}>{a}</option>)}
-                  </select>
-                  <textarea className="hfc-input hfc-ta" placeholder="Your message (optional)" rows={3}
-                    value={form.msg} onChange={e => setForm(f => ({...f, msg: e.target.value}))} />
-                  <label className="hfc-check"><input type="checkbox" defaultChecked /> Get updates on WhatsApp</label>
-                  <button type="submit" className="hfc-submit">Get Free Estimate →</button>
-                </form>
+                {submitted ? (
+                  <div className="hfc-success">
+                    <div className="hfc-success-icon" aria-hidden="true">✅</div>
+                    <div className="hfc-success-title">Request Sent!</div>
+                    <p className="hfc-success-sub">
+                      We've opened WhatsApp with your details — send the message and our team will reply shortly.
+                    </p>
+                    <button type="button" className="hfc-submit" style={{marginTop:18}}
+                      onClick={() => setSubmitted(false)}>Send Another Request</button>
+                  </div>
+                ) : (
+                  <form className="hfc-form" onSubmit={handleSubmit}>
+                    <input className="hfc-input" placeholder="Enter Your Name *" required
+                      value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} />
+                    <input className="hfc-input" placeholder="Enter Your Phone No *" type="tel" required
+                      value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
+                    <select className="hfc-input" value={form.area}
+                      onChange={e => setForm(f => ({...f, area: e.target.value}))}>
+                      {AREAS.map(a => <option key={a}>{a}</option>)}
+                    </select>
+                    <textarea className="hfc-input hfc-ta" placeholder="Your message (optional)" rows={3}
+                      value={form.msg} onChange={e => setForm(f => ({...f, msg: e.target.value}))} />
+                    <label className="hfc-check"><input type="checkbox" defaultChecked /> Get updates on WhatsApp</label>
+                    <button type="submit" className="hfc-submit">Get Free Estimate →</button>
+                  </form>
+                )}
               </div>
             </section>
+
+            <TrustBadges />
 
             {/* Trust banner */}
             <div className="trust-banner">
@@ -366,6 +295,8 @@ export default function Home() {
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
+
+              <TrustBadges />
 
               {/* Why Us circles */}
               <div className="why-sec">
@@ -644,60 +575,7 @@ export default function Home() {
 
       </main>{/* end page-fade */}
 
-      {/* ── Footer ── */}
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-grid">
-            <div className="footer-col footer-brand-col">
-              <Link to="/" className="footer-brand-name">
-                <span className="tn-the">The </span>
-                <span className="tn-p">P</span><span className="tn-a">a</span><span className="tn-i">i</span>
-                <span className="tn-n">n</span><span className="tn-t">t</span><span className="tn-e">e</span>
-                <span className="tn-r">r</span><span className="tn-sp"> </span>
-                <span className="tn-b">B</span><span className="tn-o">o</span><span className="tn-y">y</span>
-                <span className="tn-s">s</span>
-              </Link>
-              <p className="footer-tagline">Home Painting Professionals<br/>Do it right, Do it once.</p>
-              <a className="footer-phone" href={`tel:${PHONE}`}>📞 +91 78388 88509</a>
-              <a className="footer-wa-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 WhatsApp Us</a>
-            </div>
-            <div className="footer-col">
-              <div className="footer-col-title">Our Services</div>
-              <div className="footer-col-links">
-                {['Interior Painting','Exterior Painting','Waterproofing','Royal Emulsion','Texture & Designer','Putty & Primer'].map(s => (
-                  <Link key={s} to="/services" className="footer-link">{s}</Link>
-                ))}
-              </div>
-            </div>
-            <div className="footer-col">
-              <div className="footer-col-title">Company</div>
-              <div className="footer-col-links">
-                {NAV_PAGES.map(([id,label]) => (
-                  <Link key={id} to={PAGE_META[id].path} className="footer-link">{label}</Link>
-                ))}
-              </div>
-            </div>
-            <div className="footer-col">
-              <div className="footer-col-title">Areas Served</div>
-              <div className="footer-col-links">
-                {['Ghaziabad','Noida','Delhi NCR','Haridwar','Dehradun'].map(a => (
-                  <span key={a} className="footer-area">{a}</span>
-                ))}
-              </div>
-              <div className="footer-col-title" style={{marginTop:20}}>We Paint</div>
-              <div className="footer-prop-types">
-                Houses · Flats · Villas · Societies · Hospitals · Offices · Temples
-              </div>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <div className="footer-copy">© 2026 The Painter Boys · All Rights Reserved</div>
-            <div className="footer-bottom-links">
-              <a className="footer-link" href="/pb">Staff Portal</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <a className="wa-fab" href={WA_LINK} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">💬</a>
 

@@ -160,20 +160,32 @@ the hard way:
   token has to come from the user** (Azure Portal → the Static Web App →
   Overview → Manage deployment token), or the user runs the deploy
   themselves. Don't spend time trying to work around this.
-- **If the Cosmos DB work ends up sharing that same Azure account/resource
-  group** (`pilotai` / `aiinterviewbotPilot_group`) rather than a fresh
-  one — not yet decided for this project, needs confirming before
-  creating anything — two things from that project's experience apply
-  directly: (1) **every container/database name needs a distinct prefix**
-  (that project uses `FBPR_`; this one would need its own, e.g. `PB_`) so
-  nothing collides with the other tenants already on that account
-  (`InterviewBotAuth`, `TeasHarnessCosmos`, `FBPR_*`); (2) **the account's
-  total throughput is shared and was already near its cap** (raised to
-  1400 RU/s across three projects) — check remaining headroom before
-  provisioning a new database, don't assume capacity is free.
+- **Decided (2026-08-19): this project shares the `pilotai` Cosmos account
+  / `aiinterviewbotPilot_group` resource group**, rather than getting its
+  own — same account already used by `FindBuyRentProtect`
+  (`FBPR_*`), `InterviewBotAuth`, and `TeasHarnessCosmos`. Two things
+  follow directly from that:
+  1. **Every container/database name for this project must use its own
+     distinct prefix** — not yet finalized, but `PB_` (matching the
+     `FBPR_` convention already in use) is the natural choice; confirm
+     the exact prefix before creating anything, then use it consistently.
+  2. **The account's total throughput is shared and was already near its
+     cap** before this project joins — raised once already, to 1400 RU/s,
+     split across the three existing tenants. **Check actual remaining
+     headroom (`az cosmosdb show` / portal metrics) before provisioning a
+     new database here** — don't assume capacity is free just because the
+     last raise succeeded; a second raise may be needed, and that's worth
+     flagging to the user rather than silently requesting one.
+  3. If a database is created here, follow the shared-throughput sequence
+     that worked for `FBPR_SocietyEstateDb`: create the database *with*
+     `--throughput` on the shared pool first, then create containers
+     *without* `--throughput` so they draw from that pool — creating a
+     container before the database has shared throughput set caused it to
+     silently grab its own dedicated allocation last time (had to delete
+     and recreate to fix).
 - **If a backend ends up on that same shared App Service plan**
-  (`ASP-aiinterviewbotPilotgroup-9918`) — again, not yet decided here —
-  that plan also hosts a **live production app** for a totally unrelated
+  (`ASP-aiinterviewbotPilotgroup-9918`) — separate decision, not made yet
+  — that plan also hosts a **live production app** for a totally unrelated
   project (`aiinterviewbot.com`). Any `az webapp` command against it needs
   the `--name` triple-checked before running, every time.
 - **Azure CLI from Git Bash mangles leading-slash arguments** (e.g.
@@ -188,9 +200,9 @@ the hard way:
   separately-approved step, which is the same spirit — worth being just
   as strict about it here as that project is.
 
-These are notes, not decisions — whether this project actually shares that
-Cosmos account/App Service plan, or gets its own, hasn't been confirmed
-yet. Update this section once that's settled.
+Cosmos account sharing is now decided (above); the App Service plan
+question is separate and still open — update this section once that's
+settled too.
 
 ## ⚠️ `ThePainterBoybeforemovingtoCosmos` — do not update without explicit triple confirmation
 

@@ -286,7 +286,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   background: rgba(242,135,31,.12); border: 1px solid rgba(242,135,31,.35);
   color: var(--gold-soft); font-size: .8rem; font-weight: 700; letter-spacing: .06em;
 }
-.hero-title { font-family: var(--font-display); font-weight: 700; letter-spacing: .005em; margin-bottom: 14px; }
+.hero-title { font-family: var(--font-display); font-weight: 700; letter-spacing: .005em; margin-bottom: 14px; text-align: center; }
 .hero-title-colorful {
   display: block; font-size: clamp(2.2rem, 5vw, 4.1rem); line-height: 1.15;
   background: linear-gradient(90deg, #ffffff 0%, var(--gold) 32%, var(--gold-soft) 50%, var(--gold) 68%, #ffffff 100%);

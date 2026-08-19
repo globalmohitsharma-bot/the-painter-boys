@@ -283,11 +283,11 @@ export default function Home() {
                   <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
-                <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
-                <p className="hero-cities hero-cities-local">Serving {GHAZIABAD_AREAS.join(' · ')} in Ghaziabad</p>
                 <p className="hero-desc">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
+                <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
+                <p className="hero-cities hero-cities-local">Serving {GHAZIABAD_AREAS.join(' · ')} in Ghaziabad</p>
                 <div className="hero-stats">
                   <div className="hero-stat"><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-sep" />

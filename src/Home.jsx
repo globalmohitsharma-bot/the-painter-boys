@@ -292,7 +292,7 @@ export default function Home() {
                   <div className="hero-stat-card"><Icon name="home" size={20} className="hero-stat-icon" /><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-card"><Icon name="clock" size={20} className="hero-stat-icon" /><strong>10+</strong><span>Years Trusted</span></div>
                   <div className="hero-stat-card"><Icon name="pin" size={20} className="hero-stat-icon" /><strong>5</strong><span>Cities Covered</span></div>
-                  <div className="hero-stat-card"><Icon name="star" size={20} className="hero-stat-icon" /><strong>4.9</strong><span>Customer Rating</span></div>
+                  <div className="hero-stat-card"><Icon name="badgeCheck" size={20} className="hero-stat-icon" /><strong>100%</strong><span>Satisfaction</span></div>
                 </div>
                 <div className="hero-presence">
                   <div className="hero-presence-head"><Icon name="pin" size={14} />We Proudly Serve</div>

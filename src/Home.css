@@ -256,7 +256,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   background: linear-gradient(90deg, #ffffff 0%, #f2871f 22%, #ffffff 42%, #7c3aed 62%, #ffffff 82%, #0ea5a8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.hero-accent { color: var(--ivory); font-weight: 800; }
+.hero-accent { color: var(--ivory); font-weight: 800; font-size: .6em; display: inline-block; margin-top: 4px; }
 .hero-cities { font-size: .9rem; color: rgba(255,255,255,.5); letter-spacing: .05em; margin-bottom: 18px; font-weight: 500; }
 .hero-cities-local { font-size: .78rem; margin-top: -12px; opacity: .75; }
 .hero-desc { font-size: 1rem; color: rgba(255,255,255,.72); line-height: 1.75; margin-bottom: 32px; }

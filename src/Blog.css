@@ -10,8 +10,14 @@
 .blog-card-excerpt { font-size: .9rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 14px; }
 .blog-card-read { font-size: .85rem; font-weight: 700; color: var(--gold-deep); }
 
-.blog-back-link { display: inline-block; color: rgba(255,255,255,.7); font-size: .85rem; font-weight: 700; text-decoration: none; margin-bottom: 14px; }
-.blog-back-link:hover { color: var(--gold-soft); }
+.blog-back-link {
+  display: flex; align-items: center; gap: 6px; width: fit-content;
+  color: rgba(255,255,255,.75); font-size: .85rem; font-weight: 700; text-decoration: none;
+  margin-bottom: 18px; padding: 7px 14px; border-radius: 20px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+  transition: background .2s, border-color .2s, color .2s;
+}
+.blog-back-link:hover { color: var(--gold-soft); background: rgba(242,135,31,.12); border-color: rgba(242,135,31,.35); }
 
 .blog-post-body { max-width: 720px; margin: 0 auto; }
 .blog-post-body p { font-size: 1rem; color: var(--ink-soft); line-height: 1.8; margin-bottom: 18px; }

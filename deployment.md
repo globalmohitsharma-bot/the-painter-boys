@@ -229,7 +229,38 @@ equivalent to wire it into until one exists:
   separate. Needs an explicit choice before wiring in either way.
 
 This section stays reference-only until a backend actually exists here to
-consume it.
+consume it — **except the Google OAuth Client ID**, which the frontend
+now actually consumes (below).
+
+### Google Sign-In (BottomNav.jsx) — real code, not yet configured (2026-08-19)
+
+The mobile bottom nav's "My Projects" / "Profile" tabs open a real Google
+Identity Services sign-in button (Google's own `renderButton`, not a mock)
+— see [src/BottomNav.jsx](src/BottomNav.jsx). It's genuinely non-functional
+right now by design (the user explicitly chose "build the real button now,
+wire the Client ID later" over a fake "coming soon" placeholder):
+
+- Reads `import.meta.env.VITE_GOOGLE_CLIENT_ID` — **not set anywhere**, so
+  the button renders (the GIS script loads fine with no client ID) but
+  Google will reject the sign-in attempt until a real one is supplied.
+- **To make it work**: set `VITE_GOOGLE_CLIENT_ID` as a build-time env var
+  in Netlify (Site configuration → Environment variables) — Vite only
+  inlines `VITE_*` vars at build time, so this needs a rebuild/redeploy
+  after adding it, not just a config change.
+- **Which Client ID to use is still an open choice** — reuse the shared
+  one from the `pilotai`-account projects (see above) or create one
+  specific to `thepainterboys.com`. If reusing the shared one, this
+  domain's origins (`https://www.thepainterboys.com`,
+  `http://localhost:5173`, plus whatever the Azure test URL ends up being)
+  need adding to that OAuth client's **Authorized JavaScript origins** in
+  Google Cloud Console first — same process documented in the sibling
+  project's notes.
+- **What sign-in actually does today**: decodes the ID token client-side
+  (name/email/photo) to show a signed-in state and stores it in
+  `localStorage` — **this is display-only, not verified/secure auth**
+  (verifying the token's signature needs a backend, which doesn't exist
+  yet). Don't treat this as real authentication for anything sensitive
+  until the backend verifies it server-side.
 
 ## ⚠️ `ThePainterBoybeforemovingtoCosmos` — do not update without explicit triple confirmation
 

@@ -9,6 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Google Identity Services — client-side "Sign in with Google" for the
+         customer portal (BottomNav.jsx). Loading the script here is harmless
+         with no client ID configured yet; the button itself won't work until
+         VITE_GOOGLE_CLIENT_ID is set — see deployment.md. -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PainterBoys" />

@@ -1,0 +1,57 @@
+/* ── Bottom portal nav (mobile) — grey icons, replaces the old call/WhatsApp bar ── */
+.bn-bar { display: none; }
+
+@media (max-width: 768px) {
+  .bn-bar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 300;
+    background: var(--ivory); border-top: 1px solid var(--hairline);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px 8px; background: none; border: none; cursor: pointer;
+  color: var(--ink-faint); font-size: .66rem; font-weight: 700; letter-spacing: .02em;
+  text-decoration: none; font-family: inherit; transition: color .2s;
+}
+.bn-item:hover, .bn-item:active { color: var(--gold-deep); }
+.bn-avatar { width: 21px; height: 21px; border-radius: 50%; object-fit: cover; }
+
+/* ── Sign-in modal ── */
+.bn-modal-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(8,22,39,.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.bn-modal {
+  background: var(--ivory); border-radius: 14px; padding: 36px 30px;
+  max-width: 360px; width: 100%; text-align: center; position: relative;
+  border: 1px solid var(--hairline); box-shadow: 0 40px 100px rgba(0,0,0,.4);
+  animation: bnPop .25s ease;
+}
+@keyframes bnPop { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.bn-modal-close {
+  position: absolute; top: 14px; right: 14px;
+  background: var(--parchment); border: 1px solid var(--hairline); border-radius: 50%;
+  width: 30px; height: 30px; cursor: pointer; color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center; transition: background .2s;
+}
+.bn-modal-close:hover { background: var(--hairline); }
+.bn-modal-icon {
+  width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 14px;
+  background: rgba(242,135,31,.1); color: var(--gold-deep);
+  display: flex; align-items: center; justify-content: center;
+}
+.bn-modal-title { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.bn-modal-sub { font-size: .88rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 20px; }
+.bn-gsi-btn { display: flex; justify-content: center; min-height: 44px; }
+.bn-modal-warn { font-size: .76rem; color: var(--ink-faint); margin-top: 16px; line-height: 1.5; }
+.bn-modal-note { font-size: .85rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 20px; }
+.bn-modal-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin: 0 auto 14px; display: block; }
+.bn-modal-avatar-fallback { background: var(--charcoal); color: var(--ivory); display: flex; align-items: center; justify-content: center; }
+.bn-signout {
+  background: none; border: 1.5px solid var(--hairline); color: var(--ink-soft);
+  padding: 9px 22px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; transition: border-color .2s, color .2s;
+}
+.bn-signout:hover { border-color: var(--gold); color: var(--gold-deep); }

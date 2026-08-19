@@ -122,6 +122,14 @@ const ICONS = {
   },
   menu: { vb: '0 0 24 24', mode: 'stroke', body: <path d="M3 6h18M3 12h18M3 18h18" /> },
   close: { vb: '0 0 24 24', mode: 'stroke', body: <path d="M6 6l12 12M18 6 6 18" /> },
+  folder: {
+    vb: '0 0 24 24', mode: 'stroke',
+    body: <path d="M3 6.5a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5Z" />,
+  },
+  user: {
+    vb: '0 0 24 24', mode: 'stroke',
+    body: (<><circle cx="12" cy="8" r="3.5" /><path d="M5 20.5v-1a7 7 0 0 1 14 0v1" /></>),
+  },
   chat: {
     vb: '0 0 24 24', mode: 'stroke',
     body: <path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H9.5L5 21v-4H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z" />,

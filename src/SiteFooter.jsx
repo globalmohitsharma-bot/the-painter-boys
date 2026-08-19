@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import LeadBot from './LeadBot.jsx';
+import BottomNav from './BottomNav.jsx';
 import { PHONE, WA_LINK, PAGE_META, NAV_PAGES } from './siteConfig.js';
 
 export default function SiteFooter() {
@@ -60,13 +61,7 @@ export default function SiteFooter() {
       </div>
     </footer>
 
-    <div className="mobile-action-bar">
-      <a className="mab-call" href={`tel:${PHONE}`}><Icon name="phone" size={16} />Call Now</a>
-      <a className="mab-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
-        <span className="mab-wa-dot" aria-hidden="true" /><Icon name="whatsapp" size={16} />WhatsApp Quote
-      </a>
-    </div>
-
+    <BottomNav />
     <LeadBot />
     </>
   );

@@ -204,6 +204,33 @@ Cosmos account sharing is now decided (above); the App Service plan
 question is separate and still open — update this section once that's
 settled too.
 
+### Reference config values pulled from FindBuyRentProtect (2026-08-19)
+
+Checked that project's `backend/appsettings*.json` for anything to bring
+over. **No actual secret/key exists to copy** — Cosmos auth there is
+Azure AD only, by design (no `AccountKey` field at all — see the gotcha
+above on why), and the one real secret that does exist there (SMTP
+password) is blank/unset, so there's nothing sensitive in play either way.
+What follows is plain, non-sensitive config, recorded here for reference
+since **this project has no backend yet** — there's no `appsettings.json`
+equivalent to wire it into until one exists:
+
+- **Cosmos `AccountEndpoint`** (same for any database on the shared
+  account): `https://pilotai.documents.azure.com:443/`
+- **This project's `DatabaseName`**, once created, should follow the
+  `PB_` prefix convention agreed above — not created yet.
+- **Google OAuth Client ID already in use across projects on this
+  account**: `761494778320-lu30acdh3t704jisnc2hj1t24jkqhldp.apps.googleusercontent.com`
+  ("TeasHarness Web" client, shared/additive — see the sibling project's
+  notes on adding a new origin to an existing client vs. creating a new
+  one). Not necessarily the right choice for this project's Google
+  sign-in — reusing it is an option, not a decision; a project-specific
+  OAuth client is equally valid and keeps origins/consent-screen branding
+  separate. Needs an explicit choice before wiring in either way.
+
+This section stays reference-only until a backend actually exists here to
+consume it.
+
 ## ⚠️ `ThePainterBoybeforemovingtoCosmos` — do not update without explicit triple confirmation
 
 This branch is a **parked, frozen snapshot** of `master` taken on 2026-08-19,

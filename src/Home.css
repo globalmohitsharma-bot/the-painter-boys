@@ -270,7 +270,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 }
 .hero-accent { display: block; color: var(--ivory); font-weight: 800; font-size: clamp(1.3rem, 2.6vw, 2rem); line-height: 1.25; margin-top: 6px; }
 .hero-cities-local { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: 10px; }
-.hero-desc { font-size: 1rem; color: rgba(255,253,248,.72); line-height: 1.75; margin-bottom: 32px; }
+.hero-desc { font-size: .82rem; color: rgba(255,253,248,.65); line-height: 1.5; margin-bottom: 24px; max-width: 480px; }
 .hero-stats { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
 
 .hero-presence {
@@ -739,6 +739,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .hero { text-align: center; padding: 90px 20px 48px; }
   .hero-stats { justify-content: center; }
   .hero-home-btns { justify-content: center; }
+  .hero-desc { max-width: none; }
   /* Feature strip */
   .fi { min-width: 45%; border-right: none; border-bottom: 1px solid var(--hairline); }
   .fi:nth-child(odd) { border-right: 1px solid var(--hairline); }

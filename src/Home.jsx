@@ -286,8 +286,6 @@ export default function Home() {
                 <p className="hero-desc">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
-                <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
-                <p className="hero-cities hero-cities-local">Serving {GHAZIABAD_AREAS.join(' · ')} in Ghaziabad</p>
                 <div className="hero-stats">
                   <div className="hero-stat"><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-sep" />
@@ -296,6 +294,15 @@ export default function Home() {
                   <div className="hero-stat"><strong>5</strong><span>Cities Covered</span></div>
                   <div className="hero-stat-sep" />
                   <div className="hero-stat"><strong><Icon name="star" size={16} style={{ marginRight: 3, verticalAlign: '-2px' }} />4.9</strong><span>Customer Rating</span></div>
+                </div>
+                <div className="hero-presence">
+                  <div className="hero-presence-head"><Icon name="pin" size={14} />We Proudly Serve</div>
+                  <div className="hero-presence-chips">
+                    {['Ghaziabad', 'Noida', 'Delhi', 'Haridwar', 'Dehradun'].map(c => (
+                      <span key={c} className="hero-presence-chip">{c}</span>
+                    ))}
+                  </div>
+                  <p className="hero-cities-local">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</p>
                 </div>
                 <div className="hero-home-btns">
                   <Link to="/services" className="btn-primary">Our Services →</Link>

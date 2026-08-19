@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import AccountModal from './AccountModal.jsx';
+import useGoogleAccount from './useGoogleAccount.js';
 import { PHONE, WA_LINK, PAGE_META, NAV_PAGES } from './siteConfig.js';
+import './BottomNav.css';
 
 // Shared top bar + nav, used identically by Home.jsx and Blog.jsx so every
 // page on the site (marketing pages and blog posts alike) has the same
@@ -10,6 +13,8 @@ export default function SiteHeader() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { user, handleCredential, signOut } = useGoogleAccount();
 
   const currentPage = Object.keys(PAGE_META).find(k => PAGE_META[k].path === location.pathname) || 'home';
 
@@ -40,12 +45,26 @@ export default function SiteHeader() {
             <span className="tp-icon"><Icon name="phone" size={16} /></span>
             <span className="tp-num">+91 78388 88509</span>
           </a>
+          <button type="button" className="topbar-account" onClick={() => setAccountOpen(true)} aria-label="Sign in / My account">
+            {user?.picture
+              ? <img src={user.picture} alt="" className="topbar-account-avatar" referrerPolicy="no-referrer" />
+              : <Icon name="user" size={17} />}
+          </button>
           <a className="topbar-cta" href={WA_LINK} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
           <button className="nav-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
             <Icon name={menuOpen ? 'close' : 'menu'} size={22} />
           </button>
         </div>
       </div>
+
+      <AccountModal
+        open={accountOpen}
+        tab="profile"
+        onClose={() => setAccountOpen(false)}
+        user={user}
+        onCredential={handleCredential}
+        onSignOut={signOut}
+      />
 
       <nav className={`nav${scrolled ? ' nav-scrolled' : ''}`} style={{ top: scrolled ? '50px' : '60px' }}>
         <div className="nav-inner">

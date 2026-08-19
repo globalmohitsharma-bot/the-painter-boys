@@ -1,0 +1,79 @@
+import { useEffect, useRef, useState } from 'react';
+import Icon from './Icon.jsx';
+
+// Google Identity Services client ID — not set yet. The sign-in button below
+// is real (Google's own renderButton, not a mock), but Google will reject it
+// until a real client ID registered for this domain is supplied at build
+// time via VITE_GOOGLE_CLIENT_ID. See deployment.md for the setup this needs.
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+// Shared sign-in panel used by both the desktop header account icon
+// (SiteHeader.jsx) and the mobile bottom nav (BottomNav.jsx) — same modal,
+// same Google button, just triggered from two different places.
+export default function AccountModal({ open, tab, onClose, user, onCredential, onSignOut }) {
+  const buttonRef = useRef(null);
+  const [gsiReady, setGsiReady] = useState(false);
+
+  useEffect(() => {
+    if (!open || user) return;
+    let cancelled = false;
+    let attempts = 0;
+    const tryInit = () => {
+      if (cancelled) return;
+      if (!window.google?.accounts?.id) {
+        attempts += 1;
+        if (attempts < 40) { setTimeout(tryInit, 150); }
+        return;
+      }
+      setGsiReady(true);
+      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential });
+      if (buttonRef.current) {
+        buttonRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          theme: 'outline', size: 'large', width: 260, text: 'signin_with',
+        });
+      }
+    };
+    tryInit();
+    return () => { cancelled = true; };
+  }, [open, user, onCredential]);
+
+  if (!open) return null;
+
+  return (
+    <div className="bn-modal-overlay" onClick={onClose}>
+      <div className="bn-modal" onClick={e => e.stopPropagation()}>
+        <button className="bn-modal-close" onClick={onClose} aria-label="Close"><Icon name="close" size={16} /></button>
+
+        {user ? (
+          <div className="bn-signed-in">
+            {user.picture
+              ? <img src={user.picture} alt="" className="bn-modal-avatar" referrerPolicy="no-referrer" />
+              : <div className="bn-modal-avatar bn-modal-avatar-fallback"><Icon name="user" size={28} /></div>}
+            <h3 className="bn-modal-title">Welcome, {user.name?.split(' ')[0]}</h3>
+            <p className="bn-modal-sub">{user.email}</p>
+            <p className="bn-modal-note">
+              {tab === 'projects'
+                ? 'Your project dashboard (photos, progress, past work) is coming soon — this account will be linked to your jobs automatically once it\'s live.'
+                : 'Full profile management is coming soon.'}
+            </p>
+            <button className="bn-signout" onClick={onSignOut}>Sign out</button>
+          </div>
+        ) : (
+          <div className="bn-signin">
+            <div className="bn-modal-icon"><Icon name={tab === 'projects' ? 'folder' : 'user'} size={26} /></div>
+            <h3 className="bn-modal-title">{tab === 'projects' ? 'My Projects' : 'My Profile'}</h3>
+            <p className="bn-modal-sub">Sign in with Google to see your painting projects, photos, and progress here.</p>
+            <div ref={buttonRef} className="bn-gsi-btn" />
+            {!GOOGLE_CLIENT_ID && (
+              <p className="bn-modal-warn">Sign-in isn't fully configured on this deployment yet — the button above won't complete until a Google Client ID is added.</p>
+            )}
+            {GOOGLE_CLIENT_ID && !gsiReady && (
+              <p className="bn-modal-warn">Loading Google Sign-In…</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

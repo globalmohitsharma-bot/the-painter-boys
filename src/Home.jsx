@@ -279,13 +279,10 @@ export default function Home() {
                   <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
-                <div className="hero-badge">
-                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-                  4.9 Rating · 2000+ Happy Homeowners
-                </div>
-                <p className="hero-desc">
+                <p className="hero-desc hero-desc-full">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
+                <p className="hero-desc hero-desc-short">Expert painting, honest advice, zero hassle.</p>
                 <div className="hero-stats">
                   <div className="hero-stat"><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-sep" />
@@ -294,6 +291,15 @@ export default function Home() {
                   <div className="hero-stat"><strong>5</strong><span>Cities Covered</span></div>
                   <div className="hero-stat-sep" />
                   <div className="hero-stat"><strong><Icon name="star" size={16} style={{ marginRight: 3, verticalAlign: '-2px' }} />4.9</strong><span>Customer Rating</span></div>
+                </div>
+                <div className="hero-badge">
+                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+                  4.9 Rating · 2000+ Happy Homeowners
+                </div>
+                <div className="hero-home-btns">
+                  <Link to="/services" className="btn-primary">Our Services →</Link>
+                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
+                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
                 </div>
                 <div className="hero-presence">
                   <div className="hero-presence-head"><Icon name="pin" size={14} />We Proudly Serve</div>
@@ -304,15 +310,25 @@ export default function Home() {
                   </div>
                   <p className="hero-cities-local">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</p>
                 </div>
-                <div className="hero-home-btns">
-                  <Link to="/services" className="btn-primary">Our Services →</Link>
-                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
-                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
-                </div>
               </div>
             </section>
 
             <TrustBadges />
+
+            {/* Quick service nav cards */}
+            <div className="home-quick-nav container">
+              <h2 className="hqn-title">What Can We Do For You?</h2>
+              <div className="hqn-grid">
+                {QUICK_NAV.map(c => (
+                  <Link key={c.label} to={c.to} className="hqn-card" style={{'--card-accent': c.accent}}>
+                    <div className="hqn-icon"><Icon name={c.icon} size={34} /></div>
+                    <div className="hqn-label">{c.label}</div>
+                    <div className="hqn-sub">{c.sub}</div>
+                    <div className="hqn-arrow" aria-hidden="true">→</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             {/* Trust banner */}
             <div className="trust-banner">
@@ -330,21 +346,6 @@ export default function Home() {
                     <span className="fi-label">{f.label}</span>
                   </div>
                 ))}
-            </div>
-
-            {/* Quick service nav cards */}
-            <div className="home-quick-nav container">
-              <h2 className="hqn-title">What Can We Do For You?</h2>
-              <div className="hqn-grid">
-                {QUICK_NAV.map(c => (
-                  <Link key={c.label} to={c.to} className="hqn-card" style={{'--card-accent': c.accent}}>
-                    <div className="hqn-icon"><Icon name={c.icon} size={34} /></div>
-                    <div className="hqn-label">{c.label}</div>
-                    <div className="hqn-sub">{c.sub}</div>
-                    <div className="hqn-arrow" aria-hidden="true">→</div>
-                  </Link>
-                ))}
-              </div>
             </div>
 
             <FeaturedPaints />

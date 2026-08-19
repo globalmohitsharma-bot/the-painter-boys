@@ -306,9 +306,20 @@ export default function Home() {
                   <p className="hero-cities-local">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</p>
                 </div>
                 <div className="hero-home-btns">
-                  <Link to="/services" className="btn-primary">Our Services →</Link>
-                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
-                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
+                  <Link to="/services" className="btn-primary">
+                    <span className="hero-btn-full">Our Services →</span>
+                    <span className="hero-btn-short">Services</span>
+                  </Link>
+                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
+                    <Icon name="whatsapp" size={17} />
+                    <span className="hero-btn-full">WhatsApp Us</span>
+                    <span className="hero-btn-short">WhatsApp</span>
+                  </a>
+                  <a className="btn-call-hero" href={`tel:${PHONE}`}>
+                    <Icon name="phone" size={17} />
+                    <span className="hero-btn-full">{PHONE}</span>
+                    <span className="hero-btn-short">Call</span>
+                  </a>
                 </div>
               </div>
             </section>

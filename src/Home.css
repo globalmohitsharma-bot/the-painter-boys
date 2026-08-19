@@ -302,6 +302,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .hero-stat span { font-size: .7rem; color: rgba(255,255,255,.45); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
 .hero-stat-sep { width: 1px; height: 34px; background: rgba(242,135,31,.2); }
 .hero-home-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+.hero-btn-short { display: none; }
 .btn-call-hero {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 14px 28px; background: rgba(255,255,255,.06); color: var(--ivory);
@@ -747,11 +748,22 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .nav { display: none; }
   /* Hero */
   .hero { text-align: center; padding: 90px 20px 48px; }
-  .hero-stats { justify-content: center; }
-  .hero-home-btns { justify-content: center; }
   .hero-desc { max-width: none; }
   .hero-desc-full { display: none; }
   .hero-desc-short { display: block; }
+  /* Stats: compact enough to stay on one line */
+  .hero-stats { justify-content: center; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; }
+  .hero-stat strong { font-size: 1.15rem; }
+  .hero-stat span { font-size: .52rem; letter-spacing: .03em; }
+  .hero-stat-sep { height: 24px; }
+  /* Buttons: short labels, compact enough to stay on one line */
+  .hero-home-btns { justify-content: center; flex-wrap: nowrap; gap: 6px; }
+  .hero-btn-full { display: none; }
+  .hero-btn-short { display: inline; }
+  .hero-home-btns .btn-primary, .hero-home-btns .btn-wa, .hero-home-btns .btn-call-hero {
+    padding: 10px 10px; font-size: .74rem; gap: 4px; flex: 1; justify-content: center; white-space: nowrap;
+  }
+  .hero-home-btns svg { width: 13px; height: 13px; }
   /* Feature strip */
   .fi { min-width: 45%; border-right: none; border-bottom: 1px solid var(--hairline); }
   .fi:nth-child(odd) { border-right: 1px solid var(--hairline); }

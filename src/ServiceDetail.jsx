@@ -32,7 +32,7 @@ export default function ServiceDetail() {
   }
 
   const title = `${service.title} — The Painter Boys`;
-  const description = service.detail.slice(0, 155);
+  const description = service.detail[0].slice(0, 155);
 
   return (
     <div className="home">
@@ -56,19 +56,23 @@ export default function ServiceDetail() {
             </div>
           </div>
           <div className="page-content-white">
-            <div className="container section svc-detail-body">
-              <div className="svc-detail-photo" style={{ background: service.bg }}>
-                <Icon name={service.icon} size={56} style={{ color: '#fffdf8' }} />
-              </div>
-              <p className="svc-detail-text">{service.detail}</p>
-              <ul className="svc-modal-bullets">
-                {service.bullets.map(b => <li key={b}>{b}</li>)}
-              </ul>
-              <div className="sec-cta">
-                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">
+            <div className="container section svc-detail-grid">
+              <aside className="svc-detail-media">
+                <div className="svc-detail-photo" style={{ background: service.bg }}>
+                  <Icon name={service.icon} size={56} style={{ color: '#fffdf8' }} />
+                </div>
+                <ul className="svc-modal-bullets">
+                  {service.bullets.map(b => <li key={b}>{b}</li>)}
+                </ul>
+                <a className="btn-primary svc-detail-cta" href={WA_LINK} target="_blank" rel="noopener noreferrer">
                   <Icon name="whatsapp" size={17} />Get a Quote for {service.title}
                 </a>
-                <Link to="/services" className="btn-secondary">← All Services</Link>
+              </aside>
+              <div className="svc-detail-main">
+                {service.detail.map((para, i) => <p key={i} className="svc-detail-text">{para}</p>)}
+                <div className="sec-cta" style={{ justifyContent: 'flex-start' }}>
+                  <Link to="/services" className="btn-secondary">← All Services</Link>
+                </div>
               </div>
             </div>
           </div>

@@ -5,7 +5,7 @@ import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
 import { SITE_URL, PHONE, WA_LINK, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
-import { SERVICES, TEAM, PAINT_TYPES } from './siteData.js';
+import { SERVICES, TEAM, PAINT_TYPES, PAINT_BASE_GUIDE } from './siteData.js';
 import './Home.css';
 
 const QUICK_NAV = [
@@ -130,6 +130,48 @@ function Stars({ count }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Icon key={i} name="star" size={15} className={i < count ? 'tm-star-on' : 'tm-star-off'} />
       ))}
+    </div>
+  );
+}
+
+const FEATURED_PAINT_SLUGS = ['asian-paints-royale', 'royale-shyne-luxury-emulsion', 'apex-exterior-emulsion', 'apcolite-premium-enamel'];
+const FEATURED_PAINT_STYLE = {
+  'asian-paints-royale':            { icon: 'crown', accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#f2871f)' },
+  'royale-shyne-luxury-emulsion':   { icon: 'star',  accent: '#7c3aed', bg: 'linear-gradient(135deg,#1a0f2e,#3b1f5c,#7c3aed)' },
+  'apex-exterior-emulsion':         { icon: 'construction', accent: '#2563c4', bg: 'linear-gradient(135deg,#081627,#163457,#2563c4)' },
+  'apcolite-premium-enamel':        { icon: 'brush', accent: '#475569', bg: 'linear-gradient(135deg,#0f172a,#334155,#475569)' },
+};
+
+function FeaturedPaints() {
+  const paints = FEATURED_PAINT_SLUGS.map(slug => PAINT_TYPES.find(p => p.slug === slug)).filter(Boolean);
+  return (
+    <div className="fp-sec container">
+      <div className="sec-head">
+        <span className="sec-tag">Premium Products</span>
+        <h2 className="sec-title">Paints We Trust</h2>
+        <p className="sec-sub">Asian Paints Royale, Royale Shyne and more — real products, real finishes, tap any card for the full picture.</p>
+      </div>
+      <div className="fp-grid">
+        {paints.map(p => {
+          const s = FEATURED_PAINT_STYLE[p.slug];
+          return (
+            <Link key={p.slug} to={`/paint-types/${p.slug}`} className="fp-card" style={{ '--fp-accent': s.accent }}>
+              <div className="fp-photo" style={{ background: s.bg }}>
+                <Icon name={s.icon} size={34} style={{ color: '#fffdf8' }} />
+                <span className={`fp-base fp-base-${p.oilOrWater === 'Oil-based' ? 'oil' : 'water'}`}>{p.oilOrWater}</span>
+              </div>
+              <div className="fp-body">
+                <div className="fp-top">
+                  <h3 className="fp-name">{p.name}</h3>
+                  <span className={`paint-tier paint-tier-${p.tier.toLowerCase()}`}>{p.tier}</span>
+                </div>
+                <p className="fp-finish">{p.finish}</p>
+                <span className="fp-learn">See full details →</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -297,6 +339,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <FeaturedPaints />
 
             <Testimonials />
           </>
@@ -512,10 +556,31 @@ export default function Home() {
                       </div>
                       <div className="paint-finish">{p.finish}</div>
                       <p className="paint-desc">{p.desc}</p>
+                      <span className={`paint-base-chip paint-base-chip-${p.oilOrWater === 'Oil-based' ? 'oil' : 'water'}`}>{p.oilOrWater}</span>
                       <span className="paint-learn">Learn more →</span>
                     </Link>
                   ))}
                 </div>
+
+                {/* Oil vs water-based guide */}
+                <div className="pbg-sec">
+                  <div className="sec-head">
+                    <span className="sec-tag">The Basics</span>
+                    <h2 className="sec-title">Oil-Based vs Water-Based Paint</h2>
+                    <p className="sec-sub">Every paint on this page is one or the other — here's what that actually changes.</p>
+                  </div>
+                  <div className="pbg-grid">
+                    {[PAINT_BASE_GUIDE.water, PAINT_BASE_GUIDE.oil].map(g => (
+                      <div key={g.title} className="pbg-card">
+                        <h3 className="pbg-title">{g.title}</h3>
+                        <ul className="pbg-list">
+                          {g.points.map(pt => <li key={pt}>{pt}</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <p className="paint-note">
                   Not sure which paint is right for your space? Our team recommends the best option for your
                   budget and finish preference during your free on-site consultation.

@@ -63,6 +63,11 @@ export default function PaintDetail() {
                 </div>
                 <div className="paint-finish">{paint.finish}</div>
                 <p className="paint-desc">{paint.desc}</p>
+                <div className="paint-facts">
+                  <div className="paint-fact"><span className="paint-fact-label">Base</span><span className="paint-fact-val">{paint.oilOrWater}</span></div>
+                  <div className="paint-fact"><span className="paint-fact-label">Coverage</span><span className="paint-fact-val">{paint.coverage}</span></div>
+                  <div className="paint-fact"><span className="paint-fact-label">Best for</span><span className="paint-fact-val">{paint.bestFor}</span></div>
+                </div>
               </article>
               <div className="sec-cta">
                 <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import { WA_LINK } from './siteConfig.js';
 import './BottomNav.css';
 
 // Google Identity Services client ID — not set yet. The sign-in button below
@@ -98,6 +99,10 @@ export default function BottomNav() {
             : <Icon name="user" size={21} />}
           <span>Profile</span>
         </button>
+        <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="bn-item bn-item-wa">
+          <Icon name="whatsapp" size={20} />
+          <span>WhatsApp</span>
+        </a>
       </nav>
 
       {open && (

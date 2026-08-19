@@ -16,6 +16,8 @@
   text-decoration: none; font-family: inherit; transition: color .2s;
 }
 .bn-item:hover, .bn-item:active { color: var(--gold-deep); }
+.bn-item-wa { color: #22c55e; }
+.bn-item-wa:hover, .bn-item-wa:active { color: #16a34a; }
 .bn-avatar { width: 21px; height: 21px; border-radius: 50%; object-fit: cover; }
 
 /* ── Sign-in modal ── */

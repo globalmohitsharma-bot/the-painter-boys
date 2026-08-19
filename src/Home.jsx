@@ -222,7 +222,7 @@ export default function Home() {
               <div className="hero-content">
                 <div className="hero-badge">
                   <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-                  4.9 Rating · 120+ Happy Homeowners
+                  4.9 Rating · 2000+ Happy Homeowners
                 </div>
                 <h1 className="hero-title">
                   Home Painting Professionals<br />

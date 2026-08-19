@@ -296,11 +296,6 @@ export default function Home() {
                   <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
                   4.9 Rating · 2000+ Happy Homeowners
                 </div>
-                <div className="hero-home-btns">
-                  <Link to="/services" className="btn-primary">Our Services →</Link>
-                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
-                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
-                </div>
                 <div className="hero-presence">
                   <div className="hero-presence-head"><Icon name="pin" size={14} />We Proudly Serve</div>
                   <div className="hero-presence-chips">
@@ -310,10 +305,13 @@ export default function Home() {
                   </div>
                   <p className="hero-cities-local">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</p>
                 </div>
+                <div className="hero-home-btns">
+                  <Link to="/services" className="btn-primary">Our Services →</Link>
+                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
+                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
+                </div>
               </div>
             </section>
-
-            <TrustBadges />
 
             {/* Quick service nav cards */}
             <div className="home-quick-nav container">
@@ -329,6 +327,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <TrustBadges />
 
             {/* Trust banner */}
             <div className="trust-banner">

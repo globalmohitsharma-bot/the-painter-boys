@@ -101,6 +101,16 @@ Agreed flow, going forward:
    in parallel for a while, hasn't been decided yet — don't assume either
    without confirming, since it changes what "prod" means going forward.
 
+**Standing rule: prod is never touched without the user explicitly saying
+"move to prod" (or an unambiguous equivalent) as a direct instruction, in
+that moment.** Merging `develop` into `master`, or deploying to the Azure
+test environment, does not imply prod approval — those are separate,
+lower-stakes steps and don't require this. A message that only sounds
+adjacent to a go-ahead (thinking out loud about environments, asking
+questions about prod) is not the trigger. When in doubt, ask rather than
+treat something as that signal. Mirrors the same rule already standing on
+the sibling `FindBuyRentProtect` project, adopted here for consistency.
+
 ### Azure setup — status
 
 **Not yet done — needs your Azure Portal access, which I don't have.**
@@ -120,15 +130,67 @@ another one to prod"):
   it. I can't do this part myself; it needs to run through the Azure
   Portal (or `az staticwebapp create` from an authenticated Azure CLI,
   which I also don't have access to here).
-- [staticwebapp.config.json](staticwebapp.config.json) (added now) gives
+- [public/staticwebapp.config.json](public/staticwebapp.config.json) gives
   Azure the same SPA-fallback behavior `netlify.toml`'s redirect rule
   gives Netlify — every route serves `index.html` client-side, so direct
-  loads of `/services`, `/blog/:slug`, etc. don't 404.
+  loads of `/services`, `/blog/:slug`, etc. don't 404. **Must live under
+  `public/`, not the repo root** — Vite copies `public/` verbatim into
+  `dist/` on build, and Azure SWA reads the config from the build output,
+  not the repo root. Got this wrong on the first pass here (root-level),
+  caught by cross-checking a sibling project's deploy notes before it ever
+  got deployed and 404'd for real — see the note below.
 
 **2. Production resource, tracking `master` (do this after step 1 is verified)**
 - Same process, second Static Web App resource, branch: **`master`**.
 - Custom domain (`thepainterboys.com`) only gets pointed at this one once
   it's confirmed working — don't touch the live DNS until then.
+
+### Lessons pulled from a sibling project's deploy notes (2026-08-19)
+
+The user pointed at `docs/deployment.md` in a different project on this
+machine (`FindBuyRentProtect` — Azure Static Web Apps + App Service +
+Cosmos DB, same kind of stack this project is moving toward) as a
+reference. Worth keeping these in mind here rather than rediscovering them
+the hard way:
+
+- **Claude Code is blocked from fetching Azure deployment tokens/secrets**
+  by its own safety classifier, even for this project's own resources —
+  confirmed precedent, not a guess. `az staticwebapp secrets list` (or
+  reading a saved token from a local file) gets refused. **The deployment
+  token has to come from the user** (Azure Portal → the Static Web App →
+  Overview → Manage deployment token), or the user runs the deploy
+  themselves. Don't spend time trying to work around this.
+- **If the Cosmos DB work ends up sharing that same Azure account/resource
+  group** (`pilotai` / `aiinterviewbotPilot_group`) rather than a fresh
+  one — not yet decided for this project, needs confirming before
+  creating anything — two things from that project's experience apply
+  directly: (1) **every container/database name needs a distinct prefix**
+  (that project uses `FBPR_`; this one would need its own, e.g. `PB_`) so
+  nothing collides with the other tenants already on that account
+  (`InterviewBotAuth`, `TeasHarnessCosmos`, `FBPR_*`); (2) **the account's
+  total throughput is shared and was already near its cap** (raised to
+  1400 RU/s across three projects) — check remaining headroom before
+  provisioning a new database, don't assume capacity is free.
+- **If a backend ends up on that same shared App Service plan**
+  (`ASP-aiinterviewbotPilotgroup-9918`) — again, not yet decided here —
+  that plan also hosts a **live production app** for a totally unrelated
+  project (`aiinterviewbot.com`). Any `az webapp` command against it needs
+  the `--name` triple-checked before running, every time.
+- **Azure CLI from Git Bash mangles leading-slash arguments** (e.g.
+  `--partition-key-path "/id"` gets rewritten like a Windows path) — run
+  Cosmos-related `az` commands from PowerShell instead, or prefix with
+  `MSYS_NO_PATHCONV=1`.
+- That project runs under a **standing rule: prod is never touched without
+  the user explicitly saying "move to prod"** (or an unambiguous
+  equivalent) in that literal moment — merging to `master` or deploying to
+  test does not imply it. This project's release-flow section above
+  already treats "map another one to prod" as a distinct, later,
+  separately-approved step, which is the same spirit — worth being just
+  as strict about it here as that project is.
+
+These are notes, not decisions — whether this project actually shares that
+Cosmos account/App Service plan, or gets its own, hasn't been confirmed
+yet. Update this section once that's settled.
 
 ## ⚠️ `ThePainterBoybeforemovingtoCosmos` — do not update without explicit triple confirmation
 

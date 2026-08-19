@@ -154,8 +154,6 @@ export default function Home() {
   const location = useLocation();
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedSvc,    setSelectedSvc]    = useState(null);
-  const [form,           setForm]           = useState({ name:'', phone:'', area:'Ghaziabad', msg:'' });
-  const [submitted,      setSubmitted]      = useState(false);
 
   // The current "page" is derived from the real URL (not local-only state),
   // so each section has its own crawlable/shareable/bookmarkable address.
@@ -163,13 +161,6 @@ export default function Home() {
   const meta = PAGE_META[currentPage] || PAGE_META.home;
 
   useEffect(() => { window.scrollTo(0, 0); }, [currentPage]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const msg = `Hi! I'd like a free estimate.\nName: ${form.name}\nPhone: ${form.phone}\nArea: ${form.area}${form.msg ? '\nMessage: '+form.msg : ''}`;
-    window.open(`${WA_LINK}?text=${encodeURIComponent(msg)}`, '_blank');
-    setSubmitted(true);
-  };
 
   return (
     <div className="home">
@@ -225,7 +216,7 @@ export default function Home() {
                   4.9 Rating · 2000+ Happy Homeowners
                 </div>
                 <h1 className="hero-title">
-                  Home Painting Professionals<br />
+                  <span className="hero-title-colorful">Home Painting Professionals</span><br />
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
                 <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
@@ -245,37 +236,8 @@ export default function Home() {
                 <div className="hero-home-btns">
                   <Link to="/services" className="btn-primary">Our Services →</Link>
                   <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
+                  <a className="btn-call-hero" href={`tel:${PHONE}`}><Icon name="phone" size={17} />{PHONE}</a>
                 </div>
-              </div>
-
-              <div className="hero-form-card">
-                <div className="hfc-head">Let Our Experts Help You</div>
-                {submitted ? (
-                  <div className="hfc-success">
-                    <div className="hfc-success-icon"><Icon name="badgeCheck" size={40} style={{ color: 'var(--gold-deep)' }} /></div>
-                    <div className="hfc-success-title">Request Sent!</div>
-                    <p className="hfc-success-sub">
-                      We've opened WhatsApp with your details — send the message and our team will reply shortly.
-                    </p>
-                    <button type="button" className="hfc-submit" style={{marginTop:18}}
-                      onClick={() => setSubmitted(false)}>Send Another Request</button>
-                  </div>
-                ) : (
-                  <form className="hfc-form" onSubmit={handleSubmit}>
-                    <input className="hfc-input" placeholder="Enter Your Name *" required
-                      value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} />
-                    <input className="hfc-input" placeholder="Enter Your Phone No *" type="tel" required
-                      value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
-                    <select className="hfc-input" value={form.area}
-                      onChange={e => setForm(f => ({...f, area: e.target.value}))}>
-                      {AREAS.map(a => <option key={a}>{a}</option>)}
-                    </select>
-                    <textarea className="hfc-input hfc-ta" placeholder="Your message (optional)" rows={3}
-                      value={form.msg} onChange={e => setForm(f => ({...f, msg: e.target.value}))} />
-                    <label className="hfc-check"><input type="checkbox" defaultChecked /> Get updates on WhatsApp</label>
-                    <button type="submit" className="hfc-submit">Get Free Estimate →</button>
-                  </form>
-                )}
               </div>
             </section>
 

@@ -277,8 +277,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
     radial-gradient(circle at 80% 20%, rgba(242,135,31,.08) 0%, transparent 40%);
 }
 .hero-bg-pattern {
-  position: absolute; inset: 0; opacity: .03;
-  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff'%3E%3Cpath d='M20 20.5V18H0v5h5v5H0v5h20v-2.5h5V20.5h-5zm-5 9.5v-5h5v5h-5z'/%3E%3C/g%3E%3C/svg%3E");
+  position: absolute; inset: 0; opacity: .05; pointer-events: none;
+  background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0px, rgba(255,255,255,.06) 1px, transparent 1px, transparent 90px);
 }
 .hero-content { position: relative; z-index: 1; max-width: 880px; }
 .hero-badge {
@@ -293,30 +293,48 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .hero-accent { display: block; color: var(--ivory); font-weight: 800; font-size: clamp(1.3rem, 2.6vw, 2rem); line-height: 1.25; margin-top: 6px; }
-.hero-cities-local { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: 10px; }
 .hero-desc { font-size: .82rem; color: rgba(255,253,248,.65); line-height: 1.5; margin-bottom: 24px; max-width: 480px; }
 .hero-desc-short { display: none; white-space: nowrap; }
-.hero-stats { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 28px; }
 
+/* Stats — glassmorphism cards */
+.hero-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.hero-stat-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  flex: 1; min-width: 108px; padding: 16px 12px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background .25s ease, border-color .25s ease, transform .25s ease;
+}
+.hero-stat-card:hover { background: rgba(242,135,31,.1); border-color: rgba(242,135,31,.4); transform: translateY(-3px); }
+.hero-stat-icon { color: var(--gold); }
+.hero-stat-card strong { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--gold); line-height: 1; }
+.hero-stat-card span { font-size: .64rem; color: rgba(255,255,255,.5); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+
+/* We Proudly Serve — glass card matching the stats */
 .hero-presence {
-  background: rgba(255,255,255,.05); border: 1px solid rgba(242,135,31,.25); border-radius: 12px;
-  padding: 16px 20px; margin-bottom: 28px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 18px 20px; margin-bottom: 28px;
 }
 .hero-presence-head {
   display: flex; align-items: center; gap: 6px;
   font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
   color: var(--gold-soft); margin-bottom: 12px;
 }
-.hero-presence-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-presence-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .hero-presence-chip {
   padding: 6px 14px; border-radius: 20px;
-  background: rgba(242,135,31,.12); border: 1px solid rgba(242,135,31,.35);
+  background: rgba(242,135,31,.14); border: 1px solid rgba(242,135,31,.4);
   color: var(--ivory); font-size: .82rem; font-weight: 700;
+  transition: background .2s, border-color .2s;
 }
-.hero-stat { text-align: center; }
-.hero-stat strong { font-family: var(--font-display); display: block; font-size: 1.9rem; font-weight: 700; color: var(--gold); line-height: 1; }
-.hero-stat span { font-size: .7rem; color: rgba(255,255,255,.45); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
-.hero-stat-sep { width: 1px; height: 34px; background: rgba(242,135,31,.2); }
+.hero-presence-chip:hover { background: rgba(242,135,31,.22); border-color: var(--gold); }
+.hero-locality-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
+.hero-locality-chip {
+  padding: 4px 10px; border-radius: 14px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+  color: rgba(255,255,255,.6); font-size: .7rem; font-weight: 600;
+}
 .hero-home-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
 .hero-btn-short { display: none; }
 .btn-call-hero {
@@ -769,11 +787,12 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .hero-desc { max-width: none; margin-bottom: 16px; }
   .hero-desc-full { display: none; }
   .hero-desc-short { display: block; }
-  /* Stats: compact enough to stay on one line */
-  .hero-stats { justify-content: center; flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; }
-  .hero-stat strong { font-size: 1.15rem; }
-  .hero-stat span { font-size: .52rem; letter-spacing: .03em; }
-  .hero-stat-sep { height: 24px; }
+  /* Stats: compact cards, still on one line */
+  .hero-stats { justify-content: center; flex-wrap: nowrap; gap: 6px; margin-bottom: 14px; }
+  .hero-stat-card { padding: 10px 4px; border-radius: 10px; gap: 3px; min-width: 0; }
+  .hero-stat-icon { display: none; }
+  .hero-stat-card strong { font-size: 1.05rem; }
+  .hero-stat-card span { font-size: .5rem; letter-spacing: .02em; }
   /* Buttons: short labels, compact enough to stay on one line */
   .hero-home-btns { justify-content: center; flex-wrap: nowrap; gap: 6px; margin-top: 14px; }
   .hero-btn-full { display: none; }
@@ -782,12 +801,12 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
     padding: 10px 10px; font-size: .74rem; gap: 4px; flex: 1; justify-content: center; white-space: nowrap;
   }
   .hero-home-btns svg { width: 13px; height: 13px; }
-  /* We Proudly Serve: chips on one line, locality list on a second */
+  /* We Proudly Serve: city chips on one line, locality chips hidden (too many to fit) */
   .hero-presence { padding: 12px 14px; margin-bottom: 14px; }
   .hero-presence-head { margin-bottom: 8px; }
-  .hero-presence-chips { flex-wrap: nowrap; gap: 4px; }
+  .hero-presence-chips { flex-wrap: nowrap; gap: 4px; margin-bottom: 0; }
   .hero-presence-chip { padding: 4px 6px; font-size: .58rem; flex: 1; text-align: center; white-space: nowrap; }
-  .hero-cities-local { display: none; }
+  .hero-locality-chips { display: none; }
   /* Feature strip */
   .fi { min-width: 45%; border-right: none; border-bottom: 1px solid var(--hairline); }
   .fi:nth-child(odd) { border-right: 1px solid var(--hairline); }

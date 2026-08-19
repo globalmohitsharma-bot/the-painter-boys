@@ -280,22 +280,19 @@ export default function Home() {
                   <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
+                <div className="hero-badge">
+                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+                  4.9 Rating · 2000+ Happy Homeowners
+                </div>
                 <p className="hero-desc hero-desc-full">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
                 <p className="hero-desc hero-desc-short">Expert painting, honest advice, zero hassle.</p>
                 <div className="hero-stats">
-                  <div className="hero-stat"><strong>2000+</strong><span>Homes Painted</span></div>
-                  <div className="hero-stat-sep" />
-                  <div className="hero-stat"><strong>10+</strong><span>Years Trusted</span></div>
-                  <div className="hero-stat-sep" />
-                  <div className="hero-stat"><strong>5</strong><span>Cities Covered</span></div>
-                  <div className="hero-stat-sep" />
-                  <div className="hero-stat"><strong><Icon name="star" size={16} style={{ marginRight: 3, verticalAlign: '-2px' }} />4.9</strong><span>Customer Rating</span></div>
-                </div>
-                <div className="hero-badge">
-                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-                  4.9 Rating · 2000+ Happy Homeowners
+                  <div className="hero-stat-card"><Icon name="home" size={20} className="hero-stat-icon" /><strong>2000+</strong><span>Homes Painted</span></div>
+                  <div className="hero-stat-card"><Icon name="clock" size={20} className="hero-stat-icon" /><strong>10+</strong><span>Years Trusted</span></div>
+                  <div className="hero-stat-card"><Icon name="pin" size={20} className="hero-stat-icon" /><strong>5</strong><span>Cities Covered</span></div>
+                  <div className="hero-stat-card"><Icon name="star" size={20} className="hero-stat-icon" /><strong>4.9</strong><span>Customer Rating</span></div>
                 </div>
                 <div className="hero-presence">
                   <div className="hero-presence-head"><Icon name="pin" size={14} />We Proudly Serve</div>
@@ -304,7 +301,11 @@ export default function Home() {
                       <span key={c} className="hero-presence-chip">{c}</span>
                     ))}
                   </div>
-                  <p className="hero-cities-local">Ghaziabad: {GHAZIABAD_AREAS.join(' · ')}</p>
+                  <div className="hero-locality-chips">
+                    {GHAZIABAD_AREAS.map(a => (
+                      <span key={a} className="hero-locality-chip">{a}</span>
+                    ))}
+                  </div>
                 </div>
                 <div className="hero-home-btns">
                   <Link to="/services" className="btn-primary">

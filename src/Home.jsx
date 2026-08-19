@@ -349,15 +349,19 @@ export default function Home() {
               <a className="tb-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />Schedule Free Estimate</a>
             </div>
 
-            {/* Feature strip */}
-            <div className="feature-strip">
-              {[{icon:'magnifier',label:'On-Site Consultation'},{icon:'shield',label:'Furniture Protection'},{icon:'crown',label:'Premium Products'},{icon:'worker',label:'Certified Painters'},{icon:'check',label:'Post-Painting Clean-up'}]
-                .map(f => (
-                  <div key={f.label} className="fi">
-                    <span className="fi-icon"><Icon name={f.icon} size={22} /></span>
-                    <span className="fi-label">{f.label}</span>
-                  </div>
-                ))}
+            {/* Feature strip — presented as a "how we work" process */}
+            <div className="feature-process-sec">
+              <h2 className="fp-heading">How We Work</h2>
+              <div className="feature-strip">
+                {[{icon:'magnifier',label:'On-Site Consultation'},{icon:'shield',label:'Furniture Protection'},{icon:'crown',label:'Premium Products'},{icon:'worker',label:'Certified Painters'},{icon:'check',label:'Post-Painting Clean-up'}]
+                  .map((f, i) => (
+                    <div key={f.label} className="fi">
+                      <span className="fi-num">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="fi-icon"><Icon name={f.icon} size={22} /></span>
+                      <span className="fi-label">{f.label}</span>
+                    </div>
+                  ))}
+              </div>
             </div>
 
             <FeaturedPaints />

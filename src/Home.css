@@ -238,18 +238,28 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .trust-badge-title { font-family: var(--font-display); font-weight: 700; font-size: .95rem; color: var(--ink); margin-bottom: 3px; }
 .trust-badge-desc { font-size: .78rem; color: var(--ink-soft); line-height: 1.5; }
 
-/* ── Feature strip ── */
+/* ── Feature strip — presented as one "How We Work" process card ── */
+.feature-process-sec { background: var(--parchment); padding: 48px 24px; border-bottom: 1px solid var(--hairline); }
+.fp-heading { text-align: center; font-family: var(--font-display); font-size: clamp(1.3rem,3vw,1.7rem); font-weight: 700; color: var(--ink); margin-bottom: 24px; }
 .feature-strip {
-  background: var(--parchment); border-bottom: 1px solid var(--hairline);
-  padding: 0 24px;
+  max-width: 1040px; margin: 0 auto;
+  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.04); overflow: hidden;
   display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap;
 }
 .fi {
+  position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 18px 28px; text-align: center; flex: 1; min-width: 120px; max-width: 200px;
+  padding: 22px 20px; text-align: center; flex: 1; min-width: 120px; max-width: 220px;
   border-right: 1px solid var(--hairline);
+  transition: background .25s ease;
 }
+.fi:hover { background: rgba(242,135,31,.05); }
 .fi:last-child { border-right: none; }
+.fi-num {
+  position: absolute; top: 8px; right: 12px;
+  font-family: var(--font-display); font-size: .75rem; font-weight: 700; color: rgba(242,135,31,.4);
+}
 .fi-icon { display: inline-flex; color: var(--gold-deep); }
 .fi-label { font-size: .68rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; line-height: 1.4; }
 

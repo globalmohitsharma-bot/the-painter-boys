@@ -217,13 +217,19 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 
 /* ── Trust badges ── */
 .trust-badges-sec { background: var(--ivory); padding: 40px 24px; border-bottom: 1px solid var(--hairline); }
-.trust-badges-grid { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; max-width: 1040px; margin: 0 auto; }
+.tb-heading { text-align: center; font-family: var(--font-display); font-size: clamp(1.3rem,3vw,1.7rem); font-weight: 700; color: var(--ink); margin-bottom: 24px; }
+.trust-badges-grid {
+  display: flex; flex-wrap: wrap; max-width: 1040px; margin: 0 auto;
+  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.04); overflow: hidden;
+}
 .trust-badge {
   display: flex; align-items: center; gap: 14px; flex: 1; min-width: 260px;
-  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 10px; padding: 18px 24px;
-  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  padding: 22px 24px; border-right: 1px solid var(--hairline);
+  transition: background .25s ease;
 }
-.trust-badge:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 14px 32px rgba(242,135,31,.16); }
+.trust-badge:last-child { border-right: none; }
+.trust-badge:hover { background: rgba(242,135,31,.05); }
 .trust-badge-icon {
   flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%; color: var(--gold-deep);
   background: rgba(242,135,31,.08); border: 1px solid rgba(242,135,31,.18);
@@ -787,6 +793,10 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .inner-page { padding-top: 60px; }
   /* Trust banner */
   .trust-banner { flex-direction: column; text-align: center; gap: 12px; }
+  /* We Care badges: stacked, so dividers go horizontal instead of vertical */
+  .trust-badges-grid { flex-direction: column; }
+  .trust-badge { border-right: none; border-bottom: 1px solid var(--hairline); }
+  .trust-badge:last-child { border-bottom: none; }
   /* About grid */
   .about-grid { grid-template-columns: 1fr; }
   /* Sec CTA */

@@ -61,9 +61,9 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .topbar-name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; white-space: nowrap; letter-spacing: .02em; }
 .topbar-sub { font-size: .6rem; font-weight: 600; color: var(--gold-soft); letter-spacing: .12em; text-transform: uppercase; }
 /* Refined single-family gold gradient wordmark — no rainbow letters */
-.tn-the { color: rgba(255,255,255,.75); font-weight: 500; font-style: italic; }
-.tn-p, .tn-a, .tn-i, .tn-n, .tn-t, .tn-e, .tn-r, .tn-b, .tn-o, .tn-y, .tn-s { color: var(--gold-soft); }
-.tn-sp { color: rgba(255,255,255,.75); }
+.tn-the { color: var(--ivory); font-weight: 700; font-style: italic; }
+.tn-p, .tn-a, .tn-i, .tn-n, .tn-t, .tn-e, .tn-r, .tn-b, .tn-o, .tn-y, .tn-s { color: var(--ivory); font-weight: 800; }
+.tn-sp { color: var(--ivory); }
 .topbar-phone {
   font-size: .9rem; font-weight: 700; color: rgba(255,255,255,.9);
   text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color .2s;

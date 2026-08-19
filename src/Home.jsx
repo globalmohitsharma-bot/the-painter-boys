@@ -23,36 +23,36 @@ const PAINT_TYPES = [
 ];
 
 const QUICK_NAV = [
-  { icon:'home',         label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#b8934a' },
-  { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#4a6178' },
-  { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#3f6b5f' },
-  { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#D4AF37' },
-  { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#5c5650' },
-  { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#6b3f52' },
+  { icon:'home',         label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#f2871f' },
+  { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#2563c4' },
+  { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#0ea5a8' },
+  { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#7c3aed' },
+  { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#475569' },
+  { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#b91c1c' },
 ];
 
 const SERVICES_PHOTO = [
-  { bg:'linear-gradient(135deg,#1c1a17,#4a3820,#b8934a)', icon:'home', accent:'#b8934a', title:'Interior Painting',
+  { bg:'linear-gradient(135deg,#0d2137,#1c4068,#f2871f)', icon:'home', accent:'#f2871f', title:'Interior Painting',
     bullets:['Premium emulsion, distemper & luxury finishes','Full furniture protection — zero mess guaranteed'] },
-  { bg:'linear-gradient(135deg,#1a2128,#2d3d4a,#4a6178)', icon:'construction', accent:'#4a6178', title:'Exterior Painting',
+  { bg:'linear-gradient(135deg,#081627,#163457,#2563c4)', icon:'construction', accent:'#2563c4', title:'Exterior Painting',
     bullets:['Weather-resistant & UV-protective coatings','Surface prep, crack filling & primer included'] },
-  { bg:'linear-gradient(135deg,#14201d,#24413a,#3f6b5f)', icon:'water', accent:'#3f6b5f', title:'Waterproofing',
+  { bg:'linear-gradient(135deg,#072a2b,#0d4547,#0ea5a8)', icon:'water', accent:'#0ea5a8', title:'Waterproofing',
     bullets:['Eliminate seepage, dampness & wall leakages','Scientific solutions with quality materials'] },
-  { bg:'linear-gradient(135deg,#1c1a17,#6b4f22,#D4AF37)', icon:'crown', accent:'#D4AF37', title:'Royale Emulsion',
+  { bg:'linear-gradient(135deg,#1a0f2e,#3b1f5c,#7c3aed)', icon:'crown', accent:'#7c3aed', title:'Royale Emulsion',
     bullets:['Smooth, washable, lasting premium finish','Asian Paints Royale — stays vibrant for years'] },
-  { bg:'linear-gradient(135deg,#1e1620,#3d2a3d,#6b3f52)', icon:'brush', accent:'#6b3f52', title:'Texture & Designer',
+  { bg:'linear-gradient(135deg,#2a0f1e,#5c1f3f,#db2777)', icon:'brush', accent:'#db2777', title:'Texture & Designer',
     bullets:['Unique 3D textures and designer wall finishes','Custom patterns for a premium luxury look'] },
-  { bg:'linear-gradient(135deg,#1a1a1a,#35322e,#5c5650)', icon:'layers', accent:'#5c5650', title:'Putty & Primer',
+  { bg:'linear-gradient(135deg,#0f172a,#334155,#475569)', icon:'layers', accent:'#475569', title:'Putty & Primer',
     bullets:['Crack filling and professional wall levelling','Perfect surface prep for a flawless paint job'] },
 ];
 
 const WHY = [
-  { icon:'worker',    label:'Trained Professionals',         bg:'rgba(184,147,74,.08)', ic:'#9c7a3c' },
-  { icon:'magnifier', label:'Technical Site Evaluation',     bg:'rgba(74,97,120,.08)',  ic:'#4a6178' },
-  { icon:'palette',   label:'Personalised Colour Consultation', bg:'rgba(107,63,82,.08)', ic:'#6b3f52' },
-  { icon:'shield',    label:'Stringent Safety Protocol',     bg:'rgba(63,107,95,.08)',  ic:'#3f6b5f' },
-  { icon:'eye',       label:'Supervised Painting',          bg:'rgba(28,26,23,.06)',   ic:'#4a453e' },
-  { icon:'gear',      label:'Mechanized Tools',              bg:'rgba(212,175,55,.1)', ic:'#9c7a3c' },
+  { icon:'worker',    label:'Trained Professionals',         bg:'rgba(22,52,87,.08)',  ic:'#163457' },
+  { icon:'magnifier', label:'Technical Site Evaluation',     bg:'rgba(37,99,196,.08)', ic:'#2563c4' },
+  { icon:'palette',   label:'Personalised Colour Consultation', bg:'rgba(124,58,237,.08)', ic:'#7c3aed' },
+  { icon:'shield',    label:'Stringent Safety Protocol',     bg:'rgba(14,165,168,.08)', ic:'#0ea5a8' },
+  { icon:'eye',       label:'Supervised Painting',          bg:'rgba(71,85,105,.06)',  ic:'#475569' },
+  { icon:'gear',      label:'Mechanized Tools',              bg:'rgba(242,135,31,.1)', ic:'#f2871f' },
 ];
 
 const TRUST_BADGES = [
@@ -87,11 +87,11 @@ const TESTIMONIALS = [
 ];
 
 const TEAM = [
-  { name:'Rajeev Kumar',    role:'Director — Delivery & Operations', img:null,                 initials:'RK', color:'#9c7a3c',
+  { name:'Rajeev Kumar',    role:'Director — Delivery & Operations', img:null,                 initials:'RK', color:'#163457',
     bio:'With 10+ years leading painting and quality work, Rajeev heads customer relationships and operations. A passionate artist whose craftsmanship has made lasting impressions across Delhi NCR.' },
-  { name:'Sonia Gupta',     role:'Marketing & Digital Growth',        img:'/images/sonia.webp', initials:'SG', color:'#4a6178',
+  { name:'Sonia Gupta',     role:'Marketing & Digital Growth',        img:'/images/sonia.webp', initials:'SG', color:'#2563c4',
     bio:'With 12+ years of marketing leadership, Sonia drives The Painter Boys\' digital transformation. Former consultant for Fortune 500 companies, now helping homeowners achieve their dream spaces.' },
-  { name:'Dr. Susheel Rai', role:'Head of Operations',                img:'/images/susheel.jpg',initials:'SR', color:'#6b3f52',
+  { name:'Dr. Susheel Rai', role:'Head of Operations',                img:'/images/susheel.jpg',initials:'SR', color:'#0ea5a8',
     bio:'Overseeing operations with decades of leadership experience. His philosophy — caring for people and putting their needs first — defines The Painter Boys\' service culture throughout.' },
 ];
 

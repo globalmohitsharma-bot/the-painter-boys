@@ -1,49 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
 import { SITE_URL, PHONE, WA_LINK, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
+import { SERVICES, TEAM, PAINT_TYPES } from './siteData.js';
 import './Home.css';
 
-const PAINT_TYPES = [
-  { name: 'Asian Paints Royale',        tier: 'Luxury',  finish: 'Smooth matt luxury emulsion',
-    desc: 'A premium interior emulsion known for its rich, smooth, non-reflective finish that hides minor wall imperfections and tolerates a damp-cloth wipe. Popular for living rooms and feature walls where a luxury look matters.' },
-  { name: 'Tractor Emulsion',           tier: 'Economy', finish: 'Matt emulsion',
-    desc: 'Asian Paints\' value-for-money emulsion range — a practical, washable finish for bedrooms and interiors where budget matters without giving up a clean look.' },
-  { name: 'Royale Shyne Luxury Emulsion', tier: 'Luxury', finish: 'High-sheen luxury emulsion',
-    desc: 'Asian Paints\' top-tier luxury emulsion — one step above standard Royale, with a high-sheen, reflective finish, Teflon surface protection, anti-bacterial and anti-fungal shield, and an 8-year performance warranty. Superior stain resistance and washability, ideal for statement walls and high-traffic living spaces.' },
-  { name: 'Apex Exterior Emulsion',     tier: 'Premium', finish: 'Weatherproof exterior',
-    desc: 'Built for exteriors — weather and UV resistant, formulated to resist algae/fungal growth and monsoon dampness on outer walls and building facades.' },
-  { name: 'Distemper',                  tier: 'Budget',  finish: 'Matt, basic',
-    desc: 'The most economical wall finish, suited for spaces needing a quick, affordable refresh — commonly used in budget-conscious interior projects.' },
-  { name: 'Texture & Designer Finishes',tier: 'Luxury',  finish: '3D texture / designer',
-    desc: 'Decorative textured finishes for feature walls — stone, fabric and abstract patterns that add a designer touch to living rooms and entryways.' },
-];
-
 const QUICK_NAV = [
-  { icon:'home',         label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#f2871f' },
-  { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#2563c4' },
-  { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#0ea5a8' },
-  { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#7c3aed' },
-  { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#475569' },
-  { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#b91c1c' },
-];
-
-const SERVICES_PHOTO = [
-  { bg:'linear-gradient(135deg,#0d2137,#1c4068,#f2871f)', icon:'home', accent:'#f2871f', title:'Interior Painting',
-    bullets:['Premium emulsion, distemper & luxury finishes','Full furniture protection — zero mess guaranteed'] },
-  { bg:'linear-gradient(135deg,#081627,#163457,#2563c4)', icon:'construction', accent:'#2563c4', title:'Exterior Painting',
-    bullets:['Weather-resistant & UV-protective coatings','Surface prep, crack filling & primer included'] },
-  { bg:'linear-gradient(135deg,#072a2b,#0d4547,#0ea5a8)', icon:'water', accent:'#0ea5a8', title:'Waterproofing',
-    bullets:['Eliminate seepage, dampness & wall leakages','Scientific solutions with quality materials'] },
-  { bg:'linear-gradient(135deg,#1a0f2e,#3b1f5c,#7c3aed)', icon:'crown', accent:'#7c3aed', title:'Royale Emulsion',
-    bullets:['Smooth, washable, lasting premium finish','Asian Paints Royale — stays vibrant for years'] },
-  { bg:'linear-gradient(135deg,#2a0f1e,#5c1f3f,#db2777)', icon:'brush', accent:'#db2777', title:'Texture & Designer',
-    bullets:['Unique 3D textures and designer wall finishes','Custom patterns for a premium luxury look'] },
-  { bg:'linear-gradient(135deg,#0f172a,#334155,#475569)', icon:'layers', accent:'#475569', title:'Putty & Primer',
-    bullets:['Crack filling and professional wall levelling','Perfect surface prep for a flawless paint job'] },
+  { icon:'home',         label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#f2871f', to:'/services/interior-painting' },
+  { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#2563c4', to:'/services/exterior-painting' },
+  { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#0ea5a8', to:'/services/waterproofing' },
+  { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#7c3aed', to:'/services/royale-emulsion' },
+  { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#475569', to:'/services' },
+  { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#b91c1c', to:'/services' },
 ];
 
 const WHY = [
@@ -84,15 +55,6 @@ const TESTIMONIALS = [
     quote:'Got a full-home repaint done before moving in. The on-site estimate was clear upfront and there were no surprise charges at the end.' },
   { name:'Deepak B.', area:'Vasundhara, Ghaziabad',     rating:4,
     quote:'Appreciated the colour consultation — the associate helped us pick shades that actually suited our furniture rather than a generic recommendation.' },
-];
-
-const TEAM = [
-  { name:'Rajeev Kumar',    role:'Director — Delivery & Operations', img:null,                 initials:'RK', color:'#163457',
-    bio:'With 10+ years leading painting and quality work, Rajeev heads customer relationships and operations. A passionate artist whose craftsmanship has made lasting impressions across Delhi NCR.' },
-  { name:'Sonia Gupta',     role:'Marketing & Digital Growth',        img:'/images/sonia.webp', initials:'SG', color:'#2563c4',
-    bio:'With 12+ years of marketing leadership, Sonia drives The Painter Boys\' digital transformation. Former consultant for Fortune 500 companies, now helping homeowners achieve their dream spaces.' },
-  { name:'Dr. Susheel Rai', role:'Head of Operations',                img:'/images/susheel.jpg',initials:'SR', color:'#0ea5a8',
-    bio:'Overseeing operations with decades of leadership experience. His philosophy — caring for people and putting their needs first — defines The Painter Boys\' service culture throughout.' },
 ];
 
 function TrustBadges() {
@@ -152,8 +114,6 @@ function Testimonials() {
 
 export default function Home() {
   const location = useLocation();
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [selectedSvc,    setSelectedSvc]    = useState(null);
 
   // The current "page" is derived from the real URL (not local-only state),
   // so each section has its own crawlable/shareable/bookmarkable address.
@@ -216,7 +176,7 @@ export default function Home() {
                   4.9 Rating · 2000+ Happy Homeowners
                 </div>
                 <h1 className="hero-title">
-                  <span className="hero-title-colorful">Home Painting Professionals</span><br />
+                  <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
                 <p className="hero-cities">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</p>
@@ -266,7 +226,7 @@ export default function Home() {
               <h2 className="hqn-title">What Can We Do For You?</h2>
               <div className="hqn-grid">
                 {QUICK_NAV.map(c => (
-                  <Link key={c.label} to="/services" className="hqn-card" style={{'--card-accent': c.accent}}>
+                  <Link key={c.label} to={c.to} className="hqn-card" style={{'--card-accent': c.accent}}>
                     <div className="hqn-icon"><Icon name={c.icon} size={34} /></div>
                     <div className="hqn-label">{c.label}</div>
                     <div className="hqn-sub">{c.sub}</div>
@@ -293,11 +253,10 @@ export default function Home() {
             <div className="page-content-white">
               <div className="container section">
                 <div className="svc-grid">
-                  {SERVICES_PHOTO.map(s => (
-                    <article key={s.title} className="svc-card" style={{'--svc-accent': s.accent}}
-                      onClick={() => setSelectedSvc(s)}>
+                  {SERVICES.map(s => (
+                    <Link key={s.slug} to={`/services/${s.slug}`} className="svc-card" style={{'--svc-accent': s.accent}}>
                       <div className="svc-photo" style={{ background: s.bg }} role="img" aria-label={`${s.title} illustration`}>
-                        <Icon name={s.icon} size={60} style={{ color: '#fffdf8' }} className="svc-photo-icon" />
+                        <Icon name={s.icon} size={36} style={{ color: '#fffdf8' }} className="svc-photo-icon" />
                       </div>
                       <div className="svc-body">
                         <h3 className="svc-title">{s.title}</h3>
@@ -306,10 +265,10 @@ export default function Home() {
                         </ul>
                         <div className="svc-cta-row">
                           <span className="svc-learn">Learn more →</span>
-                          <div className="svc-badge"><Icon name={s.icon} size={19} /></div>
+                          <div className="svc-badge"><Icon name={s.icon} size={16} /></div>
                         </div>
                       </div>
-                    </article>
+                    </Link>
                   ))}
                 </div>
                 <div className="sec-cta">
@@ -454,37 +413,19 @@ export default function Home() {
               <div className="container section">
                 <div className="team-grid">
                   {TEAM.map(t => (
-                    <article key={t.name} className="team-card" onClick={() => setSelectedMember(t)}>
+                    <Link key={t.slug} to={`/team/${t.slug}`} className="team-card">
                       {t.img && <img src={t.img} alt={`${t.name}, ${t.role} at The Painter Boys`} className="team-photo" loading="lazy"
                         onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />}
                       <div className="team-avatar" style={{ background: t.color, display: t.img ? 'none' : 'flex' }} aria-hidden="true">{t.initials}</div>
                       <h3 className="team-name">{t.name}</h3>
                       <div className="team-role">{t.role}</div>
                       <p className="team-bio">{t.bio}</p>
-                      <div className="team-click-hint">Tap to know more →</div>
-                    </article>
+                      <div className="team-click-hint">Read full profile →</div>
+                    </Link>
                   ))}
                 </div>
               </div>
             </div>
-
-            {selectedMember && (
-              <div className="team-modal-overlay" onClick={() => setSelectedMember(null)}>
-                <div className="team-modal" onClick={e => e.stopPropagation()}>
-                  <button className="team-modal-close" onClick={() => setSelectedMember(null)}><Icon name="close" size={15} /></button>
-                  {selectedMember.img
-                    ? <img src={selectedMember.img} alt={`${selectedMember.name}, ${selectedMember.role} at The Painter Boys`} className="team-modal-photo"
-                        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
-                    : null}
-                  <div className="team-modal-avatar" style={{ background: selectedMember.color, display: selectedMember.img ? 'none' : 'flex' }}>
-                    {selectedMember.initials}
-                  </div>
-                  <h3 className="team-modal-name">{selectedMember.name}</h3>
-                  <div className="team-modal-role">{selectedMember.role}</div>
-                  <p className="team-modal-bio">{selectedMember.bio}</p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -502,14 +443,15 @@ export default function Home() {
               <div className="container section">
                 <div className="paint-grid">
                   {PAINT_TYPES.map(p => (
-                    <article key={p.name} className="paint-card">
+                    <Link key={p.slug} to={`/paint-types/${p.slug}`} className="paint-card">
                       <div className="paint-card-top">
                         <h3 className="paint-name">{p.name}</h3>
                         <span className={`paint-tier paint-tier-${p.tier.toLowerCase()}`}>{p.tier}</span>
                       </div>
                       <div className="paint-finish">{p.finish}</div>
                       <p className="paint-desc">{p.desc}</p>
-                    </article>
+                      <span className="paint-learn">Learn more →</span>
+                    </Link>
                   ))}
                 </div>
                 <p className="paint-note">
@@ -607,28 +549,6 @@ export default function Home() {
       <SiteFooter />
 
       <a className="wa-fab" href={WA_LINK} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp"><Icon name="whatsapp" size={26} /></a>
-
-      {/* ── Service detail modal ── */}
-      {selectedSvc && (
-        <div className="svc-modal-overlay" onClick={() => setSelectedSvc(null)}>
-          <div className="svc-modal" style={{'--svc-accent': selectedSvc.accent}} onClick={e => e.stopPropagation()}>
-            <button className="team-modal-close" onClick={() => setSelectedSvc(null)}><Icon name="close" size={15} /></button>
-            <div className="svc-modal-photo" style={{background: selectedSvc.bg}}>
-              <Icon name={selectedSvc.icon} size={52} style={{ color: '#fffdf8' }} />
-            </div>
-            <div className="svc-modal-body">
-              <h2 className="svc-modal-title">{selectedSvc.title}</h2>
-              <ul className="svc-modal-bullets">
-                {selectedSvc.bullets.map(b => <li key={b}>{b}</li>)}
-              </ul>
-              <div className="svc-modal-cta">
-                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"
-                  onClick={() => setSelectedSvc(null)}><Icon name="whatsapp" size={17} />Get Quote for {selectedSvc.title}</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

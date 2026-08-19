@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
@@ -42,19 +42,68 @@ const REASONS = [
 ];
 
 // PLACEHOLDER — illustrative sample quotes only, not real customer reviews.
-// Swap these for actual customer feedback (WhatsApp/Google review text, with
-// permission) before this goes live — publishing fabricated reviews as if
-// genuine is misleading to visitors and risky under consumer-protection rules
-// around fake reviews.
+// Deliberately generic first-name + initial (no real customer names pulled
+// from the operations sheet — attaching invented quotes to real, identifiable
+// people without their consent is a defamation/privacy risk, not just a
+// "looks fake" problem). Swap for actual customer feedback (WhatsApp/Google
+// review text, collected with permission) before this goes live.
 const TESTIMONIALS = [
-  { name:'Priya S.',  area:'Indirapuram, Ghaziabad', rating:5,
+  { name:'Priya S.',   area:'Indirapuram, Ghaziabad', rating:5,
     quote:'The team was punctual and kept the flat clean throughout the job. The finish in our living room came out just as we\'d discussed.' },
-  { name:'Anil M.',   area:'Raj Nagar Extension',      rating:5,
+  { name:'Anil M.',    area:'Raj Nagar Extension',     rating:5,
     quote:'We\'d had a recurring seepage issue on one wall. Their team traced it to the actual source before repainting, instead of just covering it up.' },
-  { name:'Kavita R.', area:'Sector 62, Noida',          rating:5,
+  { name:'Kavita R.',  area:'Sector 62, Noida',        rating:5,
     quote:'Got a full-home repaint done before moving in. The on-site estimate was clear upfront and there were no surprise charges at the end.' },
-  { name:'Deepak B.', area:'Vasundhara, Ghaziabad',     rating:4,
+  { name:'Deepak B.',  area:'Vasundhara, Ghaziabad',   rating:4,
     quote:'Appreciated the colour consultation — the associate helped us pick shades that actually suited our furniture rather than a generic recommendation.' },
+  { name:'Manisha T.', area:'Raj Nagar, Ghaziabad',    rating:5,
+    quote:'Exterior of our house hadn\'t been touched in years. They pressure-washed, filled every crack, and the Apex coat has handled two monsoons fine so far.' },
+  { name:'Rohit V.',   area:'Kavi Nagar, Ghaziabad',   rating:5,
+    quote:'Went with Royale Shyne for the living room on their recommendation. The sheen genuinely looks premium, and it wipes clean easily with the kids around.' },
+  { name:'Sunita A.',  area:'RDC, Ghaziabad',          rating:4,
+    quote:'Good work overall. Took a day longer than the original estimate because of extra putty work, but they explained why before doing it.' },
+  { name:'Vikram J.',  area:'Sector 50, Noida',        rating:5,
+    quote:'Booked them for a 3BHK repaint. Furniture protection was thorough — genuinely not a single splatter anywhere when they finished.' },
+  { name:'Neha K.',    area:'Dwarka, Delhi',           rating:5,
+    quote:'Called for a free estimate expecting the usual sales pressure. Got a straightforward on-site visit and an honest quote instead. Booked the same week.' },
+  { name:'Arjun P.',   area:'Vasant Kunj, Delhi',      rating:5,
+    quote:'Textured feature wall in the hall turned out better than the reference photos we showed them. Neighbours have already asked who did it.' },
+  { name:'Ritu S.',    area:'Rohini, Delhi',           rating:4,
+    quote:'Solid job on the exterior. Only feedback is the crew arrived later than scheduled on day one, but they made up the time by the end.' },
+  { name:'Sandeep G.', area:'Indirapuram, Ghaziabad',  rating:5,
+    quote:'Waterproofed the terrace before this year\'s monsoon after two years of ceiling stains. Zero leakage this season — first time in a while.' },
+  { name:'Pooja M.',   area:'Raj Nagar Extension',     rating:5,
+    quote:'Distemper touch-up for a rental property, quick and budget-friendly as promised. Didn\'t try to upsell us to a premium finish we didn\'t need.' },
+  { name:'Karan D.',   area:'Sector 137, Noida',       rating:5,
+    quote:'Repainted our office space over a weekend so there was zero disruption to work. Professional crew, cleaned up fully before Monday.' },
+  { name:'Shalini N.', area:'Vasundhara, Ghaziabad',   rating:4,
+    quote:'Happy with the final result. Would\'ve liked a bit more notice before the crew showed up, but the actual painting work was excellent.' },
+  { name:'Amit R.',    area:'Kavi Nagar, Ghaziabad',   rating:5,
+    quote:'Our society\'s common areas needed a repaint — they handled the scale without a hitch and coordinated timing around residents\' schedules.' },
+  { name:'Divya C.',   area:'RDC, Ghaziabad',          rating:5,
+    quote:'Putty and primer work before painting made a real difference — walls that used to look patchy are now completely even. Worth the extra day.' },
+  { name:'Nikhil B.',  area:'Sector 62, Noida',        rating:5,
+    quote:'Asked a lot of questions before booking and every answer matched what actually happened on site. Refreshingly straightforward company to deal with.' },
+  { name:'Anjali W.',  area:'Raj Nagar, Ghaziabad',    rating:4,
+    quote:'Good quality Royale finish in the bedrooms. Pricing was a little higher than one other quote we got, but the finish justified it.' },
+  { name:'Rajesh L.',  area:'Indirapuram, Ghaziabad',  rating:5,
+    quote:'Temple committee hired them for a full repaint ahead of a festival. Finished on the promised date, which mattered a lot given the deadline.' },
+  { name:'Meera H.',   area:'Dehradun',                rating:5,
+    quote:'Wasn\'t sure they\'d travel out this far but they did the full exterior job with the same attention to detail as the city jobs we\'d heard about.' },
+  { name:'Suresh O.',  area:'Haridwar',                rating:5,
+    quote:'Hospital wing repaint had to work around patient areas — they scheduled it in phases and kept noise/mess to a minimum throughout.' },
+  { name:'Tanvi I.',   area:'Vasundhara, Ghaziabad',   rating:4,
+    quote:'Overall a smooth experience. One coat needed touching up after it dried unevenly near a window, but they came back and fixed it free of charge.' },
+  { name:'Gaurav F.',  area:'Raj Nagar Extension',     rating:5,
+    quote:'Compared three painting companies before deciding. This was the only one that gave a written, itemised quote instead of a vague lump sum.' },
+  { name:'Preeti Y.',  area:'Sector 50, Noida',        rating:5,
+    quote:'Colour consultation actually helped — brought sample boards to match against our flooring instead of just showing a catalogue on a phone screen.' },
+  { name:'Manoj E.',   area:'Kavi Nagar, Ghaziabad',   rating:5,
+    quote:'Villa exterior needed serious crack repair before painting. They flagged the structural issue honestly instead of just painting over it.' },
+  { name:'Bhavna U.',  area:'RDC, Ghaziabad',          rating:4,
+    quote:'Texture work on the accent wall came out well. Communication could\'ve been a bit faster between booking and the actual visit date.' },
+  { name:'Yash Q.',    area:'Raj Nagar, Ghaziabad',    rating:5,
+    quote:'Second time using them, this time for a full flat repaint after the first waterproofing job held up perfectly for over a year.' },
 ];
 
 function TrustBadges() {
@@ -85,7 +134,13 @@ function Stars({ count }) {
   );
 }
 
+const TESTIMONIALS_PAGE_SIZE = 8;
+
 function Testimonials() {
+  const [visible, setVisible] = useState(TESTIMONIALS_PAGE_SIZE);
+  const shown = TESTIMONIALS.slice(0, visible);
+  const hasMore = visible < TESTIMONIALS.length;
+
   return (
     <div className="testimonials-sec">
       <div className="container">
@@ -95,7 +150,7 @@ function Testimonials() {
           <p className="sec-sub">A few notes from recent projects across Ghaziabad, Noida and Delhi NCR.</p>
         </div>
         <div className="tm-grid">
-          {TESTIMONIALS.map(t => (
+          {shown.map(t => (
             <article key={t.name} className="tm-card">
               <Icon name="quote" size={26} className="tm-quote-icon" />
               <Stars count={t.rating} />
@@ -107,6 +162,13 @@ function Testimonials() {
             </article>
           ))}
         </div>
+        {hasMore && (
+          <div className="tm-more-row">
+            <button type="button" className="btn-secondary" onClick={() => setVisible(v => v + TESTIMONIALS_PAGE_SIZE)}>
+              Show More Reviews ({TESTIMONIALS.length - visible} more)
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

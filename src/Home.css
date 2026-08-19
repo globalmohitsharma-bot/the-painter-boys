@@ -333,6 +333,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .tm-author { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 1px solid var(--hairline); }
 .tm-name { font-family: var(--font-display); font-weight: 700; font-size: .92rem; color: var(--ink); }
 .tm-area { font-size: .74rem; color: var(--ink-faint); font-weight: 500; }
+.tm-more-row { text-align: center; margin-top: 32px; }
 
 /* ── Services — glass card with gold border-glow on hover ── */
 .svc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }

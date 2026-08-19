@@ -9,8 +9,8 @@
   --charcoal:     #163457;
   --charcoal-2:   #1c4068;
   --charcoal-3:   #234c7a;
-  --gold:         #f2871f;
-  --gold-soft:    #ffa94d;
+  --gold:         #ff9f43;
+  --gold-soft:    #ffbc73;
   --gold-deep:    #c96a0f;
   --bronze:       #b85c12;
   --parchment:    #f4f7fb;
@@ -386,33 +386,19 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 }
 .svc-card:hover .svc-badge { background: var(--svc-accent); border-color: var(--svc-accent); color: #fff; transform: scale(1.08); }
 
-/* ── Service detail modal — magazine-style, blurred backdrop ── */
-.svc-modal-overlay {
-  position: fixed; inset: 0; z-index: 400;
-  background: rgba(8,22,39,.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  display: flex; align-items: center; justify-content: center; padding: 24px;
+/* ── Service detail page ── */
+.svc-detail-body { max-width: 720px; margin: 0 auto; }
+.svc-detail-photo {
+  height: 180px; border-radius: 12px; margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: center;
 }
-.svc-modal {
-  --svc-accent: var(--gold-deep);
-  background: var(--ivory); border-radius: 4px; overflow: hidden;
-  max-width: 460px; width: 100%; position: relative;
-  border: 1px solid rgba(242,135,31,.25);
-  box-shadow: 0 40px 100px rgba(0,0,0,.5);
-  animation: popIn .3s ease;
-}
-@keyframes popIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-.svc-modal-photo { height: 160px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--charcoal), var(--charcoal-2)); }
-.svc-modal-icon { font-size: 4.5rem; }
-.svc-modal-body { padding: 36px 40px; }
-.svc-modal-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--ink); margin-bottom: 20px; padding-bottom: 20px; position: relative; }
-.svc-modal-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 40px; height: 2px; background: var(--gold); }
+.svc-detail-text { font-size: 1.05rem; color: var(--ink-soft); line-height: 1.8; margin-bottom: 28px; }
 .svc-modal-bullets { list-style: none; padding: 0; margin-bottom: 28px; }
 .svc-modal-bullets li {
   font-size: .95rem; color: var(--ink-soft); padding: 12px 0 12px 26px;
   position: relative; border-bottom: 1px solid var(--hairline); line-height: 1.6;
 }
-.svc-modal-bullets li::before { content: '✓'; position: absolute; left: 0; color: var(--svc-accent); font-weight: 900; font-size: 1.1rem; }
-.svc-modal-cta { text-align: center; }
+.svc-modal-bullets li::before { content: '✓'; position: absolute; left: 0; color: var(--gold-deep); font-weight: 900; font-size: 1.1rem; }
 
 /* ── Paint Types guide ── */
 .paint-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; margin-bottom: 36px; }
@@ -434,6 +420,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .paint-learn { font-size: .82rem; font-weight: 700; color: var(--gold-deep); }
 .paint-card:hover { transform: translateY(-3px); }
 .paint-note { max-width: 640px; margin: 0 auto 32px; text-align: center; color: var(--ink-soft); font-size: .92rem; line-height: 1.6; }
+.paint-detail-card { max-width: 640px; margin: 0 auto; cursor: default; }
+.paint-detail-card:hover { transform: none; }
 
 /* ── Why Us — circular icons, restrained gold hover ── */
 .why-sec { background: var(--parchment); padding: 72px 24px 80px; }
@@ -535,25 +523,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .team-card:hover .team-click-hint { text-decoration: underline; }
 
 /* ── Team modal — blurred backdrop, magazine layout ── */
-.team-modal-overlay {
-  position: fixed; inset: 0; z-index: 400;
-  background: rgba(8,22,39,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  display: flex; align-items: center; justify-content: center; padding: 24px;
-}
-.team-modal {
-  background: var(--ivory); border-radius: 4px; padding: 44px 36px;
-  max-width: 440px; width: 100%; text-align: center; position: relative;
-  border: 1px solid rgba(242,135,31,.25);
-  box-shadow: 0 40px 100px rgba(0,0,0,.5);
-  animation: popIn .3s ease;
-}
-.team-modal-close {
-  position: absolute; top: 18px; right: 18px;
-  background: var(--parchment); border: 1px solid var(--hairline); border-radius: 50%;
-  width: 32px; height: 32px; font-size: 1rem; cursor: pointer; color: var(--ink-soft);
-  display: flex; align-items: center; justify-content: center; transition: background .2s;
-}
-.team-modal-close:hover { background: var(--hairline); }
+.team-detail-body { max-width: 480px; margin: 0 auto; text-align: center; }
 .team-modal-photo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); margin: 0 auto 16px; display: block; }
 .team-modal-avatar { width: 120px; height: 120px; border-radius: 50%; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: #fff; margin: 0 auto 16px; }
 .team-modal-name { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }

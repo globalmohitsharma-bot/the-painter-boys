@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import Home from './Home.jsx'
 import { BlogList, BlogPost } from './Blog.jsx'
+import ServiceDetail from './ServiceDetail.jsx'
+import TeamDetail from './TeamDetail.jsx'
+import PaintDetail from './PaintDetail.jsx'
 import PBDashboard from './PBDashboard.jsx'
 import PainterBoard from './PainterBoard.jsx'
 import CustomerView from './CustomerView.jsx'
@@ -17,10 +20,13 @@ export default function App() {
               so each page can be crawled, indexed, and linked to individually. */}
           <Route path="/" element={<Home />} />
           <Route path="/services" element={<Home />} />
+          <Route path="/services/:slug" element={<ServiceDetail />} />
           <Route path="/about" element={<Home />} />
           <Route path="/how-it-works" element={<Home />} />
           <Route path="/team" element={<Home />} />
+          <Route path="/team/:slug" element={<TeamDetail />} />
           <Route path="/paint-types" element={<Home />} />
+          <Route path="/paint-types/:slug" element={<PaintDetail />} />
           <Route path="/contact" element={<Home />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

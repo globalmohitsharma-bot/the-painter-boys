@@ -764,6 +764,12 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
     padding: 10px 10px; font-size: .74rem; gap: 4px; flex: 1; justify-content: center; white-space: nowrap;
   }
   .hero-home-btns svg { width: 13px; height: 13px; }
+  /* We Proudly Serve: chips on one line, locality list on a second */
+  .hero-presence { padding: 12px 14px; margin-bottom: 20px; }
+  .hero-presence-head { margin-bottom: 8px; }
+  .hero-presence-chips { flex-wrap: nowrap; gap: 4px; }
+  .hero-presence-chip { padding: 4px 6px; font-size: .58rem; flex: 1; text-align: center; white-space: nowrap; }
+  .hero-cities-local { font-size: .68rem; margin-top: 8px; white-space: normal; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
   /* Feature strip */
   .fi { min-width: 45%; border-right: none; border-bottom: 1px solid var(--hairline); }
   .fi:nth-child(odd) { border-right: 1px solid var(--hairline); }

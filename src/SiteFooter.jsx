@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import Icon from './Icon.jsx';
+import LeadBot from './LeadBot.jsx';
 import { PHONE, WA_LINK, PAGE_META, NAV_PAGES } from './siteConfig.js';
 
 export default function SiteFooter() {
@@ -17,13 +19,13 @@ export default function SiteFooter() {
               <span className="tn-s">s</span>
             </Link>
             <p className="footer-tagline">Home Painting Professionals<br/>Do it right, Do it once.</p>
-            <a className="footer-phone" href={`tel:${PHONE}`}>📞 +91 78388 88509</a>
-            <a className="footer-wa-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 WhatsApp Us</a>
+            <a className="footer-phone" href={`tel:${PHONE}`}><Icon name="phone" size={16} />+91 78388 88509</a>
+            <a className="footer-wa-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />WhatsApp Us</a>
           </div>
           <div className="footer-col">
             <div className="footer-col-title">Our Services</div>
             <div className="footer-col-links">
-              {['Interior Painting','Exterior Painting','Waterproofing','Royal Emulsion','Texture & Designer','Putty & Primer'].map(s => (
+              {['Interior Painting','Exterior Painting','Waterproofing','Royale Emulsion','Texture & Designer','Putty & Primer'].map(s => (
                 <Link key={s} to="/services" className="footer-link">{s}</Link>
               ))}
             </div>
@@ -59,11 +61,13 @@ export default function SiteFooter() {
     </footer>
 
     <div className="mobile-action-bar">
-      <a className="mab-call" href={`tel:${PHONE}`}>📞 Call Now</a>
+      <a className="mab-call" href={`tel:${PHONE}`}><Icon name="phone" size={16} />Call Now</a>
       <a className="mab-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
-        <span className="mab-wa-dot" aria-hidden="true" />💬 WhatsApp Quote
+        <span className="mab-wa-dot" aria-hidden="true" /><Icon name="whatsapp" size={16} />WhatsApp Quote
       </a>
     </div>
+
+    <LeadBot />
     </>
   );
 }

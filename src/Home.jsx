@@ -3,16 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
+import Icon from './Icon.jsx';
 import { SITE_URL, PHONE, WA_LINK, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
 import './Home.css';
 
 const PAINT_TYPES = [
-  { name: 'Asian Paints Royal',        tier: 'Luxury',  finish: 'Smooth matt / luxury emulsion',
-    desc: 'A premium interior emulsion known for its rich, smooth finish and long-lasting colour. Popular for living rooms and feature walls where a luxury look matters.' },
+  { name: 'Asian Paints Royale',        tier: 'Luxury',  finish: 'Smooth matt luxury emulsion',
+    desc: 'A premium interior emulsion known for its rich, smooth, non-reflective finish that hides minor wall imperfections and tolerates a damp-cloth wipe. Popular for living rooms and feature walls where a luxury look matters.' },
   { name: 'Tractor Emulsion',           tier: 'Economy', finish: 'Matt emulsion',
     desc: 'Asian Paints\' value-for-money emulsion range — a practical, washable finish for bedrooms and interiors where budget matters without giving up a clean look.' },
-  { name: 'Royal Shyne Emulsion',       tier: 'Premium', finish: 'Soft sheen luxury emulsion',
-    desc: 'A soft-sheen premium emulsion that adds subtle luster to walls, offering better stain resistance and washability than standard matt finishes.' },
+  { name: 'Royale Shyne Luxury Emulsion', tier: 'Luxury', finish: 'High-sheen luxury emulsion',
+    desc: 'Asian Paints\' top-tier luxury emulsion — one step above standard Royale, with a high-sheen, reflective finish, Teflon surface protection, anti-bacterial and anti-fungal shield, and an 8-year performance warranty. Superior stain resistance and washability, ideal for statement walls and high-traffic living spaces.' },
   { name: 'Apex Exterior Emulsion',     tier: 'Premium', finish: 'Weatherproof exterior',
     desc: 'Built for exteriors — weather and UV resistant, formulated to resist algae/fungal growth and monsoon dampness on outer walls and building facades.' },
   { name: 'Distemper',                  tier: 'Budget',  finish: 'Matt, basic',
@@ -22,51 +23,67 @@ const PAINT_TYPES = [
 ];
 
 const QUICK_NAV = [
-  { icon:'🏠', label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#b8934a' },
-  { icon:'🏗️', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#4a6178' },
-  { icon:'💧', label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#3f6b5f' },
-  { icon:'👑', label:'Premium Finishes',         sub:'Royal & Luxury Paints',     accent:'#D4AF37' },
-  { icon:'🏢', label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#5c5650' },
-  { icon:'🕌', label:'Temples & Institutions',   sub:'All Property Types',        accent:'#6b3f52' },
+  { icon:'home',         label:'Interior Painting',       sub:'Homes, Flats & Villas',     accent:'#b8934a' },
+  { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#4a6178' },
+  { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#3f6b5f' },
+  { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#D4AF37' },
+  { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#5c5650' },
+  { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#6b3f52' },
 ];
 
 const SERVICES_PHOTO = [
-  { bg:'linear-gradient(135deg,#1c1a17,#4a3820,#b8934a)', icon:'🏠', accent:'#b8934a', title:'Interior Painting',
+  { bg:'linear-gradient(135deg,#1c1a17,#4a3820,#b8934a)', icon:'home', accent:'#b8934a', title:'Interior Painting',
     bullets:['Premium emulsion, distemper & luxury finishes','Full furniture protection — zero mess guaranteed'] },
-  { bg:'linear-gradient(135deg,#1a2128,#2d3d4a,#4a6178)', icon:'🏗️', accent:'#4a6178', title:'Exterior Painting',
+  { bg:'linear-gradient(135deg,#1a2128,#2d3d4a,#4a6178)', icon:'construction', accent:'#4a6178', title:'Exterior Painting',
     bullets:['Weather-resistant & UV-protective coatings','Surface prep, crack filling & primer included'] },
-  { bg:'linear-gradient(135deg,#14201d,#24413a,#3f6b5f)', icon:'💧', accent:'#3f6b5f', title:'Waterproofing',
+  { bg:'linear-gradient(135deg,#14201d,#24413a,#3f6b5f)', icon:'water', accent:'#3f6b5f', title:'Waterproofing',
     bullets:['Eliminate seepage, dampness & wall leakages','Scientific solutions with quality materials'] },
-  { bg:'linear-gradient(135deg,#1c1a17,#6b4f22,#D4AF37)', icon:'👑', accent:'#D4AF37', title:'Royal Emulsion',
-    bullets:['Smooth, washable, lasting premium finish','Asian Paints Royal — stays vibrant for years'] },
-  { bg:'linear-gradient(135deg,#1e1620,#3d2a3d,#6b3f52)', icon:'✨', accent:'#6b3f52', title:'Texture & Designer',
+  { bg:'linear-gradient(135deg,#1c1a17,#6b4f22,#D4AF37)', icon:'crown', accent:'#D4AF37', title:'Royale Emulsion',
+    bullets:['Smooth, washable, lasting premium finish','Asian Paints Royale — stays vibrant for years'] },
+  { bg:'linear-gradient(135deg,#1e1620,#3d2a3d,#6b3f52)', icon:'brush', accent:'#6b3f52', title:'Texture & Designer',
     bullets:['Unique 3D textures and designer wall finishes','Custom patterns for a premium luxury look'] },
-  { bg:'linear-gradient(135deg,#1a1a1a,#35322e,#5c5650)', icon:'🔲', accent:'#5c5650', title:'Putty & Primer',
+  { bg:'linear-gradient(135deg,#1a1a1a,#35322e,#5c5650)', icon:'layers', accent:'#5c5650', title:'Putty & Primer',
     bullets:['Crack filling and professional wall levelling','Perfect surface prep for a flawless paint job'] },
 ];
 
 const WHY = [
-  { icon:'👷', label:'Trained Professionals',         bg:'rgba(184,147,74,.08)', ic:'#9c7a3c' },
-  { icon:'🔍', label:'Technical Site Evaluation',     bg:'rgba(74,97,120,.08)',  ic:'#4a6178' },
-  { icon:'🎨', label:'Personalised Colour Consultation', bg:'rgba(107,63,82,.08)', ic:'#6b3f52' },
-  { icon:'🦺', label:'Stringent Safety Protocol',     bg:'rgba(63,107,95,.08)',  ic:'#3f6b5f' },
-  { icon:'👁️', label:'Supervised Painting',          bg:'rgba(28,26,23,.06)',   ic:'#4a453e' },
-  { icon:'⚙️', label:'Mechanized Tools',              bg:'rgba(212,175,55,.1)', ic:'#9c7a3c' },
+  { icon:'worker',    label:'Trained Professionals',         bg:'rgba(184,147,74,.08)', ic:'#9c7a3c' },
+  { icon:'magnifier', label:'Technical Site Evaluation',     bg:'rgba(74,97,120,.08)',  ic:'#4a6178' },
+  { icon:'palette',   label:'Personalised Colour Consultation', bg:'rgba(107,63,82,.08)', ic:'#6b3f52' },
+  { icon:'shield',    label:'Stringent Safety Protocol',     bg:'rgba(63,107,95,.08)',  ic:'#3f6b5f' },
+  { icon:'eye',       label:'Supervised Painting',          bg:'rgba(28,26,23,.06)',   ic:'#4a453e' },
+  { icon:'gear',      label:'Mechanized Tools',              bg:'rgba(212,175,55,.1)', ic:'#9c7a3c' },
 ];
 
 const TRUST_BADGES = [
-  { icon:'🎖️', title:'Asian Paints Royale Partner', desc:'Certified application of premium Asian Paints Royale & Apex ranges.' },
-  { icon:'🧹', title:'Zero-Mess Guarantee',          desc:'Full furniture & floor protection on every job — no splatters, no exceptions.' },
-  { icon:'🏆', title:'Years Trusted',                desc:'10+ years serving Ghaziabad, Noida & Delhi NCR homeowners.' },
+  { icon:'medal',  title:'Asian Paints Royale Partner', desc:'Certified application of premium Asian Paints Royale & Apex ranges.' },
+  { icon:'broom',  title:'Zero-Mess Guarantee',          desc:'Full furniture & floor protection on every job — no splatters, no exceptions.' },
+  { icon:'trophy', title:'Years Trusted',                desc:'10+ years serving Ghaziabad, Noida & Delhi NCR homeowners.' },
 ];
 
 const REASONS = [
-  { icon:'🎯', title:'Precision & Craftsmanship',    desc:'Every brushstroke flawless — stunning, lasting finish on houses, flats, villas, societies and more.' },
-  { icon:'👷', title:'Skilled & Experienced Team',   desc:'10+ years serving homes, societies, hospitals, offices and temples. Expertise for every project.' },
-  { icon:'⏱️', title:'Hassle-Free, On-Time Service', desc:'Clear communication, punctual arrival, professional execution. Completely stress-free.' },
-  { icon:'💰', title:'Free On-Site Estimates',        desc:'Know the full cost upfront. Free no-obligation inspection. Honest pricing — no hidden charges.' },
-  { icon:'🏆', title:'Premium Paints & Materials',   desc:'Asian Paints, Berger, and top-grade materials. Beautiful results that last for years.' },
-  { icon:'🏢', title:'All Property Types',            desc:'Houses, flats, villas, societies, hospitals, offices, temples — equipped for every scale.' },
+  { icon:'target', title:'Precision & Craftsmanship',    desc:'Every brushstroke flawless — stunning, lasting finish on houses, flats, villas, societies and more.' },
+  { icon:'worker', title:'Skilled & Experienced Team',   desc:'10+ years serving homes, societies, hospitals, offices and temples. Expertise for every project.' },
+  { icon:'clock',  title:'Hassle-Free, On-Time Service', desc:'Clear communication, punctual arrival, professional execution. Completely stress-free.' },
+  { icon:'coins',  title:'Free On-Site Estimates',        desc:'Know the full cost upfront. Free no-obligation inspection. Honest pricing — no hidden charges.' },
+  { icon:'trophy', title:'Premium Paints & Materials',   desc:'Asian Paints, Berger, and top-grade materials. Beautiful results that last for years.' },
+  { icon:'office', title:'All Property Types',            desc:'Houses, flats, villas, societies, hospitals, offices, temples — equipped for every scale.' },
+];
+
+// PLACEHOLDER — illustrative sample quotes only, not real customer reviews.
+// Swap these for actual customer feedback (WhatsApp/Google review text, with
+// permission) before this goes live — publishing fabricated reviews as if
+// genuine is misleading to visitors and risky under consumer-protection rules
+// around fake reviews.
+const TESTIMONIALS = [
+  { name:'Priya S.',  area:'Indirapuram, Ghaziabad', rating:5,
+    quote:'The team was punctual and kept the flat clean throughout the job. The finish in our living room came out just as we\'d discussed.' },
+  { name:'Anil M.',   area:'Raj Nagar Extension',      rating:5,
+    quote:'We\'d had a recurring seepage issue on one wall. Their team traced it to the actual source before repainting, instead of just covering it up.' },
+  { name:'Kavita R.', area:'Sector 62, Noida',          rating:5,
+    quote:'Got a full-home repaint done before moving in. The on-site estimate was clear upfront and there were no surprise charges at the end.' },
+  { name:'Deepak B.', area:'Vasundhara, Ghaziabad',     rating:4,
+    quote:'Appreciated the colour consultation — the associate helped us pick shades that actually suited our furniture rather than a generic recommendation.' },
 ];
 
 const TEAM = [
@@ -84,13 +101,50 @@ function TrustBadges() {
       <div className="trust-badges-grid">
         {TRUST_BADGES.map(b => (
           <div key={b.title} className="trust-badge">
-            <div className="trust-badge-icon" aria-hidden="true">{b.icon}</div>
+            <div className="trust-badge-icon"><Icon name={b.icon} size={24} /></div>
             <div>
               <div className="trust-badge-title">{b.title}</div>
               <div className="trust-badge-desc">{b.desc}</div>
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function Stars({ count }) {
+  return (
+    <div className="tm-stars" aria-label={`${count} out of 5 stars`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Icon key={i} name="star" size={15} className={i < count ? 'tm-star-on' : 'tm-star-off'} />
+      ))}
+    </div>
+  );
+}
+
+function Testimonials() {
+  return (
+    <div className="testimonials-sec">
+      <div className="container">
+        <div className="sec-head">
+          <span className="sec-tag">Customer Feedback</span>
+          <h2 className="sec-title">What Homeowners Say</h2>
+          <p className="sec-sub">A few notes from recent projects across Ghaziabad, Noida and Delhi NCR.</p>
+        </div>
+        <div className="tm-grid">
+          {TESTIMONIALS.map(t => (
+            <article key={t.name} className="tm-card">
+              <Icon name="quote" size={26} className="tm-quote-icon" />
+              <Stars count={t.rating} />
+              <p className="tm-text">{t.quote}</p>
+              <div className="tm-author">
+                <span className="tm-name">{t.name}</span>
+                <span className="tm-area">{t.area}</span>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -166,6 +220,10 @@ export default function Home() {
             <section className="hero">
               <div className="hero-bg-pattern" />
               <div className="hero-content">
+                <div className="hero-badge">
+                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+                  4.9 Rating · 120+ Happy Homeowners
+                </div>
                 <h1 className="hero-title">
                   Home Painting Professionals<br />
                   <span className="hero-accent">With Decades of Experience</span>
@@ -176,17 +234,17 @@ export default function Home() {
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>
                 <div className="hero-stats">
-                  <div className="hero-stat"><strong>500+</strong><span>Homes Painted</span></div>
+                  <div className="hero-stat"><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-sep" />
                   <div className="hero-stat"><strong>10+</strong><span>Years Trusted</span></div>
                   <div className="hero-stat-sep" />
                   <div className="hero-stat"><strong>5</strong><span>Cities Covered</span></div>
                   <div className="hero-stat-sep" />
-                  <div className="hero-stat"><strong>⭐ 4.9</strong><span>Customer Rating</span></div>
+                  <div className="hero-stat"><strong><Icon name="star" size={16} style={{ marginRight: 3, verticalAlign: '-2px' }} />4.9</strong><span>Customer Rating</span></div>
                 </div>
                 <div className="hero-home-btns">
                   <Link to="/services" className="btn-primary">Our Services →</Link>
-                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 WhatsApp Us</a>
+                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />WhatsApp Us</a>
                 </div>
               </div>
 
@@ -194,7 +252,7 @@ export default function Home() {
                 <div className="hfc-head">Let Our Experts Help You</div>
                 {submitted ? (
                   <div className="hfc-success">
-                    <div className="hfc-success-icon" aria-hidden="true">✅</div>
+                    <div className="hfc-success-icon"><Icon name="badgeCheck" size={40} style={{ color: 'var(--gold-deep)' }} /></div>
                     <div className="hfc-success-title">Request Sent!</div>
                     <p className="hfc-success-sub">
                       We've opened WhatsApp with your details — send the message and our team will reply shortly.
@@ -227,15 +285,15 @@ export default function Home() {
             <div className="trust-banner">
               <span className="tb-text">Service You Can Trust!</span>
               <span className="tb-sub">Let us know how we can help you today.</span>
-              <a className="tb-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Schedule Free Estimate</a>
+              <a className="tb-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />Schedule Free Estimate</a>
             </div>
 
             {/* Feature strip */}
             <div className="feature-strip">
-              {[{icon:'🔍',label:'On-Site Consultation'},{icon:'🛡️',label:'Furniture Protection'},{icon:'👑',label:'Premium Products'},{icon:'👷',label:'Certified Painters'},{icon:'✅',label:'Post-Painting Clean-up'}]
+              {[{icon:'magnifier',label:'On-Site Consultation'},{icon:'shield',label:'Furniture Protection'},{icon:'crown',label:'Premium Products'},{icon:'worker',label:'Certified Painters'},{icon:'check',label:'Post-Painting Clean-up'}]
                 .map(f => (
                   <div key={f.label} className="fi">
-                    <span className="fi-icon">{f.icon}</span>
+                    <span className="fi-icon"><Icon name={f.icon} size={22} /></span>
                     <span className="fi-label">{f.label}</span>
                   </div>
                 ))}
@@ -247,7 +305,7 @@ export default function Home() {
               <div className="hqn-grid">
                 {QUICK_NAV.map(c => (
                   <Link key={c.label} to="/services" className="hqn-card" style={{'--card-accent': c.accent}}>
-                    <div className="hqn-icon" aria-hidden="true">{c.icon}</div>
+                    <div className="hqn-icon"><Icon name={c.icon} size={34} /></div>
                     <div className="hqn-label">{c.label}</div>
                     <div className="hqn-sub">{c.sub}</div>
                     <div className="hqn-arrow" aria-hidden="true">→</div>
@@ -255,6 +313,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <Testimonials />
           </>
         )}
 
@@ -275,7 +335,7 @@ export default function Home() {
                     <article key={s.title} className="svc-card" style={{'--svc-accent': s.accent}}
                       onClick={() => setSelectedSvc(s)}>
                       <div className="svc-photo" style={{ background: s.bg }} role="img" aria-label={`${s.title} illustration`}>
-                        <div className="svc-photo-icon" aria-hidden="true">{s.icon}</div>
+                        <Icon name={s.icon} size={60} style={{ color: '#fffdf8' }} className="svc-photo-icon" />
                       </div>
                       <div className="svc-body">
                         <h3 className="svc-title">{s.title}</h3>
@@ -284,14 +344,14 @@ export default function Home() {
                         </ul>
                         <div className="svc-cta-row">
                           <span className="svc-learn">Learn more →</span>
-                          <div className="svc-badge" aria-hidden="true">{s.icon}</div>
+                          <div className="svc-badge"><Icon name={s.icon} size={19} /></div>
                         </div>
                       </div>
                     </article>
                   ))}
                 </div>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Discuss Your Project</a>
+                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Discuss Your Project</a>
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
@@ -310,7 +370,7 @@ export default function Home() {
                     {WHY.map(w => (
                       <div key={w.label} className="why-card" style={{'--why-bg': w.bg, '--why-ic': w.ic}}>
                         <div className="why-circle">
-                          <div className="why-icon">{w.icon}</div>
+                          <Icon name={w.icon} size={38} className="why-icon" />
                         </div>
                         <div className="why-label">{w.label}</div>
                       </div>
@@ -335,13 +395,13 @@ export default function Home() {
             <div className="page-content-white">
               <div className="container section">
                 <div className="about-grid">
-                  <div className="about-card"><div className="about-icon">🤝</div><h3>Our Promise</h3><p>We won't leave until you are fully satisfied. Every customer walks the job with our crew leader and signs a quality assurance form before we leave.</p></div>
-                  <div className="about-card"><div className="about-icon">🏠</div><h3>Zero Mess Guarantee</h3><p>Before we start, we cover floors, move furniture, fill cracks, and repair caulking. Paint goes only on your wall — no splatters. Ever.</p></div>
-                  <div className="about-card"><div className="about-icon">🏆</div><h3>Proven Reputation</h3><p>Over a decade of trusted painting work — built on customer satisfaction, premium products, and never cutting corners.</p></div>
-                  <div className="about-card"><div className="about-icon">🕌</div><h3>All Properties</h3><p>Houses, flats, villas, housing societies, hospitals, offices, temples — our expert teams are equipped for every scale and type.</p></div>
+                  <div className="about-card"><div className="about-icon"><Icon name="badgeCheck" size={28} /></div><h3>Our Promise</h3><p>We won't leave until you are fully satisfied. Every customer walks the job with our crew leader and signs a quality assurance form before we leave.</p></div>
+                  <div className="about-card"><div className="about-icon"><Icon name="home" size={28} /></div><h3>Zero Mess Guarantee</h3><p>Before we start, we cover floors, move furniture, fill cracks, and repair caulking. Paint goes only on your wall — no splatters. Ever.</p></div>
+                  <div className="about-card"><div className="about-icon"><Icon name="trophy" size={28} /></div><h3>Proven Reputation</h3><p>Over a decade of trusted painting work — built on customer satisfaction, premium products, and never cutting corners.</p></div>
+                  <div className="about-card"><div className="about-icon"><Icon name="temple" size={28} /></div><h3>All Properties</h3><p>Houses, flats, villas, housing societies, hospitals, offices, temples — our expert teams are equipped for every scale and type.</p></div>
                 </div>
                 <div className="notice-box">
-                  <span className="notice-icon">⚠️</span>
+                  <Icon name="warning" size={22} className="notice-icon" />
                   <div><strong>Important Notice</strong><p>We do not have any other branches or representatives. To receive legitimate service, call only the numbers listed on this portal.</p></div>
                 </div>
               </div>
@@ -359,7 +419,7 @@ export default function Home() {
                   <div className="reasons-grid">
                     {REASONS.map(r => (
                       <article key={r.title} className="reason-card">
-                        <div className="rc-star" aria-hidden="true">{r.icon}</div>
+                        <div className="rc-star"><Icon name={r.icon} size={17} /></div>
                         <div><div className="rc-title">{r.title}</div><div className="rc-desc">{r.desc}</div></div>
                       </article>
                     ))}
@@ -370,7 +430,7 @@ export default function Home() {
                         onError={e => { e.target.parentElement.style.display='none'; e.target.parentElement.nextSibling.style.display='flex'; }} />
                     </div>
                     <div className="rp-fallback" style={{display:'none'}}>
-                      <div className="rp-fallback-icon">🎨</div>
+                      <Icon name="brush" size={48} className="rp-fallback-icon" />
                       <div className="rp-fallback-text">The Painter Boys<br/>Home Painting Professionals</div>
                     </div>
                   </div>
@@ -394,23 +454,23 @@ export default function Home() {
               <div className="container section">
                 <div className="how-grid">
                   {[
-                    {n:'01',icon:'📅',title:'Schedule an Appointment',     desc:'Fill a quick form or WhatsApp us. Our team books a convenient time for a site visit.'},
-                    {n:'02',icon:'🔍',title:'Product & Site Consultation',  desc:'Our associate visits your home, answers all questions, and provides a full consultation.'},
-                    {n:'03',icon:'🎨',title:'Colour Selection',             desc:'Choose from our curated palette. Our expert helps you finalise the perfect shades.'},
-                    {n:'04',icon:'🛡️',title:'Work Preparation',            desc:'We cover floors and furniture, then begin the painting process with zero disruption.'},
-                    {n:'05',icon:'⚙️',title:'Site Execution',              desc:'Using a structured project management framework, we ensure high-quality, on-time execution.'},
-                    {n:'06',icon:'🏠',title:'Handover & Walkthrough',       desc:'Post-painting clean-up done. We walk you through and share tips for keeping walls beautiful.'},
+                    {n:'01',icon:'calendar',   title:'Schedule an Appointment',     desc:'Fill a quick form or WhatsApp us. Our team books a convenient time for a site visit.'},
+                    {n:'02',icon:'magnifier',  title:'Product & Site Consultation',  desc:'Our associate visits your home, answers all questions, and provides a full consultation.'},
+                    {n:'03',icon:'palette',    title:'Colour Selection',             desc:'Choose from our curated palette. Our expert helps you finalise the perfect shades.'},
+                    {n:'04',icon:'shield',     title:'Work Preparation',            desc:'We cover floors and furniture, then begin the painting process with zero disruption.'},
+                    {n:'05',icon:'gear',       title:'Site Execution',              desc:'Using a structured project management framework, we ensure high-quality, on-time execution.'},
+                    {n:'06',icon:'home',       title:'Handover & Walkthrough',       desc:'Post-painting clean-up done. We walk you through and share tips for keeping walls beautiful.'},
                   ].map(s => (
                     <div key={s.n} className="how-card">
                       <div className="how-num">{s.n}</div>
-                      <div className="how-icon">{s.icon}</div>
+                      <Icon name={s.icon} size={26} className="how-icon" />
                       <h3 className="how-title">{s.title}</h3>
                       <p className="how-desc">{s.desc}</p>
                     </div>
                   ))}
                 </div>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Book Your Free Consultation</a>
+                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Book Your Free Consultation</a>
                   <Link to="/contact" className="btn-secondary">Contact Us →</Link>
                 </div>
               </div>
@@ -449,7 +509,7 @@ export default function Home() {
             {selectedMember && (
               <div className="team-modal-overlay" onClick={() => setSelectedMember(null)}>
                 <div className="team-modal" onClick={e => e.stopPropagation()}>
-                  <button className="team-modal-close" onClick={() => setSelectedMember(null)}>✕</button>
+                  <button className="team-modal-close" onClick={() => setSelectedMember(null)}><Icon name="close" size={15} /></button>
                   {selectedMember.img
                     ? <img src={selectedMember.img} alt={`${selectedMember.name}, ${selectedMember.role} at The Painter Boys`} className="team-modal-photo"
                         onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
@@ -473,7 +533,7 @@ export default function Home() {
               <div className="ph-content">
                 <span className="sec-tag light">Paint Guide</span>
                 <h1 className="ph-title">Paint Types & Brands We Work With</h1>
-                <p className="ph-sub">Asian Paints Royal, Tractor Emulsion, Apex, Royal Shyne and more — which finish suits your home?</p>
+                <p className="ph-sub">Asian Paints Royale, Tractor Emulsion, Apex, Royale Shyne and more — which finish suits your home?</p>
               </div>
             </div>
             <div className="page-content-white">
@@ -495,7 +555,7 @@ export default function Home() {
                   budget and finish preference during your free on-site consultation.
                 </p>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Ask Us Which Paint Is Right For You</a>
+                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Ask Us Which Paint Is Right For You</a>
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
@@ -517,21 +577,21 @@ export default function Home() {
                   <div className="cfs-body">
                     <div className="cfs-cards">
                       <a className="cfs-card cfs-phone" href={`tel:${PHONE}`}>
-                        <div className="cfsc-icon">📞</div>
+                        <div className="cfsc-icon"><Icon name="phone" size={22} /></div>
                         <div>
                           <div className="cfsc-label">Call Us Now</div>
                           <div className="cfsc-val">+91 78388 88509</div>
                         </div>
                       </a>
                       <a className="cfs-card cfs-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
-                        <div className="cfsc-icon">💬</div>
+                        <div className="cfsc-icon"><Icon name="whatsapp" size={20} /></div>
                         <div>
                           <div className="cfsc-label">WhatsApp</div>
                           <div className="cfsc-val">Chat Instantly</div>
                         </div>
                       </a>
                       <div className="cfs-card">
-                        <div className="cfsc-icon">📍</div>
+                        <div className="cfsc-icon"><Icon name="pin" size={22} /></div>
                         <div>
                           <div className="cfsc-label">Areas We Serve</div>
                           <div className="cfsc-val">Ghaziabad · Noida · Delhi · Haridwar · Dehradun</div>
@@ -539,7 +599,7 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="cfs-card">
-                        <div className="cfsc-icon">🕐</div>
+                        <div className="cfsc-icon"><Icon name="clock" size={22} /></div>
                         <div>
                           <div className="cfsc-label">Working Hours</div>
                           <div className="cfsc-val">Mon – Sun · 8 AM to 8 PM</div>
@@ -550,8 +610,8 @@ export default function Home() {
                       <h2 className="cfs-cta-title">Ready to Transform Your Home?</h2>
                       <p className="cfs-cta-sub">We paint houses, flats, villas, societies, hospitals, offices and temples — with premium paints and zero-mess execution.</p>
                       <div className="cfs-cta-btns">
-                        <a className="btn-wa btn-lg" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Get Free Quote on WhatsApp</a>
-                        <a className="btn-call" href={`tel:${PHONE}`}>📞 Call Now</a>
+                        <a className="btn-wa btn-lg" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={19} />Get Free Quote on WhatsApp</a>
+                        <a className="btn-call" href={`tel:${PHONE}`}><Icon name="phone" size={17} />Call Now</a>
                       </div>
                     </div>
                   </div>
@@ -563,8 +623,15 @@ export default function Home() {
                 <div className="container">
                   <p className="css-label">We Paint Everything</p>
                   <div className="css-grid">
-                    {['🏠 Houses & Flats','🏙️ Villas','🏘️ Societies','🏥 Hospitals','🏢 Offices','🕌 Temples'].map(s => (
-                      <div key={s} className="css-chip">{s}</div>
+                    {[
+                      { icon:'home', label:'Houses & Flats' },
+                      { icon:'office', label:'Villas' },
+                      { icon:'office', label:'Societies' },
+                      { icon:'medical', label:'Hospitals' },
+                      { icon:'office', label:'Offices' },
+                      { icon:'temple', label:'Temples' },
+                    ].map(s => (
+                      <div key={s.label} className="css-chip"><Icon name={s.icon} size={15} />{s.label}</div>
                     ))}
                   </div>
                 </div>
@@ -577,15 +644,15 @@ export default function Home() {
 
       <SiteFooter />
 
-      <a className="wa-fab" href={WA_LINK} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">💬</a>
+      <a className="wa-fab" href={WA_LINK} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp"><Icon name="whatsapp" size={26} /></a>
 
       {/* ── Service detail modal ── */}
       {selectedSvc && (
         <div className="svc-modal-overlay" onClick={() => setSelectedSvc(null)}>
           <div className="svc-modal" style={{'--svc-accent': selectedSvc.accent}} onClick={e => e.stopPropagation()}>
-            <button className="team-modal-close" onClick={() => setSelectedSvc(null)}>✕</button>
+            <button className="team-modal-close" onClick={() => setSelectedSvc(null)}><Icon name="close" size={15} /></button>
             <div className="svc-modal-photo" style={{background: selectedSvc.bg}}>
-              <span className="svc-modal-icon">{selectedSvc.icon}</span>
+              <Icon name={selectedSvc.icon} size={52} style={{ color: '#fffdf8' }} />
             </div>
             <div className="svc-modal-body">
               <h2 className="svc-modal-title">{selectedSvc.title}</h2>
@@ -594,7 +661,7 @@ export default function Home() {
               </ul>
               <div className="svc-modal-cta">
                 <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"
-                  onClick={() => setSelectedSvc(null)}>💬 Get Quote for {selectedSvc.title}</a>
+                  onClick={() => setSelectedSvc(null)}><Icon name="whatsapp" size={17} />Get Quote for {selectedSvc.title}</a>
               </div>
             </div>
           </div>

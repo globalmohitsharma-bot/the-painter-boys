@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
+import Icon from './Icon.jsx';
 import { SITE_URL, WA_LINK } from './siteConfig.js';
 import './Blog.css';
 
@@ -20,7 +21,7 @@ export const BLOG_POSTS = [
       { h: 'Paintable area, not room count' },
       'Two "3BHK" homes can have very different wall areas depending on ceiling height, number of windows, and layout. Painters price by square footage of surface to be painted, not by counting rooms — which is why two similar-sized homes can get different quotes.',
       { h: 'Paint tier and brand' },
-      'Budget distemper, mid-range Tractor Emulsion, and premium finishes like Asian Paints Royal or Royal Shyne sit at very different price points per litre — and coverage per litre also varies. See our ',
+      'Budget distemper, mid-range Tractor Emulsion, and premium finishes like Asian Paints Royale or Royale Shyne sit at very different price points per litre — and coverage per litre also varies. See our ',
       { link: { to: '/paint-types', text: 'Paint Types & Brands Guide' } },
       ' for how these compare.',
       { h: 'Surface condition' },
@@ -34,11 +35,11 @@ export const BLOG_POSTS = [
   },
   {
     slug: 'asian-paints-royal-vs-tractor-emulsion',
-    title: 'Asian Paints Royal vs Tractor Emulsion: Which Is Right for Your Home?',
+    title: 'Asian Paints Royale vs Tractor Emulsion: Which Is Right for Your Home?',
     date: '2026-06-22',
     excerpt: 'Both are Asian Paints emulsions, but they serve very different budgets and use-cases. Here\'s a straight comparison to help you decide.',
     body: [
-      'Asian Paints Royal and Tractor Emulsion are both popular choices, but they\'re built for different priorities — one for a luxury finish, one for value. Here\'s how they actually compare.',
+      'Asian Paints Royale and Tractor Emulsion are both popular choices, but they\'re built for different priorities — one for a luxury finish, one for value. Here\'s how they actually compare.',
       { h: 'Finish quality' },
       'Royal delivers a noticeably smoother, richer finish with better light reflection — the kind of look that shows well on feature walls and living rooms. Tractor Emulsion gives a clean, flat matt finish that looks good but doesn\'t have the same depth or sheen.',
       { h: 'Durability and washability' },
@@ -47,11 +48,11 @@ export const BLOG_POSTS = [
       'Tractor Emulsion is Asian Paints\' value range — meaningfully cheaper per litre than Royal, which is positioned as a premium product. For a budget-conscious repaint of bedrooms or less-used rooms, Tractor is a sensible choice.',
       { h: 'Our recommendation' },
       'If budget is the primary constraint and the space isn\'t heavily used, Tractor Emulsion is genuinely good value. If you want your living room or entryway to look and feel premium — and plan to keep the colour for years — Royal is worth the difference. For something in between, ',
-      { link: { to: '/paint-types', text: 'Royal Shyne Emulsion' } },
+      { link: { to: '/paint-types', text: 'Royale Shyne Luxury Emulsion' } },
       ' offers a soft-sheen premium finish at a mid-point price.',
       'Not sure which fits your space and budget? Our team recommends the right option during your free on-site consultation, based on the actual room and how it\'s used.',
     ],
-    metaDescription: 'Asian Paints Royal vs Tractor Emulsion compared — finish quality, durability, washability and price — so you know which fits your home and budget.',
+    metaDescription: 'Asian Paints Royale vs Tractor Emulsion compared — finish quality, durability, washability and price — so you know which fits your home and budget.',
   },
   {
     slug: 'monsoon-waterproofing-tips-delhi-ncr',
@@ -231,7 +232,7 @@ export function BlogPost() {
             <div className="container section blog-post-body">
               {post.body.map(renderBodyBlock)}
               <div className="sec-cta">
-                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">💬 Get a Free Estimate</a>
+                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Get a Free Estimate</a>
                 <Link to="/blog" className="btn-secondary">← More Articles</Link>
               </div>
             </div>

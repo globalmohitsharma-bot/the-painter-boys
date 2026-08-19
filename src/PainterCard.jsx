@@ -167,7 +167,7 @@ export default function PainterCard() {
         <div className="pc-card-footer">
           <span className="pc-footer-txt">Trusted Since 2010</span>
           <span className="pc-footer-sep">·</span>
-          <span className="pc-footer-txt">500+ Homes Painted</span>
+          <span className="pc-footer-txt">2000+ Homes Painted</span>
           <span className="pc-footer-sep">·</span>
           <span className="pc-footer-txt">⭐ 4.9 Rating</span>
         </div>

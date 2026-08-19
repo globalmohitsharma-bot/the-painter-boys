@@ -43,8 +43,8 @@ export const PAGE_META = {
   },
   'paint-types': {
     path: '/paint-types',
-    title: 'Paint Types & Brands Guide — Asian Paints Royal, Tractor, Apex | The Painter Boys',
-    description: 'A guide to popular paint types we work with — Asian Paints Royal, Tractor Emulsion, Apex exterior, Royal Shyne, distemper and premium textures — and which suits your home.',
+    title: 'Paint Types & Brands Guide — Asian Paints Royale, Tractor, Apex | The Painter Boys',
+    description: 'A guide to popular paint types we work with — Asian Paints Royale, Tractor Emulsion, Apex exterior, Royale Shyne, distemper and premium textures — and which suits your home.',
   },
   blog: {
     path: '/blog',

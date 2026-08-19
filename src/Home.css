@@ -253,13 +253,10 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 }
 .hero-title { font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 700; color: var(--ivory); line-height: 1.15; letter-spacing: .005em; margin-bottom: 14px; }
 .hero-title-colorful {
-  background: linear-gradient(90deg, #f2871f, #db2777, #7c3aed, #2563c4, #0ea5a8);
+  background: linear-gradient(90deg, #ffffff 0%, #f2871f 22%, #ffffff 42%, #7c3aed 62%, #ffffff 82%, #0ea5a8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.hero-accent {
-  background: linear-gradient(90deg, var(--gold), var(--gold-soft), var(--gold-deep));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
+.hero-accent { color: var(--ivory); font-weight: 800; }
 .hero-cities { font-size: .9rem; color: rgba(255,255,255,.5); letter-spacing: .05em; margin-bottom: 18px; font-weight: 500; }
 .hero-cities-local { font-size: .78rem; margin-top: -12px; opacity: .75; }
 .hero-desc { font-size: 1rem; color: rgba(255,255,255,.72); line-height: 1.75; margin-bottom: 32px; }

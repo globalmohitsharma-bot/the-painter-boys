@@ -56,7 +56,7 @@ const WHY = [
 ];
 
 const TRUST_BADGES = [
-  { icon:'medal',  title:'Asian Paints Royale Partner', desc:'Certified application of premium Asian Paints Royale & Apex ranges.' },
+  { icon:'medal',  title:'Asian Paints Royale Trained Experts', desc:'Premium Asian Paints Royale trained resources for a flawless application.' },
   { icon:'broom',  title:'Zero-Mess Guarantee',          desc:'Full furniture & floor protection on every job — no splatters, no exceptions.' },
   { icon:'trophy', title:'Years Trusted',                desc:'10+ years serving Ghaziabad, Noida & Delhi NCR homeowners.' },
 ];

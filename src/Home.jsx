@@ -275,14 +275,14 @@ export default function Home() {
             <section className="hero">
               <div className="hero-bg-pattern" />
               <div className="hero-content">
-                <div className="hero-badge">
-                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
-                  4.9 Rating · 2000+ Happy Homeowners
-                </div>
                 <h1 className="hero-title">
                   <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
+                <div className="hero-badge">
+                  <Icon name="star" size={13} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+                  4.9 Rating · 2000+ Happy Homeowners
+                </div>
                 <p className="hero-desc">
                   Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
                 </p>

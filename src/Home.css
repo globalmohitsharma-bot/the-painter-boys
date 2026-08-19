@@ -747,17 +747,19 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .nav-hamburger { display: flex; }
   .nav { display: none; }
   /* Hero */
-  .hero { text-align: center; padding: 90px 20px 48px; }
-  .hero-desc { max-width: none; }
+  .hero { text-align: center; padding: 90px 20px 48px; min-height: auto; align-items: flex-start; }
+  .hero-title { margin-bottom: 8px; }
+  .hero-badge { margin-bottom: 14px; }
+  .hero-desc { max-width: none; margin-bottom: 16px; }
   .hero-desc-full { display: none; }
   .hero-desc-short { display: block; }
   /* Stats: compact enough to stay on one line */
-  .hero-stats { justify-content: center; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; }
+  .hero-stats { justify-content: center; flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; }
   .hero-stat strong { font-size: 1.15rem; }
   .hero-stat span { font-size: .52rem; letter-spacing: .03em; }
   .hero-stat-sep { height: 24px; }
   /* Buttons: short labels, compact enough to stay on one line */
-  .hero-home-btns { justify-content: center; flex-wrap: nowrap; gap: 6px; }
+  .hero-home-btns { justify-content: center; flex-wrap: nowrap; gap: 6px; margin-top: 14px; }
   .hero-btn-full { display: none; }
   .hero-btn-short { display: inline; }
   .hero-home-btns .btn-primary, .hero-home-btns .btn-wa, .hero-home-btns .btn-call-hero {
@@ -765,11 +767,11 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   }
   .hero-home-btns svg { width: 13px; height: 13px; }
   /* We Proudly Serve: chips on one line, locality list on a second */
-  .hero-presence { padding: 12px 14px; margin-bottom: 20px; }
+  .hero-presence { padding: 12px 14px; margin-bottom: 14px; }
   .hero-presence-head { margin-bottom: 8px; }
   .hero-presence-chips { flex-wrap: nowrap; gap: 4px; }
   .hero-presence-chip { padding: 4px 6px; font-size: .58rem; flex: 1; text-align: center; white-space: nowrap; }
-  .hero-cities-local { font-size: .68rem; margin-top: 8px; white-space: normal; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .hero-cities-local { display: none; }
   /* Feature strip */
   .fi { min-width: 45%; border-right: none; border-bottom: 1px solid var(--hairline); }
   .fi:nth-child(odd) { border-right: 1px solid var(--hairline); }

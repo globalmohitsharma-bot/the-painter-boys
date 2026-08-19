@@ -293,7 +293,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .hero-accent { display: block; color: var(--ivory); font-weight: 800; font-size: clamp(1.3rem, 2.6vw, 2rem); line-height: 1.25; margin-top: 6px; }
-.hero-desc { font-size: .82rem; color: rgba(255,253,248,.65); line-height: 1.5; margin-bottom: 34px; max-width: 480px; }
+.hero-desc { font-size: .82rem; color: rgba(255,253,248,.65); line-height: 1.5; margin-bottom: 34px; max-width: none; white-space: nowrap; }
 .hero-desc-short { display: none; white-space: nowrap; }
 
 /* Stats — glassmorphism cards */

@@ -26,6 +26,9 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
         return;
       }
       setGsiReady(true);
+      // Temporary diagnostic — remove once the intermittent "missing client_id"
+      // report is root-caused. Logs the exact runtime value GIS receives.
+      console.log('[PB-DIAG] GOOGLE_CLIENT_ID at initialize():', JSON.stringify(GOOGLE_CLIENT_ID), 'length:', GOOGLE_CLIENT_ID.length, 'build:', 'DZuHYk1M-followup');
       window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential });
       if (buttonRef.current) {
         buttonRef.current.innerHTML = '';

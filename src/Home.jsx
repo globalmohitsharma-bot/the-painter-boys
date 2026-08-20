@@ -109,7 +109,11 @@ const TESTIMONIALS = [
 function TrustBadges() {
   return (
     <div className="trust-badges-sec">
-      <h2 className="tb-heading">We Care</h2>
+      <div className="sec-head">
+        <span className="sec-tag">Our Commitment</span>
+        <h2 className="tb-heading">We Care</h2>
+        <p className="tb-sub">The standards behind every job — not just marketing copy.</p>
+      </div>
       <div className="trust-badges-grid">
         {TRUST_BADGES.map(b => (
           <div key={b.title} className="trust-badge">

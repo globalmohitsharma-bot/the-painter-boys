@@ -216,27 +216,32 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .tb-btn:hover { box-shadow: 0 6px 22px rgba(242,135,31,.5); }
 
 /* ── Trust badges ── */
-.trust-badges-sec { background: var(--ivory); padding: 40px 24px; border-bottom: 1px solid var(--hairline); }
-.tb-heading { text-align: center; font-family: var(--font-display); font-size: clamp(1.3rem,3vw,1.7rem); font-weight: 700; color: var(--ink); margin-bottom: 24px; }
+.trust-badges-sec { background: var(--ivory); padding: 56px 24px; border-bottom: 1px solid var(--hairline); }
+.trust-badges-sec .sec-head { margin-bottom: 36px; }
+.tb-heading { font-family: var(--font-display); font-size: clamp(1.5rem,3vw,2rem); font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+.tb-sub { font-size: .92rem; color: var(--ink-soft); max-width: 480px; margin: 0 auto; line-height: 1.6; }
 .trust-badges-grid {
-  display: flex; flex-wrap: wrap; max-width: 1040px; margin: 0 auto;
-  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.04); overflow: hidden;
+  display: flex; flex-wrap: wrap; max-width: 1060px; margin: 0 auto;
+  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.05); overflow: hidden;
 }
 .trust-badge {
-  display: flex; align-items: center; gap: 14px; flex: 1; min-width: 260px;
-  padding: 22px 24px; border-right: 1px solid var(--hairline);
+  display: flex; align-items: center; gap: 16px; flex: 1; min-width: 260px;
+  padding: 28px 26px; border-right: 1px solid var(--hairline);
   transition: background .25s ease;
 }
 .trust-badge:last-child { border-right: none; }
 .trust-badge:hover { background: rgba(242,135,31,.05); }
 .trust-badge-icon {
-  flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%; color: var(--gold-deep);
-  background: rgba(242,135,31,.08); border: 1px solid rgba(242,135,31,.18);
+  flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; color: var(--gold-deep);
+  background: linear-gradient(135deg, rgba(242,135,31,.14), rgba(242,135,31,.05));
+  border: 1px solid rgba(242,135,31,.22); box-shadow: 0 4px 14px rgba(242,135,31,.1);
   display: flex; align-items: center; justify-content: center;
+  transition: transform .3s ease;
 }
-.trust-badge-title { font-family: var(--font-display); font-weight: 700; font-size: .95rem; color: var(--ink); margin-bottom: 3px; }
-.trust-badge-desc { font-size: .78rem; color: var(--ink-soft); line-height: 1.5; }
+.trust-badge:hover .trust-badge-icon { transform: scale(1.08) rotate(-4deg); }
+.trust-badge-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--ink); margin-bottom: 4px; }
+.trust-badge-desc { font-size: .8rem; color: var(--ink-soft); line-height: 1.55; }
 
 /* ── Feature strip — presented as one "How We Work" process card ── */
 .feature-process-sec { background: var(--parchment); padding: 48px 24px; border-bottom: 1px solid var(--hairline); }

@@ -174,6 +174,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [editingProject, setEditingProject] = useState(null);
   const [mediaProjectId, setMediaProjectId] = useState(null);
   const [receiptProjectId, setReceiptProjectId] = useState(null);
+  const [thankYouProjectId, setThankYouProjectId] = useState(null);
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
@@ -413,6 +414,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
                       <button onClick={() => setReceiptProjectId(p.id)}>Payment Receipt</button>
                       <button onClick={() => shareProjectUpdate(p, selectedClient)}>Share Update</button>
+                      {p.progress === 'Inquiry' && (
+                        <button onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
+                      )}
                       <button className="ap-danger" onClick={() => deleteProject(p.id)}>Delete</button>
                     </td>
                   </tr>
@@ -457,6 +461,12 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           client={clients.find(c => c.id === projects.find(p => p.id === receiptProjectId)?.clientId)}
           onClose={() => setReceiptProjectId(null)}
           onAddPayment={addPayment}
+        />
+      )}
+      {thankYouProjectId && (
+        <ThankYouCardModal
+          client={clients.find(c => c.id === projects.find(p => p.id === thankYouProjectId)?.clientId)}
+          onClose={() => setThankYouProjectId(null)}
         />
       )}
     </div>
@@ -773,6 +783,89 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
+          </button>
+          {client?.phone && (
+            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
+          )}
+          <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Thank You card (new inquiries) ─────────────────────────────────
+function ThankYouCardModal({ client, onClose }) {
+  const cardRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
+  const name = client?.contactName ? `Mr. ${client.contactName}` : 'Customer';
+
+  const waText = [
+    `🎨 *The Painter Boys*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `Dear ${name},`,
+    ``,
+    `Thank you for reaching out to *The Painter Boys*.`,
+    `Our team will contact you shortly.`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🌐 www.thepainterboys.com`,
+    `📞 Corporate: 7838888509`,
+  ].join('\n');
+
+  async function shareAsImage() {
+    if (!cardRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: null, logging: false });
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'thankyou-thepainterboys.png', { type: 'image/png' });
+        const downloadFallback = () => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = 'thankyou-thepainterboys.png'; a.click();
+          URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
+        }
+        setCapturing(false);
+      }, 'image/png');
+    } catch { setCapturing(false); }
+  }
+
+  function shareOnWhatsApp() {
+    const digits = (client?.phone || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener');
+  }
+
+  return (
+    <div className="aq-overlay" onClick={onClose}>
+      <div className="aq-wrap" onClick={e => e.stopPropagation()}>
+        <div className="aq-card ap-ty-card" ref={cardRef}>
+          <div className="aq-card-header">
+            <div className="aq-card-logo">🎨</div>
+            <div className="aq-card-company">The Painter Boys</div>
+            <div className="aq-card-tagline">Professional Painting Services</div>
+          </div>
+          <div className="ap-ty-body">
+            <div className="ap-ty-stars">✦ &nbsp; ✦ &nbsp; ✦</div>
+            <div className="ap-ty-title">Thank You!</div>
+            <div className="ap-ty-dear">Dear {name},</div>
+            <p>Thank you for reaching out to<br /><strong>The Painter Boys.</strong></p>
+            <p>Our representative will contact<br />you shortly.</p>
+            <p>We look forward to transforming<br />your space with our expert<br />painting services.</p>
+          </div>
+          <div className="aq-card-footer">
+            <div>🌐 www.thepainterboys.com</div>
+            <div>📞 Corporate: 7838888509</div>
+          </div>
+        </div>
+        <div className="aq-actions">
+          <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
+            {capturing ? '⏳ Preparing…' : '📤 Share Thank You Card'}
           </button>
           {client?.phone && (
             <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>

@@ -58,12 +58,13 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
                 <a className="bn-staff-link" href="/admin">Admin Portal</a>
                 <a className="bn-staff-link" href="/pb">Staff Portal</a>
               </div>
+            ) : tab === 'projects' ? (
+              <div className="bn-staff-links">
+                <p className="bn-modal-note">See your painting project's progress, photos, and payments.</p>
+                <a className="bn-staff-link" href="/my-projects">View My Projects</a>
+              </div>
             ) : (
-              <p className="bn-modal-note">
-                {tab === 'projects'
-                  ? 'Your project dashboard (photos, progress, past work) is coming soon — this account will be linked to your jobs automatically once it\'s live.'
-                  : 'Full profile management is coming soon.'}
-              </p>
+              <p className="bn-modal-note">Full profile management is coming soon.</p>
             )}
             <button className="bn-signout" onClick={onSignOut}>Sign out</button>
           </div>

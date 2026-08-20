@@ -1,0 +1,39 @@
+.mp-gate { max-width: 420px; margin: 0 auto; text-align: center; padding: 40px 20px; }
+.mp-gate-icon { color: var(--gold-deep); margin-bottom: 14px; }
+.mp-gate h3 { font-family: var(--font-display); color: var(--ink); margin-bottom: 8px; }
+.mp-gate p { color: var(--ink-soft); font-size: .9rem; margin-bottom: 20px; }
+.mp-gsi-btn { display: flex; justify-content: center; }
+.mp-warn { font-size: .78rem; color: var(--ink-faint); margin-top: 14px; }
+
+.mp-toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+.mp-signout { background: none; border: 1.5px solid var(--hairline); color: var(--ink-soft); padding: 8px 18px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.mp-signout:hover { border-color: var(--gold); color: var(--gold-deep); }
+.mp-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .88rem; }
+.mp-loading { color: var(--ink-soft); text-align: center; padding: 40px 0; }
+.mp-empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+.mp-empty svg { color: var(--gold-deep); margin-bottom: 12px; }
+
+.mp-project-list { display: flex; flex-direction: column; gap: 20px; }
+.mp-card { background: var(--ivory); border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,.05); }
+.mp-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.mp-card-head h3 { font-family: var(--font-display); color: var(--ink); font-size: 1.15rem; }
+.mp-card-address { color: var(--ink-soft); font-size: .88rem; margin-bottom: 4px; }
+.mp-card-detail { color: var(--ink-soft); font-size: .88rem; margin-bottom: 12px; }
+
+.mp-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 14px 0; }
+.mp-photo-item { border-radius: 8px; overflow: hidden; background: var(--parchment); border: 1px solid var(--hairline); }
+.mp-photo-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
+.mp-photo-caption { font-size: .7rem; color: var(--ink-soft); padding: 4px 6px; margin: 0; }
+
+.mp-payment { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--hairline); }
+.mp-payment-row { display: flex; justify-content: space-between; font-size: .88rem; color: var(--ink); padding: 3px 0; }
+.mp-payment-pending { color: #b45309; font-weight: 700; }
+
+/* Reused progress-chip look from the Admin Portal, kept self-contained here
+   rather than importing AdminPortal.css across this public/admin boundary. */
+.ap-progress-chip { padding: 3px 10px; border-radius: 12px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+.ap-progress-completed { background: #dbeafe; color: #1d4ed8; }
+.ap-progress-cancelled { background: #fee2e2; color: #dc2626; }
+.ap-progress-not-started { background: #fef3c7; color: #b45309; }
+.ap-progress-in-progress { background: #d1fae5; color: #065f46; }
+.ap-progress-inquiry, .ap-progress-pending-visit { background: #ede9fe; color: #6d28d9; }

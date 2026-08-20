@@ -40,6 +40,20 @@ public class ProjectRepository : IProjectRepository
         return results;
     }
 
+    public async Task<List<Project>> GetSharedWithUserAsync(string userId, CancellationToken ct)
+    {
+        var query = new QueryDefinition(
+            "SELECT * FROM c WHERE EXISTS(SELECT VALUE s FROM s IN c.sharedWith WHERE s.userId = @userId AND s.visible = true) ORDER BY c.createdAt DESC")
+            .WithParameter("@userId", userId);
+        var results = new List<Project>();
+        using var iterator = _container.GetItemQueryIterator<Project>(query);
+        while (iterator.HasMoreResults)
+        {
+            results.AddRange(await iterator.ReadNextAsync(ct));
+        }
+        return results;
+    }
+
     public async Task<Project?> GetByIdAsync(string id, CancellationToken ct)
     {
         try

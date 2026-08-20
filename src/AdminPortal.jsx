@@ -49,7 +49,12 @@ const DEFAULT_SOCIETIES = [
 const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
 const EMPTY_QUOTATION = {
   society: '', customerName: '', mobile: '', bhk: '', paintType: '',
-  workItems: ['Putty', 'Primer', 'Chalk Mitti', 'Paint'], totalAmount: '',
+  workItems: [
+    { name: 'Putty (2 Coat)', price: '' },
+    { name: 'Primer', price: '' },
+    { name: 'Chalk Mitti', price: '' },
+    { name: 'Paint (2 Coat)', price: '' },
+  ],
 };
 // Rule-of-thumb multiplier painting contractors commonly use to go from
 // built-up area to total paintable (wall + ceiling) area — real ratio varies
@@ -176,6 +181,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [receiptProjectId, setReceiptProjectId] = useState(null);
   const [thankYouProjectId, setThankYouProjectId] = useState(null);
   const [search, setSearch] = useState('');
+  const [projectFilter, setProjectFilter] = useState('Inquiry');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -313,12 +319,19 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     updateProjectInState(saved);
   }
 
-  const filteredClients = clients.filter(c => {
-    const q = search.toLowerCase();
-    return !q || c.contactName.toLowerCase().includes(q) || c.phone.includes(q) || c.society.toLowerCase().includes(q);
-  });
   const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
+
+  // Cards are project-centric (status lives on the project, not the client),
+  // each paired with its client for name/phone/society display and search.
+  const projectCards = projects.map(p => ({ ...p, client: clients.find(c => c.id === p.clientId) }));
+  const filteredProjectCards = projectCards.filter(pc => {
+    const q = search.toLowerCase();
+    const matchesSearch = !q || (pc.client?.contactName || '').toLowerCase().includes(q)
+      || (pc.client?.phone || '').includes(q) || (pc.client?.society || '').toLowerCase().includes(q);
+    const matchesFilter = projectFilter === 'All' || pc.progress === projectFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   const stats = {
     clients: clients.length,
@@ -326,6 +339,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     inquiries: projects.filter(p => p.progress === 'Inquiry').length,
     pendingTotal: projects.reduce((s, p) => s + (p.pendingAmount || 0), 0),
   };
+  const statusCounts = PROGRESS_OPTIONS.reduce((acc, opt) => {
+    acc[opt] = projects.filter(p => p.progress === opt).length;
+    return acc;
+  }, {});
 
   return (
     <div className="ap-root">
@@ -354,35 +371,34 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             {!loading && (
               <div className="ap-stats-bar">
                 <span className="ap-stat">👤 {stats.clients} Clients</span>
-                <span className="ap-stat ap-stat-purple">💡 {stats.inquiries} Inquiries</span>
-                <span className="ap-stat ap-stat-green">🔨 {stats.inProgress} In Progress</span>
                 <span className="ap-stat ap-stat-amber">💰 ₹{stats.pendingTotal.toLocaleString('en-IN')} Pending</span>
               </div>
             )}
             <div className="ap-toolbar">
-              <input className="ap-search" placeholder="Search clients by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
               <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
             </div>
-            {loading ? <p className="ap-loading">Loading…</p> : (
-              <table className="ap-table">
-                <thead>
-                  <tr><th>Name</th><th>Phone</th><th>Society</th><th>Projects</th><th></th></tr>
-                </thead>
-                <tbody>
-                  {filteredClients.map(c => (
-                    <tr key={c.id}>
-                      <td className="ap-link" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
-                      <td>{c.phone}</td>
-                      <td>{c.society || '—'}</td>
-                      <td>{projects.filter(p => p.clientId === c.id).length}</td>
-                      <td className="ap-row-actions">
-                        <button onClick={() => setEditingClient(c)}>Edit</button>
-                        <button className="ap-danger" onClick={() => deleteClient(c.id)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="ap-filter-row">
+              <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>
+                All <span className="ap-filter-count">{projects.length}</span>
+              </button>
+              {PROGRESS_OPTIONS.map(opt => (
+                <button key={opt} className={`ap-filter-chip ap-filter-${opt.toLowerCase().replace(/\s+/g, '-')} ${projectFilter === opt ? 'active' : ''}`} onClick={() => setProjectFilter(opt)}>
+                  {opt} <span className="ap-filter-count">{statusCounts[opt] || 0}</span>
+                </button>
+              ))}
+            </div>
+            {loading ? <p className="ap-loading">Loading…</p> : filteredProjectCards.length === 0 ? (
+              <p className="ap-loading">No {projectFilter === 'All' ? '' : projectFilter.toLowerCase()} records match.</p>
+            ) : (
+              <div className="ap-cards-grid">
+                {filteredProjectCards.map(pc => (
+                  <ProjectCard key={pc.id} project={pc} client={pc.client}
+                    onOpen={() => setSelectedClientId(pc.clientId)}
+                    onShare={() => shareProjectUpdate(pc, pc.client)}
+                    onViewReceipt={() => setReceiptProjectId(pc.id)} />
+                ))}
+              </div>
             )}
           </>
         ) : (
@@ -393,7 +409,11 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 <h2>{selectedClient?.contactName}</h2>
                 <p>{selectedClient?.phone} · {selectedClient?.address} {selectedClient?.society && `(${selectedClient.society})`}</p>
               </div>
-              <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
+              <div className="ap-client-detail-actions">
+                <button onClick={() => setEditingClient(selectedClient)}>Edit Client</button>
+                <button className="ap-danger" onClick={() => { deleteClient(selectedClientId); setSelectedClientId(null); }}>Delete Client</button>
+                <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
+              </div>
             </div>
             <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} />
             <table className="ap-table">
@@ -468,6 +488,38 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           client={clients.find(c => c.id === projects.find(p => p.id === thankYouProjectId)?.clientId)}
           onClose={() => setThankYouProjectId(null)}
         />
+      )}
+    </div>
+  );
+}
+
+// Project-status card — same "Name / Mobile / Status / Date / Amount / Share"
+// shape as the Staff Portal's RecordCard, adapted to the Cosmos client+project
+// data model (status lives on the project, contact details on its client).
+function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
+  const startDate = project.dateStarted || project.dateContacted || '';
+  return (
+    <div className={`ap-card ap-card-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`} onClick={onOpen}>
+      <div className="ap-card-top">
+        <div className="ap-card-name">{client?.contactName || '—'}</div>
+        <div className="ap-card-top-right">
+          <span className={`ap-progress-chip ap-progress-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
+          <button className="ap-card-wa-btn" onClick={e => { e.stopPropagation(); onShare(); }} title="Share status on WhatsApp">💬</button>
+        </div>
+      </div>
+      {client?.phone && <div className="ap-card-row">📞 <span>{client.phone}</span></div>}
+      {client?.society && <div className="ap-card-row">🏘️ <span>{client.society}</span></div>}
+      {client?.address && <div className="ap-card-row ap-card-addr">📍 <span>{client.address}</span></div>}
+      {project.paintType && <div className="ap-card-row">🎨 <span>{project.paintType}</span></div>}
+      {startDate && <div className="ap-card-row">📅 <span>{new Date(startDate).toLocaleDateString('en-IN')}</span></div>}
+      {project.amount > 0 && <div className="ap-card-row">💰 <span>Amount: ₹{project.amount.toLocaleString('en-IN')}</span></div>}
+      {project.pendingAmount > 0 && <div className="ap-card-row">⏳ <span>Pending: ₹{project.pendingAmount.toLocaleString('en-IN')}</span></div>}
+      {(project.painterNames || []).length > 0 && <div className="ap-card-row">👷 <span>{project.painterNames.join(', ')}</span></div>}
+      {project.remarks && <div className="ap-card-remarks">{project.remarks}</div>}
+      {project.tokenReceived > 0 && (
+        <button className="ap-card-receipt-btn" onClick={e => { e.stopPropagation(); onViewReceipt(); }}>
+          🧾 View Receipt · ₹{project.tokenReceived.toLocaleString('en-IN')}
+        </button>
       )}
     </div>
   );
@@ -977,14 +1029,14 @@ function QuotationTool() {
   const [form, setForm] = useState(EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
-  function updateItem(i, value) { setForm(f => ({ ...f, workItems: f.workItems.map((w, idx) => idx === i ? value : w) })); }
-  function addItem() { setForm(f => ({ ...f, workItems: [...f.workItems, ''] })); }
+  function updateItem(i, key, value) { setForm(f => ({ ...f, workItems: f.workItems.map((w, idx) => idx === i ? { ...w, [key]: value } : w) })); }
+  function addItem() { setForm(f => ({ ...f, workItems: [...f.workItems, { name: '', price: '' }] })); }
   function removeItem(i) { setForm(f => ({ ...f, workItems: f.workItems.filter((_, idx) => idx !== i) })); }
-  const canGenerate = form.customerName.trim() && Number(form.totalAmount) > 0;
+  const amount = form.workItems.reduce((s, w) => s + (Number(w.price) || 0), 0);
+  const canGenerate = form.customerName.trim() && amount > 0;
 
   const builtUp = Number(area.builtUpArea) || 0;
   const estimatedArea = builtUp > 0 ? Math.round(builtUp * area.multiplier) : null;
-  const amount = Number(form.totalAmount) || 0;
   const ratePerSqFt = estimatedArea && amount > 0 ? Math.round(amount / estimatedArea) : null;
 
   return (
@@ -999,24 +1051,25 @@ function QuotationTool() {
           <label className="ap-field"><span>Society</span><input value={form.society} onChange={e => field('society', e.target.value)} /></label>
           <label className="ap-field"><span>BHK</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. 3 BHK" /></label>
           <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} placeholder="e.g. Royale Shyne" /></label>
-          <label className="ap-field"><span>Total Amount (₹)</span><input type="number" value={form.totalAmount} onChange={e => field('totalAmount', e.target.value)} placeholder="e.g. 80000" /></label>
         </div>
-        <label className="ap-field"><span>Scope of Work</span></label>
+        <label className="ap-field"><span>Scope of Work &amp; Pricing</span></label>
         {form.workItems.map((w, i) => (
           <div key={i} className="ap-quote-item-row">
-            <input value={w} onChange={e => updateItem(i, e.target.value)} placeholder="e.g. Putty" />
+            <input value={w.name} onChange={e => updateItem(i, 'name', e.target.value)} placeholder="e.g. Putty" />
+            <input type="number" className="ap-quote-item-price" value={w.price} onChange={e => updateItem(i, 'price', e.target.value)} placeholder="₹" />
             <button type="button" className="ap-danger" onClick={() => removeItem(i)}>✕</button>
           </div>
         ))}
         <button type="button" className="ap-add-item-btn" onClick={addItem}>+ Add Item</button>
+        {amount > 0 && <div className="ap-calc-result">Total Quotation: <strong>₹{amount.toLocaleString('en-IN')}</strong></div>}
         <div className="ap-modal-actions">
           <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
         </div>
-        {!canGenerate && <p className="ap-calc-hint">Customer name and total amount are required.</p>}
+        {!canGenerate && <p className="ap-calc-hint">Customer name and at least one priced item are required.</p>}
       </div>
 
       {showPreview && (
-        <QuotationCard quotation={{ ...form, areaSqFt: estimatedArea, ratePerSqFt }} onClose={() => setShowPreview(false)} />
+        <QuotationCard quotation={{ ...form, amount, areaSqFt: estimatedArea, ratePerSqFt }} onClose={() => setShowPreview(false)} />
       )}
     </div>
   );
@@ -1025,15 +1078,17 @@ function QuotationTool() {
 function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
-  const { society, customerName, mobile, bhk, paintType, workItems, totalAmount, areaSqFt, ratePerSqFt } = quotation;
-  const items = workItems.map(w => w.trim()).filter(Boolean);
-  const amount = Number(totalAmount) || 0;
-  const quoteDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const { society, customerName, mobile, bhk, paintType, workItems, amount, areaSqFt, ratePerSqFt } = quotation;
+  const items = workItems.filter(w => w.name.trim() && Number(w.price) > 0);
+  const quoteDate = new Date();
+  const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const validUntil = new Date(quoteDate.getTime() + 15 * 24 * 60 * 60 * 1000)
+    .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const waText = [
     `🎨 *The Painter Boys*`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
-    `📋 *QUOTATION*  ·  ${quoteDate}`,
+    `📋 *QUOTATION*  ·  ${quoteDateStr}`,
     ``,
     `👤 *Customer:* ${customerName}`,
     society ? `🏘️ *Society:* ${society}` : '',
@@ -1045,13 +1100,14 @@ function QuotationCard({ quotation, onClose }) {
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🛠️ *SCOPE OF WORK*`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
-    ...items.map(i => `✔️ ${i}`),
+    ...items.map(i => `✔️ ${i.name} — ₹${Number(i.price).toLocaleString('en-IN')}`),
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `💰 *Total Quotation = ₹${amount.toLocaleString('en-IN')}*`,
     ratePerSqFt ? `📊 *Rate = ₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft*` : '',
     `━━━━━━━━━━━━━━━━━━━━━━`,
     ``,
+    `📌 Valid until ${validUntil} · 1-year workmanship warranty`,
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
   ].filter(Boolean).join('\n');
@@ -1091,11 +1147,11 @@ function QuotationCard({ quotation, onClose }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card" ref={cardRef}>
           <div className="aq-card-header">
-            <div className="aq-card-logo">🎨</div>
+            <img className="aq-card-logo-img" src="/icon.svg" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
-          <div className="aq-card-badge">QUOTATION · {quoteDate}</div>
+          <div className="aq-card-badge">QUOTATION · {quoteDateStr}</div>
           <div className="aq-card-section">
             <div className="aq-card-section-title">Customer Details</div>
             <div className="aq-card-row"><span>Name</span><span>{customerName}</span></div>
@@ -1107,11 +1163,22 @@ function QuotationCard({ quotation, onClose }) {
           </div>
           <div className="aq-card-section">
             <div className="aq-card-section-title">Scope of Work</div>
-            {items.map((it, i) => <div key={i} className="aq-card-item">✔️ {it}</div>)}
+            <div className="aq-card-item-table">
+              {items.map((it, i) => (
+                <div key={i} className="aq-card-item-row">
+                  <span>✔️ {it.name}</span>
+                  <span>₹{Number(it.price).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="aq-card-total">
             <span>Total Quotation{ratePerSqFt ? ` (₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft)` : ''}</span>
             <span>₹{amount.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="aq-card-terms">
+            <div>📌 Valid until <strong>{validUntil}</strong> (15 days from issue)</div>
+            <div>🛡️ 1-year workmanship warranty included</div>
           </div>
           <div className="aq-card-footer">
             <div>🌐 www.thepainterboys.com</div>

@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { SITE_URL, WA_LINK } from './siteConfig.js';
+import { SITE_URL, WA_LINK_DEFAULT } from './siteConfig.js';
 import './Blog.css';
 
 // Real, useful content aimed at actual search queries customers type before
@@ -464,7 +464,7 @@ export function BlogPost() {
             <div className="container section blog-post-body">
               {post.body.map(renderBodyBlock)}
               <div className="sec-cta">
-                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Get a Free Estimate</a>
+                <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Get a Free Estimate</a>
                 <Link to="/blog" className="btn-secondary">← More Articles</Link>
               </div>
             </div>

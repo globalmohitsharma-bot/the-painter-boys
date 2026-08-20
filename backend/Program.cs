@@ -2,6 +2,7 @@ using ThePainterBoys.Api.Auth;
 using ThePainterBoys.Api.Configuration;
 using ThePainterBoys.Api.Repositories;
 using ThePainterBoys.Api.Repositories.Interfaces;
+using ThePainterBoys.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,10 +13,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddCosmosDb(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
 builder.Services.Configure<GoogleAuthOptions>(builder.Configuration.GetSection(GoogleAuthOptions.SectionName));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services
     .AddAuthentication(GoogleTokenAuthenticationHandler.SchemeName)

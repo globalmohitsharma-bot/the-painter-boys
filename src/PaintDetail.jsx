@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { SITE_URL, WA_LINK } from './siteConfig.js';
+import { SITE_URL, WA_LINK_DEFAULT } from './siteConfig.js';
 import { PAINT_TYPES } from './siteData.js';
 import './Home.css';
 import './Blog.css';
@@ -71,7 +71,7 @@ export default function PaintDetail() {
                 </div>
               </article>
               <div className="sec-cta">
-                <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer">
+                <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
                   <Icon name="whatsapp" size={17} />Ask About {paint.name}
                 </a>
                 <Link to="/paint-types" className="btn-secondary">← All Paint Types</Link>

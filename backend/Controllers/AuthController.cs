@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using ThePainterBoys.Api.Configuration;
 using ThePainterBoys.Api.Models.Entities;
 using ThePainterBoys.Api.Repositories.Interfaces;
+using ThePainterBoys.Api.Services;
 
 namespace ThePainterBoys.Api.Controllers;
 
@@ -16,6 +17,7 @@ public record WhoAmIResponse(string Email, string Name, string Role, bool IsStaf
 public class AuthController(
     IUserRepository userRepository,
     IClientRepository clientRepository,
+    IEmailService emailService,
     IOptions<GoogleAuthOptions> googleAuthOptions) : ControllerBase
 {
     /// <summary>
@@ -89,6 +91,13 @@ public class AuthController(
         user.AuthProviderId = payload.Subject;
         user.LastLoginAt = DateTimeOffset.UtcNow;
         var saved = await userRepository.UpsertAsync(user, ct);
+
+        if (isNewUser)
+        {
+            var displayName = saved.Name ?? saved.Email;
+            var firstName = displayName.Split(' ')[0];
+            await emailService.SendAsync(saved.Email, displayName, "Welcome to The Painter Boys!", EmailTemplates.Welcome(firstName), ct);
+        }
 
         var isStaff = saved.Role is UserRole.Admin or UserRole.Manager or UserRole.Partner;
         return Ok(new WhoAmIResponse(saved.Email, saved.Name, saved.Role, isStaff, payload.Picture));

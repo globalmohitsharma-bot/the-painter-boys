@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import LeadBot from './LeadBot.jsx';
 import BottomNav from './BottomNav.jsx';
-import { PHONE, WA_LINK, PAGE_META, NAV_PAGES } from './siteConfig.js';
+import { PHONE, WA_LINK_DEFAULT, PAGE_META, NAV_PAGES } from './siteConfig.js';
 
 export default function SiteFooter() {
   return (
@@ -21,7 +21,7 @@ export default function SiteFooter() {
             </Link>
             <p className="footer-tagline">Home Painting Professionals<br/>Do it right, Do it once.</p>
             <a className="footer-phone" href={`tel:${PHONE}`}><Icon name="phone" size={16} />+91 78388 88509</a>
-            <a className="footer-wa-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />WhatsApp Us</a>
+            <a className="footer-wa-btn" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />WhatsApp Us</a>
           </div>
           <div className="footer-col">
             <div className="footer-col-title">Our Services</div>

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { SITE_URL, PHONE, WA_LINK, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
+import { SITE_URL, PHONE, WA_LINK, WA_LINK_DEFAULT, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
 import { SERVICES, TEAM, PAINT_TYPES, PAINT_BASE_GUIDE } from './siteData.js';
 import './Home.css';
 
@@ -316,7 +316,7 @@ export default function Home() {
                     <span className="hero-btn-full">Our Services →</span>
                     <span className="hero-btn-short">Services</span>
                   </Link>
-                  <a className="btn-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
+                  <a className="btn-wa" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
                     <Icon name="whatsapp" size={17} />
                     <span className="hero-btn-full">WhatsApp Us</span>
                     <span className="hero-btn-short">WhatsApp</span>
@@ -351,7 +351,7 @@ export default function Home() {
             <div className="trust-banner">
               <span className="tb-text">Service You Can Trust!</span>
               <span className="tb-sub">Let us know how we can help you today.</span>
-              <a className="tb-btn" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />Schedule Free Estimate</a>
+              <a className="tb-btn" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={15} />Schedule Free Estimate</a>
             </div>
 
             {/* Feature strip — presented as a "how we work" process */}
@@ -407,7 +407,7 @@ export default function Home() {
                   ))}
                 </div>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Discuss Your Project</a>
+                  <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Discuss Your Project</a>
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
@@ -526,7 +526,7 @@ export default function Home() {
                   ))}
                 </div>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Book Your Free Consultation</a>
+                  <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Book Your Free Consultation</a>
                   <Link to="/contact" className="btn-secondary">Contact Us →</Link>
                 </div>
               </div>
@@ -615,7 +615,7 @@ export default function Home() {
                   budget and finish preference during your free on-site consultation.
                 </p>
                 <div className="sec-cta">
-                  <a className="btn-primary" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Ask Us Which Paint Is Right For You</a>
+                  <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Ask Us Which Paint Is Right For You</a>
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
                 </div>
               </div>
@@ -643,7 +643,7 @@ export default function Home() {
                           <div className="cfsc-val">+91 78388 88509</div>
                         </div>
                       </a>
-                      <a className="cfs-card cfs-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer">
+                      <a className="cfs-card cfs-wa" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
                         <div className="cfsc-icon"><Icon name="whatsapp" size={20} /></div>
                         <div>
                           <div className="cfsc-label">WhatsApp</div>
@@ -670,7 +670,7 @@ export default function Home() {
                       <h2 className="cfs-cta-title">Ready to Transform Your Home?</h2>
                       <p className="cfs-cta-sub">We paint houses, flats, villas, societies, hospitals, offices and temples — with premium paints and zero-mess execution.</p>
                       <div className="cfs-cta-btns">
-                        <a className="btn-wa btn-lg" href={WA_LINK} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={19} />Get Free Quote on WhatsApp</a>
+                        <a className="btn-wa btn-lg" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={19} />Get Free Quote on WhatsApp</a>
                         <a className="btn-call" href={`tel:${PHONE}`}><Icon name="phone" size={17} />Call Now</a>
                       </div>
                     </div>
@@ -704,7 +704,7 @@ export default function Home() {
 
       <SiteFooter />
 
-      <a className="wa-fab" href={WA_LINK} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp"><Icon name="whatsapp" size={26} /></a>
+      <a className="wa-fab" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp"><Icon name="whatsapp" size={26} /></a>
     </div>
   );
 }

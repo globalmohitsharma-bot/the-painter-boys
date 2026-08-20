@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import AccountModal from './AccountModal.jsx';
 import useGoogleAccount from './useGoogleAccount.js';
-import { WA_LINK } from './siteConfig.js';
+import { WA_LINK_DEFAULT } from './siteConfig.js';
 import './BottomNav.css';
 
 export default function BottomNav() {
@@ -33,7 +33,7 @@ export default function BottomNav() {
             : <Icon name="user" size={21} />}
           <span>Profile</span>
         </button>
-        <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="bn-item bn-item-wa">
+        <a href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer" className="bn-item bn-item-wa">
           <Icon name="whatsapp" size={20} />
           <span>WhatsApp</span>
         </a>

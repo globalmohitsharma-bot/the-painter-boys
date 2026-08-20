@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import AccountModal from './AccountModal.jsx';
 import useGoogleAccount from './useGoogleAccount.js';
-import { PHONE, WA_LINK, PAGE_META, NAV_PAGES } from './siteConfig.js';
+import { PHONE, WA_LINK_DEFAULT, PAGE_META, NAV_PAGES } from './siteConfig.js';
 import './BottomNav.css';
 
 // Shared top bar + nav, used identically by Home.jsx and Blog.jsx so every
@@ -50,7 +50,7 @@ export default function SiteHeader() {
               ? <img src={user.picture} alt="" className="topbar-account-avatar" referrerPolicy="no-referrer" />
               : <Icon name="user" size={17} />}
           </button>
-          <a className="topbar-cta" href={WA_LINK} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
+          <a className="topbar-cta" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
           <button className="nav-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
             <Icon name={menuOpen ? 'close' : 'menu'} size={22} />
           </button>
@@ -84,7 +84,7 @@ export default function SiteHeader() {
             onClick={() => setMenuOpen(false)}>{label}</Link>
         ))}
         <a className="mo-link mo-portal" href="/pb" onClick={() => setMenuOpen(false)}><Icon name="lock" size={15} style={{ marginRight: 8, verticalAlign: '-2px' }} />Staff Portal</a>
-        <a className="mo-link mo-wa" href={WA_LINK} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}><Icon name="whatsapp" size={17} style={{ marginRight: 8, verticalAlign: '-3px' }} />WhatsApp Us</a>
+        <a className="mo-link mo-wa" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}><Icon name="whatsapp" size={17} style={{ marginRight: 8, verticalAlign: '-3px' }} />WhatsApp Us</a>
       </div>
     </header>
   );

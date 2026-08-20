@@ -5,6 +5,10 @@
 export const SITE_URL = 'https://www.thepainterboys.com';
 export const PHONE    = '+91 7838888509';
 export const WA_LINK  = 'https://wa.me/917838888509';
+// Pre-fills the chat box for plain "WhatsApp us" buttons — NOT used by LeadBot
+// (which builds its own message from the user's actual answers) or by the
+// JSON-LD sameAs field (a canonical profile URL shouldn't carry a query string).
+export const WA_LINK_DEFAULT = `${WA_LINK}?text=${encodeURIComponent("Hi, I'm looking to get information about wall painting")}`;
 export const AREAS    = ['Ghaziabad', 'Noida', 'Delhi NCR', 'Haridwar', 'Dehradun'];
 // Specific Ghaziabad localities we actively target — used in visible copy and
 // structured data so local searches (e.g. "painter in Raj Nagar Extension")

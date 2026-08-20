@@ -158,6 +158,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [editingClient, setEditingClient] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [mediaProjectId, setMediaProjectId] = useState(null);
+  const [receiptProjectId, setReceiptProjectId] = useState(null);
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
@@ -339,6 +340,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                     <td className="ap-row-actions">
                       <button onClick={() => setEditingProject(p)}>Edit</button>
                       <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
+                      <button onClick={() => setReceiptProjectId(p.id)}>Payment Receipt</button>
                       <button className="ap-danger" onClick={() => deleteProject(p.id)}>Delete</button>
                     </td>
                   </tr>
@@ -365,6 +367,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           onShare={shareProject}
           onToggleShare={toggleProjectShare}
           onUnshare={unshareProject}
+        />
+      )}
+      {receiptProjectId && (
+        <PaymentReceiptModal
+          project={projects.find(p => p.id === receiptProjectId)}
+          client={clients.find(c => c.id === projects.find(p => p.id === receiptProjectId)?.clientId)}
+          onClose={() => setReceiptProjectId(null)}
         />
       )}
     </div>
@@ -507,6 +516,127 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
 
         <div className="ap-modal-actions">
           <button onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Payment receipt (shareable summary of what's been paid vs pending) ──
+// Mirrors the Staff Portal's (Sheet-based) receipt feature — same idea, but
+// reading from this project's own tokenHistory/tokenReceived/pendingAmount
+// fields instead of parsing multiple sheet columns.
+function PaymentReceiptModal({ project, client, onClose }) {
+  const cardRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
+  if (!project) return null;
+
+  const history = project.tokenHistory || [];
+  const totalAmount = project.amount || 0;
+  const receivedTotal = project.tokenReceived || 0;
+  const pendingTotal = project.pendingAmount || (totalAmount > receivedTotal ? totalAmount - receivedTotal : 0);
+  const fullAddress = [client?.society, client?.address].filter(Boolean).join(', ');
+
+  const waText = [
+    `🎨 *The Painter Boys*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *PAYMENT SUMMARY*`,
+    ``,
+    `👤 *Customer:* ${client?.contactName || '—'}`,
+    fullAddress ? `🏘️ *Address:* ${fullAddress}` : '',
+    client?.phone ? `📞 *Phone:* ${client.phone}` : '',
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *PAYMENT HISTORY*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    ...(history.length ? history.map(e => `📅 ${e.date}   ₹${(e.amount || 0).toLocaleString('en-IN')}`) : ['No entries yet']),
+    ``,
+    totalAmount > 0
+      ? `📋 *Total Project Amount = ₹${totalAmount.toLocaleString('en-IN')}*\n➖ *Total Received = ₹${receivedTotal.toLocaleString('en-IN')}*\n🟰 *Pending Payment = ₹${pendingTotal.toLocaleString('en-IN')}*`
+      : `✅ *Total Received = ₹${receivedTotal.toLocaleString('en-IN')}*` + (pendingTotal > 0 ? `\n⏳ *Pending Payment = ₹${pendingTotal.toLocaleString('en-IN')}*` : ''),
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    `🌐 www.thepainterboys.com`,
+    `📞 Corporate: 7838888509`,
+  ].filter(Boolean).join('\n');
+
+  async function shareAsImage() {
+    if (!cardRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: '#0d2137', logging: false });
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'receipt-thepainterboys.png', { type: 'image/png' });
+        const downloadFallback = () => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'receipt-thepainterboys.png'; a.click();
+          URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
+        }
+        setCapturing(false);
+      }, 'image/png');
+    } catch { setCapturing(false); }
+  }
+
+  function shareOnWhatsApp() {
+    const digits = (client?.phone || '').replace(/\D/g, '');
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(waText)}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  return (
+    <div className="aq-overlay" onClick={onClose}>
+      <div className="aq-wrap" onClick={e => e.stopPropagation()}>
+        <div className="aq-card" ref={cardRef}>
+          <div className="aq-card-header">
+            <div className="aq-card-logo">🎨</div>
+            <div className="aq-card-company">The Painter Boys</div>
+            <div className="aq-card-tagline">Professional Painting Services</div>
+          </div>
+          <div className="aq-card-badge">PAYMENT SUMMARY</div>
+          <div className="aq-card-section">
+            <div className="aq-card-section-title">Customer Details</div>
+            <div className="aq-card-row"><span>Name</span><span>{client?.contactName || '—'}</span></div>
+            {client?.society && <div className="aq-card-row"><span>Society</span><span>{client.society}</span></div>}
+            {client?.address && <div className="aq-card-row"><span>Address</span><span>{client.address}</span></div>}
+            {client?.phone && <div className="aq-card-row"><span>Phone</span><span>{client.phone}</span></div>}
+          </div>
+          <div className="aq-card-section">
+            <div className="aq-card-section-title">Payment History</div>
+            {history.length === 0 && <p className="ap-calc-hint">No entries yet</p>}
+            {history.map((e, i) => (
+              <div key={i} className="aq-card-row"><span>📅 {e.date}</span><span>₹{(e.amount || 0).toLocaleString('en-IN')}</span></div>
+            ))}
+          </div>
+          <div className="aq-card-total">
+            <span>{totalAmount > 0 ? 'Pending Payment' : 'Total Received'}</span>
+            <span>₹{(totalAmount > 0 ? pendingTotal : receivedTotal).toLocaleString('en-IN')}</span>
+          </div>
+          {totalAmount > 0 && (
+            <div className="aq-card-section">
+              <div className="aq-card-row"><span>Total Project Amount</span><span>₹{totalAmount.toLocaleString('en-IN')}</span></div>
+              <div className="aq-card-row"><span>Total Received</span><span>₹{receivedTotal.toLocaleString('en-IN')}</span></div>
+            </div>
+          )}
+          <div className="aq-card-footer">
+            <div>🌐 www.thepainterboys.com</div>
+            <div>📞 Corporate: 7838888509</div>
+          </div>
+        </div>
+        <div className="aq-actions">
+          <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
+            {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
+          </button>
+          {client?.phone && (
+            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
+          )}
+          <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
     </div>

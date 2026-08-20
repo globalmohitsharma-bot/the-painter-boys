@@ -22,11 +22,35 @@ function ScrollToTop() {
   return null;
 }
 
+// Instantly-checkable proof of which actual build a browser has loaded —
+// no DevTools needed. Click it to also log the GIS client ID state, for
+// tracking down "stale cache vs real bug" reports without back-and-forth.
+function BuildBadge() {
+  return (
+    <div
+      onClick={() => {
+        const id = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+        alert(`Build: ${typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : 'unknown'}\nOrigin: ${window.location.origin}\nGoogle Client ID set: ${id ? 'yes (' + id.length + ' chars)' : 'NO — empty'}`);
+      }}
+      style={{
+        position: 'fixed', bottom: 4, left: 4, zIndex: 99999,
+        background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 9,
+        padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace',
+        cursor: 'pointer', userSelect: 'none',
+      }}
+      title="Tap for build/config info"
+    >
+      {typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__.slice(11, 19) : '?'}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <BuildBadge />
         <Routes>
           {/* Each of these renders <Home/>, which reads the path to pick which
               section to show — real distinct URLs instead of client-only state,

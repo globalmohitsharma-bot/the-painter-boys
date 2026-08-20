@@ -382,7 +382,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               </div>
               <div className="ap-client-detail-actions">
                 <button onClick={() => setEditingClient(selectedClient)}>Edit Client</button>
-                <button className="ap-danger" onClick={() => { deleteClient(selectedClientId); setSelectedClientId(null); }}>Delete Client</button>
                 <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
               </div>
             </div>
@@ -408,7 +407,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       {p.progress === 'Inquiry' && (
                         <button onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
-                      <button className="ap-danger" onClick={() => deleteProject(p.id)}>Delete</button>
+                      {p.progress !== 'Cancelled' && (
+                        <button className="ap-danger" onClick={() => saveProject({ ...p, progress: 'Cancelled' })}>Deactivate</button>
+                      )}
                     </td>
                   </tr>
                 ))}

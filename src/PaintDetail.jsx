@@ -41,6 +41,7 @@ export default function PaintDetail() {
         <link rel="canonical" href={`${SITE_URL}/paint-types/${paint.slug}`} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={paint.desc.slice(0, 155)} />
+        <meta property="og:url" content={`${SITE_URL}/paint-types/${paint.slug}`} />
         <meta property="og:type" content="website" />
       </Helmet>
       <SiteHeader />

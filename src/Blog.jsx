@@ -148,6 +148,10 @@ export function BlogList() {
         <title>Blog — Painting Tips & Guides | The Painter Boys</title>
         <meta name="description" content="Painting tips, cost guides, and product comparisons from The Painter Boys — serving Ghaziabad, Noida and Delhi NCR." />
         <link rel="canonical" href={`${SITE_URL}/blog`} />
+        <meta property="og:title" content="Blog — Painting Tips & Guides | The Painter Boys" />
+        <meta property="og:description" content="Painting tips, cost guides, and product comparisons from The Painter Boys — serving Ghaziabad, Noida and Delhi NCR." />
+        <meta property="og:url" content={`${SITE_URL}/blog`} />
+        <meta property="og:type" content="website" />
       </Helmet>
       <SiteHeader />
       <main className="page-fade">
@@ -206,6 +210,7 @@ export function BlogPost() {
         <link rel="canonical" href={`${SITE_URL}/blog/${post.slug}`} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.metaDescription} />
+        <meta property="og:url" content={`${SITE_URL}/blog/${post.slug}`} />
         <meta property="og:type" content="article" />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',

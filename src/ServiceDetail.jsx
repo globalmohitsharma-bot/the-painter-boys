@@ -42,7 +42,16 @@ export default function ServiceDetail() {
         <link rel="canonical" href={`${SITE_URL}/services/${service.slug}`} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
+        <meta property="og:url" content={`${SITE_URL}/services/${service.slug}`} />
         <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: service.title,
+          description,
+          provider: { '@type': 'LocalBusiness', name: 'The Painter Boys', url: SITE_URL, telephone: '+917838888509' },
+          areaServed: ['Ghaziabad', 'Noida', 'Delhi NCR', 'Haridwar', 'Dehradun'],
+        })}</script>
       </Helmet>
       <SiteHeader />
       <main className="page-fade">

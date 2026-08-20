@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /pb
+Disallow: /painter
+Disallow: /card
+
+Sitemap: https://www.thepainterboys.com/sitemap.xml

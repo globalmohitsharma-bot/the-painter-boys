@@ -111,25 +111,17 @@ questions about prod) is not the trigger. When in doubt, ask rather than
 treat something as that signal. Mirrors the same rule already standing on
 the sibling `FindBuyRentProtect` project, adopted here for consistency.
 
-### Azure setup — status
+### Azure setup — status (updated 2026-08-20)
 
-**Not yet done — needs your Azure Portal access, which I don't have.**
-Nothing has been provisioned. Two things need to happen, in order per the
-user's instruction ("deploy develop to azure first than we will map
-another one to prod"):
+Both Static Web App resources now exist, in `aiinterviewbotPilot_group`
+(shared `pilotai`-account resource group), created via `az staticwebapp
+create --login-with-github` (device-code auth — the user completed the
+GitHub device-flow approval, I ran the CLI):
 
-**1. Test/staging resource, tracking `develop` (do this first)**
-- Azure Portal → **Create a resource → Static Web App**.
-- Source: **GitHub** → authorize → select this repo → branch: **`develop`**.
-- Build presets: **Vite** (or "Custom" with app location `/`, output
-  location `dist`, matching `npm run build`).
-- Creating it this way auto-generates a GitHub Actions workflow file
-  (`.github/workflows/azure-static-web-apps-*.yml`) via a bot commit into
-  the repo, and auto-adds the deployment token as a GitHub Actions secret
-  — this repo has no such workflow file yet, so this step is what creates
-  it. I can't do this part myself; it needs to run through the Azure
-  Portal (or `az staticwebapp create` from an authenticated Azure CLI,
-  which I also don't have access to here).
+**1. Test/staging resource, tracking `develop` — done**
+- Name: `ThePainterBoys-web`, hostname
+  `victorious-plant-0a9de771e.7.azurestaticapps.net`.
+- Workflow: `.github/workflows/azure-static-web-apps-victorious-plant-0a9de771e.yml`.
 - [public/staticwebapp.config.json](public/staticwebapp.config.json) gives
   Azure the same SPA-fallback behavior `netlify.toml`'s redirect rule
   gives Netlify — every route serves `index.html` client-side, so direct
@@ -138,12 +130,26 @@ another one to prod"):
   `dist/` on build, and Azure SWA reads the config from the build output,
   not the repo root. Got this wrong on the first pass here (root-level),
   caught by cross-checking a sibling project's deploy notes before it ever
-  got deployed and 404'd for real — see the note below.
+  got deployed and 404'd for real.
 
-**2. Production resource, tracking `master` (do this after step 1 is verified)**
-- Same process, second Static Web App resource, branch: **`master`**.
-- Custom domain (`thepainterboys.com`) only gets pointed at this one once
-  it's confirmed working — don't touch the live DNS until then.
+**2. Production resource, tracking `master` — done (2026-08-20, "move to
+prod" instruction given)**
+- Before creating this, `develop` (38 commits — redesign, LeadBot,
+  routing/SEO, `AccountModal`/`useGoogleAccount` Google sign-in) was
+  merged into `master` (fast-forward, no conflicts) and pushed — that push
+  is what triggered Netlify's normal `master`-tracking prod deploy, so
+  those 38 commits are already live on `thepainterboys.com` via Netlify as
+  of this merge.
+- Name: `ThePainterBoys-web-prod`, hostname
+  `mango-dune-0837ad21e.7.azurestaticapps.net`.
+- Workflow: `.github/workflows/azure-static-web-apps-mango-dune-0837ad21e.yml`.
+- **No custom domain attached yet** (`customDomains: []` on the resource).
+  This resource is live at its own `*.azurestaticapps.net` URL only —
+  `thepainterboys.com` still resolves to Netlify. Pointing the domain at
+  this resource (and deciding whether Netlify gets fully replaced or the
+  two run in parallel) is a separate, not-yet-taken step — needs an
+  explicit instruction naming that specifically before it happens, per the
+  standing rule above.
 
 ### Lessons pulled from a sibling project's deploy notes (2026-08-19)
 

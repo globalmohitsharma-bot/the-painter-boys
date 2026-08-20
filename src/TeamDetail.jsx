@@ -41,6 +41,7 @@ export default function TeamDetail() {
         <link rel="canonical" href={`${SITE_URL}/team/${member.slug}`} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={member.bio.slice(0, 155)} />
+        <meta property="og:url" content={`${SITE_URL}/team/${member.slug}`} />
         <meta property="og:type" content="profile" />
       </Helmet>
       <SiteHeader />

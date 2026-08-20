@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    // The ASP.NET Core backend lives in backend/ within this same repo —
+    // its build output (bin/obj) churns constantly during `dotnet build`
+    // and has crashed Vite's watcher with EBUSY on Windows before.
+    watch: { ignored: ['**/backend/**'] },
+  },
   plugins: [
     react(),
     VitePWA({

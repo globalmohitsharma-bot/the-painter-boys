@@ -52,11 +52,19 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
               : <div className="bn-modal-avatar bn-modal-avatar-fallback"><Icon name="user" size={28} /></div>}
             <h3 className="bn-modal-title">Welcome, {user.name?.split(' ')[0]}</h3>
             <p className="bn-modal-sub">{user.email}</p>
-            <p className="bn-modal-note">
-              {tab === 'projects'
-                ? 'Your project dashboard (photos, progress, past work) is coming soon — this account will be linked to your jobs automatically once it\'s live.'
-                : 'Full profile management is coming soon.'}
-            </p>
+            {user.isStaff ? (
+              <div className="bn-staff-links">
+                <p className="bn-modal-note">You have staff access on this account.</p>
+                <a className="bn-staff-link" href="/admin">Admin Portal</a>
+                <a className="bn-staff-link" href="/pb">Staff Portal</a>
+              </div>
+            ) : (
+              <p className="bn-modal-note">
+                {tab === 'projects'
+                  ? 'Your project dashboard (photos, progress, past work) is coming soon — this account will be linked to your jobs automatically once it\'s live.'
+                  : 'Full profile management is coming soon.'}
+              </p>
+            )}
             <button className="bn-signout" onClick={onSignOut}>Sign out</button>
           </div>
         ) : (

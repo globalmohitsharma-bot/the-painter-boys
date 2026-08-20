@@ -1746,6 +1746,7 @@ export default function PBDashboard() {
           </div>
           <div className="pb-header-actions">
             {lastSynced && <span className="pb-synced">{timeAgo(lastSynced)}</span>}
+            <a className="pb-icon-btn" href="/admin" title="Admin Portal (new, Cosmos DB-backed)">⚡</a>
             <button className={`pb-icon-btn${refreshing ? ' pb-spin' : ''}`} onClick={() => fetchData(true)} title="Refresh">↻</button>
             <button className="pb-icon-btn" onClick={() => setSheet('setup')} title="Settings">⚙</button>
           </div>

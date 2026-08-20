@@ -7,6 +7,8 @@ import { useState } from 'react';
 // time (responsive CSS), so real-time cross-component reactivity isn't needed.
 const USER_KEY = 'pb_google_user';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
+
 function loadStoredUser() {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
 }
@@ -27,12 +29,39 @@ export function decodeIdToken(token) {
 export default function useGoogleAccount() {
   const [user, setUser] = useState(loadStoredUser);
 
-  function handleCredential(response) {
+  async function handleCredential(response) {
     const payload = decodeIdToken(response.credential);
     if (!payload) return;
+    // Show the sign-in immediately from the (unverified) token payload, then
+    // upgrade in the background with the server-verified role — the profile
+    // modal's staff/admin links only render once role/isStaff arrive, so a
+    // slow or unreachable backend just means those links stay hidden rather
+    // than blocking sign-in itself.
     const nextUser = { name: payload.name, email: payload.email, picture: payload.picture };
     setUser(nextUser);
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+      if (!res.ok) return;
+      const whoami = await res.json();
+      const verifiedUser = {
+        name: whoami.name || payload.name,
+        email: whoami.email,
+        picture: payload.picture,
+        role: whoami.role,
+        isStaff: whoami.isStaff,
+      };
+      setUser(verifiedUser);
+      localStorage.setItem(USER_KEY, JSON.stringify(verifiedUser));
+    } catch {
+      // Backend unreachable — the customer sign-in above already succeeded,
+      // this just means no staff/admin links this session.
+    }
   }
 
   function signOut() {

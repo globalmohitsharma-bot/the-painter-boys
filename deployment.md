@@ -1,9 +1,108 @@
 # Deployment Guide — The Painter Boys
 
-Read this before every deployment. Hosting is **Netlify**, connected to the
-`master` branch of `github.com/globalmohitsharma-bot/the-painter-boys` —
-pushing to `master` triggers an automatic build and deploy (`npm run build`,
-publishing `dist/`, per [netlify.toml](netlify.toml)).
+**Always read this file before deploying anything on this project — it has
+already caught several real, repeatable failures (see "Known deployment
+issues" below) that will happen again if skipped.**
+
+## Current hosting (updated 2026-08-20 — Netlify fully retired)
+
+- **Frontend**: Azure Static Web Apps. `develop` → `ThePainterBoys-web`
+  (staging, `victorious-plant-0a9de771e.7.azurestaticapps.net`). `master` →
+  `ThePainterBoys-web-prod` (`mango-dune-0837ad21e.7.azurestaticapps.net`,
+  custom domain `www.thepainterboys.com`). Build-once-promote CI —
+  see [.github/workflows/build-and-promote.yml](.github/workflows/build-and-promote.yml)
+  and the "Azure setup" section further down.
+- **Backend**: ASP.NET Core Web API on Azure App Service,
+  `ThePainterBoys-api` (`aiinterviewbotPilot_group`, dedicated
+  `ThePainterBoys-plan` B1 Linux plan — **not** the shared
+  `AIInterviewBotPilot` production plan). Keyless auth to Cosmos + Blob
+  Storage via the App Service's system-assigned managed identity
+  (`DefaultAzureCredential`, same pattern as local dev's `az login`).
+- **Domain**: `thepainterboys.com` registered at **GoDaddy** (account id
+  `es.mohitsharma`). Netlify previously hosted it via delegated NS1
+  nameservers — moved to GoDaddy's own nameservers, then to Azure: apex
+  (`thepainterboys.com`) **forwards (301)** to `www.thepainterboys.com`
+  (GoDaddy can't ALIAS/ANAME the apex directly to Azure), and `www` is a
+  real `CNAME` → `mango-dune-0837ad21e.7.azurestaticapps.net`, registered
+  as the custom domain on `ThePainterBoys-web-prod`. No MX records exist,
+  so this had no email impact.
+- Netlify is **no longer used for anything** on this project — the two
+  Netlify projects that were briefly investigated
+  (`the-painter-boys`, `silver-druid-06c38c`) can be considered stale/
+  unused going forward.
+
+## Known deployment issues (read before every deploy)
+
+Real failures hit while setting this up — all reproducible, all avoidable
+if you know to expect them:
+
+1. **Azure Static Web Apps' auto-generated GitHub Actions workflow leaves
+   `output_location` blank.** Build succeeds, then deploy fails with
+   *"Oryx built the app folder but was unable to determine the location of
+   the app artifacts."* Fix: set `output_location: "dist"` in the workflow
+   YAML (see the working `build-and-promote.yml` for reference).
+2. **Build-time frontend env vars (`VITE_*`) don't carry over between
+   hosting providers or pipelines — ever, silently.** `VITE_GOOGLE_CLIENT_ID`
+   had to be independently: (a) added as a GitHub Actions repo secret
+   (`gh secret set`), and (b) explicitly passed as `env:` on the build step
+   in the workflow YAML. Missing either one means Google Sign-In silently
+   shows "not configured" with no error — always verify by grepping the
+   built JS bundle for the expected value after a deploy
+   (`curl <site>/assets/index-*.js | grep <expected-string>`).
+3. **The build-once-promote CI pattern (`build-and-promote.yml`) only works
+   if `develop` → `master` merges stay fast-forward.** `deploy-prod` finds
+   the matching `develop` build by exact commit SHA — a real merge commit
+   changes the SHA and the promotion fails safely (loud error, not a silent
+   rebuild) rather than deploying something unverified.
+4. **Git Bash mangles any argument starting with `/`** (leading-slash
+   paths) — this breaks `az` commands that take a full resource ID as
+   `--scope` (role assignments, custom domain validation, etc.), producing
+   confusing errors like `MissingSubscription` that have nothing to do with
+   the actual problem. **Use the PowerShell tool for any `az` command with
+   a `/subscriptions/...`-style argument.**
+5. **Azure resource creation (storage accounts, App Service plans, role
+   assignments with real cost/access impact) can get blocked by Claude
+   Code's own safety classifier**, even after the user already approved it
+   earlier in conversation — this needs one more direct confirmation in the
+   moment before retrying. Not a bug, working as intended; don't try to
+   route around it.
+6. **`dotnet build`/`publish` fails with `MSB3027`/`MSB3021` file-lock
+   errors if the previous `dotnet run` background process is still
+   holding the exe.** Stop that background task first, every time.
+7. **Publishing on Windows without `-r linux-x64` bundles Windows-only
+   native runtime assets** (`runtimes\win-x64\...`, `runtimes\win\...` —
+   pulled in by packages like the Cosmos SDK and `System.Drawing.Common`)
+   **with backslash-separated paths that break Azure App Service's
+   Linux-side `rsync` deployment** — fails with cryptic `Invalid argument
+   (22)` errors on `recv_generator`. Fix: always publish backend deploys
+   with `dotnet publish -c Release -r linux-x64 --self-contained false -o
+   ./publish` — this also drops the zip from ~11 MB to ~4.5 MB by excluding
+   every other platform's native assets.
+8. **`zip` isn't available in Git Bash on this machine.** Use PowerShell's
+   `Compress-Archive -Path ./publish/* -DestinationPath publish.zip -Force`
+   instead.
+9. **Cosmos DB data-plane RBAC uses a different command than everything
+   else** — `az cosmosdb sql role assignment create` (with the Cosmos
+   account's own `sqlRoleDefinitions/00000000-0000-0000-0000-000000000002`
+   built-in "Data Contributor" role ID and a `/dbs/PB_ThePainterBoysDb`-
+   scoped path), not the generic `az role assignment create` used for
+   Storage/other resources.
+10. **A registrar isn't necessarily the DNS provider.** GoDaddy showed "DNS
+    Provider: NS1 — DNS is currently managed elsewhere" and its own DNS
+    Records tab was inactive until nameservers were switched to GoDaddy's
+    default — check this before assuming records can just be edited.
+11. **GoDaddy doesn't offer ALIAS/ANAME records**, so an apex domain can't
+    point directly at an Azure Static Web App (which has no fixed IP).
+    Workaround (Microsoft's own documented pattern for registrars without
+    ALIAS support): make `www` the real `CNAME` target, and use the
+    registrar's **Domain Forwarding** feature (301, no masking) to redirect
+    the bare apex to `www`.
+12. **Azure Static Web Apps apex-domain validation needs
+    `--validation-method dns-txt-token`** explicitly — the default
+    (`cname-delegation`) fails outright on an apex domain since CNAME isn't
+    valid at a root domain per DNS rules. (Ended up unused once the
+    www-forwarding approach was chosen instead, but worth knowing if a
+    future project's registrar *does* support ALIAS/ANAME.)
 
 ## Current deployment configuration — everything set up so far (2026-08-19)
 

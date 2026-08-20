@@ -70,3 +70,9 @@
   padding: 9px 22px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; transition: border-color .2s, color .2s;
 }
 .bn-signout:hover { border-color: var(--gold); color: var(--gold-deep); }
+.bn-staff-links { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.bn-staff-link {
+  display: block; text-align: center; padding: 10px 18px; border-radius: 8px; font-size: .85rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); text-decoration: none;
+}
+.bn-staff-link:hover { opacity: .9; }

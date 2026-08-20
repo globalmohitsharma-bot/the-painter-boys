@@ -1,0 +1,769 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import html2canvas from 'html2canvas';
+import Icon from './Icon.jsx';
+import './AdminPortal.css';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
+const TOKEN_KEY = 'pb_admin_id_token';
+const WHOAMI_KEY = 'pb_admin_whoami';
+
+async function api(path, idToken, options = {}) {
+  // FormData sets its own multipart Content-Type (with boundary) — letting the
+  // browser handle that, rather than forcing application/json, is required for
+  // the image-upload endpoint to parse correctly.
+  const isFormData = options.body instanceof FormData;
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      Authorization: `Bearer ${idToken}`,
+      ...options.headers,
+    },
+  });
+  if (!res.ok) throw new Error(`${options.method || 'GET'} ${path} -> ${res.status}`);
+  return res.status === 204 ? null : res.json();
+}
+
+const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', society: '' };
+const EMPTY_PROJECT = {
+  name: '', progress: 'Inquiry', paintType: '', dateContacted: '', dateStarted: '', dateCompleted: '',
+  remarks: '', noOfDays: '', amount: 0, otherDetails: '', painterNames: [], tokenReceived: 0,
+  pendingAmount: 0, tokenHistory: [], additionalWork: '',
+};
+const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progress', 'Completed', 'Cancelled'];
+const EMPTY_QUOTATION = {
+  society: '', customerName: '', mobile: '', bhk: '', paintType: '',
+  workItems: ['Putty', 'Primer', 'Chalk Mitti', 'Paint'], totalAmount: '',
+};
+// Rule-of-thumb multiplier painting contractors commonly use to go from
+// built-up area to total paintable (wall + ceiling) area — real ratio varies
+// by layout, so it's editable rather than baked in as an exact constant.
+const DEFAULT_AREA_MULTIPLIER = 2.5;
+
+export default function AdminPortal() {
+  const [idToken, setIdToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
+  const [whoami, setWhoami] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem(WHOAMI_KEY) || 'null'); } catch { return null; }
+  });
+  const [checking, setChecking] = useState(!!idToken);
+  const buttonRef = useRef(null);
+  const [gsiReady, setGsiReady] = useState(false);
+
+  const handleCredential = useCallback(async (response) => {
+    setChecking(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+      if (!res.ok) throw new Error('Sign-in failed');
+      const data = await res.json();
+      sessionStorage.setItem(TOKEN_KEY, response.credential);
+      sessionStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
+      setIdToken(response.credential);
+      setWhoami(data);
+    } catch {
+      setWhoami({ isStaff: false, role: 'Client', email: '', name: '' });
+    } finally {
+      setChecking(false);
+    }
+  }, []);
+
+  // Re-verify a stored token on load rather than trusting sessionStorage forever.
+  useEffect(() => {
+    if (!idToken || whoami) { setChecking(false); return; }
+    api('/api/auth/whoami', idToken).then(data => {
+      sessionStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
+      setWhoami(data);
+    }).catch(() => {
+      sessionStorage.removeItem(TOKEN_KEY);
+      setIdToken(null);
+    }).finally(() => setChecking(false));
+  }, [idToken, whoami]);
+
+  useEffect(() => {
+    if (idToken) return;
+    let cancelled = false;
+    let attempts = 0;
+    const tryInit = () => {
+      if (cancelled) return;
+      if (!window.google?.accounts?.id) {
+        attempts += 1;
+        if (attempts < 40) { setTimeout(tryInit, 150); }
+        return;
+      }
+      setGsiReady(true);
+      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredential });
+      if (buttonRef.current) {
+        buttonRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(buttonRef.current, { theme: 'filled_black', size: 'large', width: 280, text: 'signin_with' });
+      }
+    };
+    tryInit();
+    return () => { cancelled = true; };
+  }, [idToken, handleCredential]);
+
+  function signOut() {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(WHOAMI_KEY);
+    setIdToken(null);
+    setWhoami(null);
+  }
+
+  if (checking) {
+    return <div className="ap-gate"><p>Checking access…</p></div>;
+  }
+
+  if (!idToken || !whoami) {
+    return (
+      <div className="ap-gate">
+        <div className="ap-gate-card">
+          <Icon name="lock" size={28} className="ap-gate-icon" />
+          <h1>Admin Portal</h1>
+          <p>Sign in with a Google account that's been granted admin access.</p>
+          <div ref={buttonRef} className="ap-gsi-btn" />
+          {!GOOGLE_CLIENT_ID && <p className="ap-warn">Sign-in isn't configured on this deployment yet — no Google Client ID set.</p>}
+          {GOOGLE_CLIENT_ID && !gsiReady && <p className="ap-warn">Loading Google Sign-In…</p>}
+        </div>
+      </div>
+    );
+  }
+
+  if (!whoami.isStaff) {
+    return (
+      <div className="ap-gate">
+        <div className="ap-gate-card">
+          <Icon name="warning" size={28} className="ap-gate-icon" />
+          <h1>Access Denied</h1>
+          <p>{whoami.email} isn't set up as an admin. If this should be a staff account, ask an existing admin to add you.</p>
+          <button className="ap-signout" onClick={signOut}>Sign out</button>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboard idToken={idToken} whoami={whoami} onSignOut={signOut} />;
+}
+
+function AdminDashboard({ idToken, whoami, onSignOut }) {
+  const [view, setView] = useState('clients'); // 'clients' | 'quotation'
+  const [clients, setClients] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState(null);
+  const [editingClient, setEditingClient] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [mediaProjectId, setMediaProjectId] = useState(null);
+  const [search, setSearch] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [c, p, u] = await Promise.all([
+        api('/api/clients', idToken),
+        api('/api/projects', idToken),
+        api('/api/users', idToken),
+      ]);
+      setClients(c);
+      setProjects(p);
+      setUsers(u);
+    } catch (e) {
+      setError('Could not load data — ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [idToken]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function saveClient(client) {
+    const isNew = !client.id;
+    const saved = isNew
+      ? await api('/api/clients', idToken, { method: 'POST', body: JSON.stringify(client) })
+      : await api(`/api/clients/${client.id}`, idToken, { method: 'PUT', body: JSON.stringify(client) });
+    setClients(cs => isNew ? [saved, ...cs] : cs.map(c => c.id === saved.id ? saved : c));
+    setEditingClient(null);
+  }
+
+  async function deleteClient(id) {
+    if (!confirm('Delete this client and keep their projects orphaned? This cannot be undone.')) return;
+    await api(`/api/clients/${id}`, idToken, { method: 'DELETE' });
+    setClients(cs => cs.filter(c => c.id !== id));
+  }
+
+  async function saveProject(project) {
+    const isNew = !project.id;
+    const payload = { ...project, clientId: project.clientId || selectedClientId };
+    const saved = isNew
+      ? await api('/api/projects', idToken, { method: 'POST', body: JSON.stringify(payload) })
+      : await api(`/api/projects/${project.id}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setProjects(ps => isNew ? [saved, ...ps] : ps.map(p => p.id === saved.id ? saved : p));
+    setEditingProject(null);
+  }
+
+  async function deleteProject(id) {
+    if (!confirm('Delete this project? This cannot be undone.')) return;
+    await api(`/api/projects/${id}`, idToken, { method: 'DELETE' });
+    setProjects(ps => ps.filter(p => p.id !== id));
+  }
+
+  async function linkUser(clientId, userId) {
+    const saved = await api(`/api/clients/${clientId}/link-user`, idToken, { method: 'POST', body: JSON.stringify({ userId }) });
+    setClients(cs => cs.map(c => c.id === saved.id ? saved : c));
+    setUsers(us => us.map(u => {
+      if (u.id === userId) return { ...u, linkedClientId: clientId };
+      if (u.linkedClientId === clientId) return { ...u, linkedClientId: null };
+      return u;
+    }));
+  }
+
+  async function unlinkUser(clientId) {
+    const saved = await api(`/api/clients/${clientId}/unlink-user`, idToken, { method: 'POST' });
+    setClients(cs => cs.map(c => c.id === saved.id ? saved : c));
+    setUsers(us => us.map(u => u.linkedClientId === clientId ? { ...u, linkedClientId: null } : u));
+  }
+
+  function updateProjectInState(saved) {
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+  }
+  async function uploadProjectImage(projectId, file, caption) {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('caption', caption || '');
+    const saved = await api(`/api/projects/${projectId}/images`, idToken, { method: 'POST', body: form });
+    updateProjectInState(saved);
+  }
+  async function deleteProjectImage(projectId, url) {
+    const saved = await api(`/api/projects/${projectId}/images`, idToken, { method: 'DELETE', body: JSON.stringify({ url }) });
+    updateProjectInState(saved);
+  }
+  async function shareProject(projectId, userId) {
+    const saved = await api(`/api/projects/${projectId}/share`, idToken, { method: 'POST', body: JSON.stringify({ userId }) });
+    updateProjectInState(saved);
+  }
+  async function toggleProjectShare(projectId, userId) {
+    const saved = await api(`/api/projects/${projectId}/share/${userId}/toggle`, idToken, { method: 'POST' });
+    updateProjectInState(saved);
+  }
+  async function unshareProject(projectId, userId) {
+    const saved = await api(`/api/projects/${projectId}/share/${userId}`, idToken, { method: 'DELETE' });
+    updateProjectInState(saved);
+  }
+
+  const filteredClients = clients.filter(c => {
+    const q = search.toLowerCase();
+    return !q || c.contactName.toLowerCase().includes(q) || c.phone.includes(q) || c.society.toLowerCase().includes(q);
+  });
+  const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
+  const selectedClient = clients.find(c => c.id === selectedClientId);
+
+  return (
+    <div className="ap-root">
+      <header className="ap-header">
+        <div className="ap-header-brand">
+          <Icon name="lock" size={18} />
+          <span>The Painter Boys — Admin Portal</span>
+        </div>
+        <nav className="ap-header-nav">
+          <button className={`ap-nav-btn ${view === 'clients' ? 'active' : ''}`} onClick={() => setView('clients')}>Clients</button>
+          <button className={`ap-nav-btn ${view === 'quotation' ? 'active' : ''}`} onClick={() => setView('quotation')}>Quotation</button>
+        </nav>
+        <div className="ap-header-user">
+          <span>{whoami.name} <span className="ap-role-chip">{whoami.role}</span></span>
+          <button className="ap-signout" onClick={onSignOut}>Sign out</button>
+        </div>
+      </header>
+
+      <main className="ap-main">
+        {error && <div className="ap-error">{error}</div>}
+
+        {view === 'quotation' ? (
+          <QuotationTool />
+        ) : !selectedClientId ? (
+          <>
+            <div className="ap-toolbar">
+              <input className="ap-search" placeholder="Search clients by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
+            </div>
+            {loading ? <p className="ap-loading">Loading…</p> : (
+              <table className="ap-table">
+                <thead>
+                  <tr><th>Name</th><th>Phone</th><th>Society</th><th>Projects</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map(c => (
+                    <tr key={c.id}>
+                      <td className="ap-link" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
+                      <td>{c.phone}</td>
+                      <td>{c.society || '—'}</td>
+                      <td>{projects.filter(p => p.clientId === c.id).length}</td>
+                      <td className="ap-row-actions">
+                        <button onClick={() => setEditingClient(c)}>Edit</button>
+                        <button className="ap-danger" onClick={() => deleteClient(c.id)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        ) : (
+          <>
+            <button className="ap-back" onClick={() => setSelectedClientId(null)}>← All Clients</button>
+            <div className="ap-client-detail">
+              <div>
+                <h2>{selectedClient?.contactName}</h2>
+                <p>{selectedClient?.phone} · {selectedClient?.address} {selectedClient?.society && `(${selectedClient.society})`}</p>
+              </div>
+              <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
+            </div>
+            <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} />
+            <table className="ap-table">
+              <thead>
+                <tr><th>Name</th><th>Progress</th><th>Paint Type</th><th>Amount</th><th>Pending</th><th>Painters</th><th></th></tr>
+              </thead>
+              <tbody>
+                {clientProjects.map(p => (
+                  <tr key={p.id}>
+                    <td>{p.name || '—'}</td>
+                    <td><span className={`ap-progress-chip ap-progress-${p.progress.toLowerCase().replace(/\s+/g, '-')}`}>{p.progress}</span></td>
+                    <td>{p.paintType || '—'}</td>
+                    <td>₹{p.amount?.toLocaleString()}</td>
+                    <td>₹{p.pendingAmount?.toLocaleString()}</td>
+                    <td>{(p.painterNames || []).join(', ') || '—'}</td>
+                    <td className="ap-row-actions">
+                      <button onClick={() => setEditingProject(p)}>Edit</button>
+                      <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
+                      <button className="ap-danger" onClick={() => deleteProject(p.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </main>
+
+      {editingClient && (
+        <ClientForm client={editingClient} onCancel={() => setEditingClient(null)} onSave={saveClient} />
+      )}
+      {editingProject && (
+        <ProjectForm project={editingProject} onCancel={() => setEditingProject(null)} onSave={saveProject} />
+      )}
+      {mediaProjectId && (
+        <ProjectMediaModal
+          project={projects.find(p => p.id === mediaProjectId)}
+          users={users}
+          onClose={() => setMediaProjectId(null)}
+          onUpload={uploadProjectImage}
+          onDeleteImage={deleteProjectImage}
+          onShare={shareProject}
+          onToggleShare={toggleProjectShare}
+          onUnshare={unshareProject}
+        />
+      )}
+    </div>
+  );
+}
+
+function ClientForm({ client, onCancel, onSave }) {
+  const [form, setForm] = useState(client);
+  return (
+    <div className="ap-modal-overlay" onClick={onCancel}>
+      <div className="ap-modal" onClick={e => e.stopPropagation()}>
+        <h3>{form.id ? 'Edit Client' : 'New Client'}</h3>
+        {['contactName', 'phone', 'email', 'address', 'society'].map(field => (
+          <label key={field} className="ap-field">
+            <span>{field}</span>
+            <input value={form[field] || ''} onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))} />
+          </label>
+        ))}
+        <div className="ap-modal-actions">
+          <button onClick={onCancel}>Cancel</button>
+          <button className="ap-btn-primary" onClick={() => onSave(form)}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectForm({ project, onCancel, onSave }) {
+  const [form, setForm] = useState({ ...project, painterNamesText: (project.painterNames || []).join(', ') });
+  function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
+  function submit() {
+    onSave({ ...form, painterNames: form.painterNamesText.split(',').map(s => s.trim()).filter(Boolean) });
+  }
+  return (
+    <div className="ap-modal-overlay" onClick={onCancel}>
+      <div className="ap-modal ap-modal-wide" onClick={e => e.stopPropagation()}>
+        <h3>{form.id ? 'Edit Project' : 'New Project'}</h3>
+        <div className="ap-form-grid">
+          <label className="ap-field"><span>Name</span><input value={form.name} onChange={e => field('name', e.target.value)} placeholder="e.g. 3BHK Interior Repaint" /></label>
+          <label className="ap-field">
+            <span>Progress</span>
+            <select value={form.progress} onChange={e => field('progress', e.target.value)}>
+              {PROGRESS_OPTIONS.map(o => <option key={o}>{o}</option>)}
+            </select>
+          </label>
+          <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} /></label>
+          <label className="ap-field"><span>Date Contacted</span><input value={form.dateContacted} onChange={e => field('dateContacted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
+          <label className="ap-field"><span>Date Started</span><input value={form.dateStarted} onChange={e => field('dateStarted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
+          <label className="ap-field"><span>Date Completed</span><input value={form.dateCompleted} onChange={e => field('dateCompleted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
+          <label className="ap-field"><span>Amount (₹)</span><input type="number" value={form.amount} onChange={e => field('amount', Number(e.target.value))} /></label>
+          <label className="ap-field"><span>Token Received (₹)</span><input type="number" value={form.tokenReceived} onChange={e => field('tokenReceived', Number(e.target.value))} /></label>
+          <label className="ap-field"><span>Pending Amount (₹)</span><input type="number" value={form.pendingAmount} onChange={e => field('pendingAmount', Number(e.target.value))} /></label>
+          <label className="ap-field"><span>Painters (comma-separated)</span><input value={form.painterNamesText} onChange={e => field('painterNamesText', e.target.value)} /></label>
+        </div>
+        <label className="ap-field"><span>Remarks</span><textarea rows={2} value={form.remarks} onChange={e => field('remarks', e.target.value)} /></label>
+        <div className="ap-modal-actions">
+          <button onClick={onCancel}>Cancel</button>
+          <button className="ap-btn-primary" onClick={submit}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, onShare, onToggleShare, onUnshare }) {
+  const [uploading, setUploading] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [shareUserId, setShareUserId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
+  if (!project) return null;
+
+  const shared = project.sharedWith || [];
+  const shareable = users.filter(u => !shared.some(s => s.userId === u.id));
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try { await onUpload(project.id, file, caption); setCaption(''); }
+    catch (err) { alert('Upload failed: ' + err.message); }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+  }
+  async function handleShare() {
+    if (!shareUserId) return;
+    setBusy(true);
+    try { await onShare(project.id, shareUserId); setShareUserId(''); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="ap-modal-overlay" onClick={onClose}>
+      <div className="ap-modal ap-modal-wide" onClick={e => e.stopPropagation()}>
+        <h3>Photos & Sharing — {project.paintType || 'Project'}</h3>
+
+        <div className="ap-media-section">
+          <h4>Work-in-Progress Photos</h4>
+          <div className="ap-media-grid">
+            {[...(project.images || [])].reverse().map(img => (
+              <div key={img.url} className="ap-media-item">
+                <img src={img.url} alt={img.caption || ''} />
+                {img.caption && <p className="ap-media-caption">{img.caption}</p>}
+                <button className="ap-media-delete" onClick={() => onDeleteImage(project.id, img.url)}>✕ Remove</button>
+              </div>
+            ))}
+            {(!project.images || project.images.length === 0) && <p className="ap-calc-hint">No photos uploaded yet.</p>}
+          </div>
+          <div className="ap-quote-item-row">
+            <input placeholder="Caption (optional)" value={caption} onChange={e => setCaption(e.target.value)} style={{ flex: 1 }} />
+          </div>
+          <label className="ap-btn-primary ap-upload-btn">
+            {uploading ? '⏳ Uploading…' : '+ Upload Photo'}
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic" onChange={handleFileChange} disabled={uploading} hidden />
+          </label>
+        </div>
+
+        <div className="ap-media-section">
+          <h4>Shared With</h4>
+          {shared.length === 0 && <p className="ap-calc-hint">Not shared with any account yet — only visible in the Admin Portal.</p>}
+          {shared.map(s => {
+            const u = users.find(x => x.id === s.userId);
+            return (
+              <div key={s.userId} className="ap-card-row" style={{ padding: '6px 0' }}>
+                <span>{u ? `${u.name} (${u.email})` : s.userId} {!s.visible && <span className="ap-calc-formula">(hidden)</span>}</span>
+                <span className="ap-row-actions">
+                  <button onClick={() => onToggleShare(project.id, s.userId)}>{s.visible ? 'Hide' : 'Show'}</button>
+                  <button className="ap-danger" onClick={() => onUnshare(project.id, s.userId)}>Unshare</button>
+                </span>
+              </div>
+            );
+          })}
+          <div className="ap-quote-item-row">
+            <select value={shareUserId} onChange={e => setShareUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
+              <option value="">Select a user to share with…</option>
+              {shareable.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+            </select>
+            <button className="ap-btn-primary" disabled={!shareUserId || busy} onClick={handleShare}>Share</button>
+          </div>
+        </div>
+
+        <div className="ap-modal-actions">
+          <button onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Manual client↔user link (fallback for when auto-link-by-email
+// on sign-in didn't happen, e.g. missing/wrong email at intake) ────
+function LinkedAccountBox({ client, users, onLink, onUnlink }) {
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (!client) return null;
+
+  const linkedUser = users.find(u => u.id === client.linkedUserId);
+  const candidates = users.filter(u => u.id !== client.linkedUserId);
+  const emailMatch = candidates.find(u => client.email && u.email?.toLowerCase() === client.email.toLowerCase());
+
+  async function handleLink() {
+    if (!selectedUserId) return;
+    setBusy(true);
+    try { await onLink(client.id, selectedUserId); setSelectedUserId(''); }
+    finally { setBusy(false); }
+  }
+  async function handleUnlink() {
+    if (!confirm('Unlink this account from the client? They will no longer see this client\'s projects if signed in.')) return;
+    setBusy(true);
+    try { await onUnlink(client.id); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="ap-calc-box" style={{ marginBottom: 20 }}>
+      <h3>Linked Account</h3>
+      {linkedUser ? (
+        <div className="ap-card-row" style={{ padding: '6px 0' }}>
+          <span>{linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>
+          <button className="ap-danger" disabled={busy} onClick={handleUnlink}>Unlink</button>
+        </div>
+      ) : (
+        <>
+          <p className="ap-calc-hint">
+            No account linked yet — this happens automatically when someone signs in with an email matching
+            {client.email ? ` "${client.email}"` : ' this client\'s email'}. Use this to link manually if that hasn't worked.
+          </p>
+          <div className="ap-quote-item-row">
+            <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
+              <option value="">Select a signed-in user…</option>
+              {emailMatch && <option value={emailMatch.id}>⭐ {emailMatch.name} ({emailMatch.email}) — email matches</option>}
+              {candidates.filter(u => u !== emailMatch).map(u => (
+                <option key={u.id} value={u.id}>{u.name} ({u.email}){u.linkedClientId ? ' — already linked elsewhere' : ''}</option>
+              ))}
+            </select>
+            <button className="ap-btn-primary" disabled={!selectedUserId || busy} onClick={handleLink}>Link</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Area calculator ───────────────────────────────────────────────
+// No fixed company formula exists yet, so the multiplier is editable rather
+// than hard-coded — this gives a quick estimate to sanity-check a quote
+// against, not an exact room-by-room measurement.
+function AreaCalculator({ area, onChange, ratePerSqFt }) {
+  const builtUp = Number(area.builtUpArea) || 0;
+  const estimate = builtUp > 0 ? Math.round(builtUp * area.multiplier) : null;
+  function field(key, value) { onChange(a => ({ ...a, [key]: value })); }
+
+  return (
+    <div className="ap-calc-box">
+      <h3>Painting Area Calculator</h3>
+      <p className="ap-calc-hint">Rough estimate only — adjust the multiplier based on what you've seen actually hold true on site.</p>
+      <div className="ap-form-grid">
+        <label className="ap-field"><span>Built-up Area (sq ft)</span>
+          <input type="number" value={area.builtUpArea} onChange={e => field('builtUpArea', e.target.value)} placeholder="e.g. 1550" />
+        </label>
+        <label className="ap-field"><span>BHK</span>
+          <select value={area.bhk} onChange={e => field('bhk', e.target.value)}>
+            <option value="">—</option>
+            {['1 BHK', '2 BHK', '3 BHK', '4 BHK', '5+ BHK'].map(o => <option key={o}>{o}</option>)}
+          </select>
+        </label>
+        <label className="ap-field"><span>Multiplier</span>
+          <input type="number" step="0.1" value={area.multiplier} onChange={e => field('multiplier', Number(e.target.value) || 0)} />
+        </label>
+      </div>
+      {estimate !== null && (
+        <div className="ap-calc-result">
+          Estimated Paintable Area: <strong>{estimate.toLocaleString('en-IN')} sq ft</strong>
+          <span className="ap-calc-formula"> ({builtUp.toLocaleString('en-IN')} sq ft{area.bhk ? ` · ${area.bhk}` : ''} × {area.multiplier})</span>
+          {ratePerSqFt !== null && (
+            <div style={{ marginTop: 6 }}>Rate at current total: <strong>₹{ratePerSqFt.toLocaleString('en-IN')}/sq ft</strong></div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Quotation generator ───────────────────────────────────────────
+function QuotationTool() {
+  const [area, setArea] = useState({ builtUpArea: '', bhk: '', multiplier: DEFAULT_AREA_MULTIPLIER });
+  const [form, setForm] = useState(EMPTY_QUOTATION);
+  const [showPreview, setShowPreview] = useState(false);
+  function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
+  function updateItem(i, value) { setForm(f => ({ ...f, workItems: f.workItems.map((w, idx) => idx === i ? value : w) })); }
+  function addItem() { setForm(f => ({ ...f, workItems: [...f.workItems, ''] })); }
+  function removeItem(i) { setForm(f => ({ ...f, workItems: f.workItems.filter((_, idx) => idx !== i) })); }
+  const canGenerate = form.customerName.trim() && Number(form.totalAmount) > 0;
+
+  const builtUp = Number(area.builtUpArea) || 0;
+  const estimatedArea = builtUp > 0 ? Math.round(builtUp * area.multiplier) : null;
+  const amount = Number(form.totalAmount) || 0;
+  const ratePerSqFt = estimatedArea && amount > 0 ? Math.round(amount / estimatedArea) : null;
+
+  return (
+    <div className="ap-quote-tool">
+      <AreaCalculator area={area} onChange={setArea} ratePerSqFt={ratePerSqFt} />
+
+      <div className="ap-calc-box">
+        <h3>Generate Quotation</h3>
+        <div className="ap-form-grid">
+          <label className="ap-field"><span>Customer Name</span><input value={form.customerName} onChange={e => field('customerName', e.target.value)} /></label>
+          <label className="ap-field"><span>Mobile Number</span><input value={form.mobile} onChange={e => field('mobile', e.target.value)} /></label>
+          <label className="ap-field"><span>Society</span><input value={form.society} onChange={e => field('society', e.target.value)} /></label>
+          <label className="ap-field"><span>BHK</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. 3 BHK" /></label>
+          <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} placeholder="e.g. Royale Shyne" /></label>
+          <label className="ap-field"><span>Total Amount (₹)</span><input type="number" value={form.totalAmount} onChange={e => field('totalAmount', e.target.value)} placeholder="e.g. 80000" /></label>
+        </div>
+        <label className="ap-field"><span>Scope of Work</span></label>
+        {form.workItems.map((w, i) => (
+          <div key={i} className="ap-quote-item-row">
+            <input value={w} onChange={e => updateItem(i, e.target.value)} placeholder="e.g. Putty" />
+            <button type="button" className="ap-danger" onClick={() => removeItem(i)}>✕</button>
+          </div>
+        ))}
+        <button type="button" className="ap-add-item-btn" onClick={addItem}>+ Add Item</button>
+        <div className="ap-modal-actions">
+          <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
+        </div>
+        {!canGenerate && <p className="ap-calc-hint">Customer name and total amount are required.</p>}
+      </div>
+
+      {showPreview && (
+        <QuotationCard quotation={{ ...form, areaSqFt: estimatedArea, ratePerSqFt }} onClose={() => setShowPreview(false)} />
+      )}
+    </div>
+  );
+}
+
+function QuotationCard({ quotation, onClose }) {
+  const cardRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
+  const { society, customerName, mobile, bhk, paintType, workItems, totalAmount, areaSqFt, ratePerSqFt } = quotation;
+  const items = workItems.map(w => w.trim()).filter(Boolean);
+  const amount = Number(totalAmount) || 0;
+  const quoteDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const waText = [
+    `🎨 *The Painter Boys*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `📋 *QUOTATION*  ·  ${quoteDate}`,
+    ``,
+    `👤 *Customer:* ${customerName}`,
+    society ? `🏘️ *Society:* ${society}` : '',
+    bhk ? `🛏️ *Configuration:* ${bhk}` : '',
+    mobile ? `📞 *Phone:* ${mobile}` : '',
+    paintType ? `🎨 *Paint Type:* ${paintType}` : '',
+    areaSqFt ? `📐 *Est. Painting Area:* ${areaSqFt.toLocaleString('en-IN')} sq ft` : '',
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🛠️ *SCOPE OF WORK*`,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    ...items.map(i => `✔️ ${i}`),
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `💰 *Total Quotation = ₹${amount.toLocaleString('en-IN')}*`,
+    ratePerSqFt ? `📊 *Rate = ₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft*` : '',
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    ``,
+    `🌐 www.thepainterboys.com`,
+    `📞 Corporate: 7838888509`,
+  ].filter(Boolean).join('\n');
+
+  async function shareAsImage() {
+    if (!cardRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: '#0d2137', logging: false });
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'quotation-thepainterboys.png', { type: 'image/png' });
+        const downloadFallback = () => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'quotation-thepainterboys.png'; a.click();
+          URL.revokeObjectURL(url);
+        };
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'Quotation — The Painter Boys' }); }
+          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+        } else {
+          downloadFallback();
+        }
+        setCapturing(false);
+      }, 'image/png');
+    } catch { setCapturing(false); }
+  }
+
+  function shareOnWhatsApp() {
+    const digits = mobile.replace(/\D/g, '');
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(waText)}`;
+    window.open(url, '_blank', 'noopener');
+  }
+
+  return (
+    <div className="aq-overlay" onClick={onClose}>
+      <div className="aq-wrap" onClick={e => e.stopPropagation()}>
+        <div className="aq-card" ref={cardRef}>
+          <div className="aq-card-header">
+            <div className="aq-card-logo">🎨</div>
+            <div className="aq-card-company">The Painter Boys</div>
+            <div className="aq-card-tagline">Professional Painting Services</div>
+          </div>
+          <div className="aq-card-badge">QUOTATION · {quoteDate}</div>
+          <div className="aq-card-section">
+            <div className="aq-card-section-title">Customer Details</div>
+            <div className="aq-card-row"><span>Name</span><span>{customerName}</span></div>
+            {society && <div className="aq-card-row"><span>Society</span><span>{society}</span></div>}
+            {bhk && <div className="aq-card-row"><span>Configuration</span><span>{bhk}</span></div>}
+            {mobile && <div className="aq-card-row"><span>Phone</span><span>{mobile}</span></div>}
+            {paintType && <div className="aq-card-row"><span>Paint Type</span><span>{paintType}</span></div>}
+            {areaSqFt && <div className="aq-card-row"><span>Est. Painting Area</span><span>{areaSqFt.toLocaleString('en-IN')} sq ft</span></div>}
+          </div>
+          <div className="aq-card-section">
+            <div className="aq-card-section-title">Scope of Work</div>
+            {items.map((it, i) => <div key={i} className="aq-card-item">✔️ {it}</div>)}
+          </div>
+          <div className="aq-card-total">
+            <span>Total Quotation{ratePerSqFt ? ` (₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft)` : ''}</span>
+            <span>₹{amount.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="aq-card-footer">
+            <div>🌐 www.thepainterboys.com</div>
+            <div>📞 Corporate: 7838888509</div>
+          </div>
+        </div>
+        <div className="aq-actions">
+          <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
+            {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
+          </button>
+          {mobile && (
+            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
+          )}
+          <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -9,6 +9,7 @@ import PBDashboard from './PBDashboard.jsx'
 import PainterBoard from './PainterBoard.jsx'
 import CustomerView from './CustomerView.jsx'
 import PainterCard from './PainterCard.jsx'
+import AdminPortal from './AdminPortal.jsx'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/pb" element={<PBDashboard />} />
+          <Route path="/admin" element={<AdminPortal />} />
           <Route path="/painter" element={<PainterBoard />} />
           <Route path="/job/:code" element={<CustomerView />} />
           <Route path="/customer" element={<CustomerView />} />

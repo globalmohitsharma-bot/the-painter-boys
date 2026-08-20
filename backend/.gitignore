@@ -1,0 +1,5 @@
+bin/
+obj/
+publish/
+*.zip
+appsettings.Local.json

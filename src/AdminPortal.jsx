@@ -168,7 +168,7 @@ export default function AdminPortal() {
 }
 
 function AdminDashboard({ idToken, whoami, onSignOut }) {
-  const [view, setView] = useState('clients'); // 'clients' | 'quotation'
+  const [view, setView] = useState('dashboard'); // 'dashboard' | 'grid' | 'clients' | 'quotation' | 'linked'
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
@@ -344,6 +344,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     return acc;
   }, {});
 
+  function goto(v) { setSelectedClientId(null); setView(v); }
+
   return (
     <div className="ap-root">
       <header className="ap-header">
@@ -351,59 +353,28 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <Icon name="lock" size={18} />
           <span>The Painter Boys — Admin Portal</span>
         </div>
-        <nav className="ap-header-nav">
-          <button className={`ap-nav-btn ${view === 'clients' ? 'active' : ''}`} onClick={() => setView('clients')}>Clients</button>
-          <button className={`ap-nav-btn ${view === 'quotation' ? 'active' : ''}`} onClick={() => setView('quotation')}>Quotation</button>
-        </nav>
         <div className="ap-header-user">
           <span>{whoami.name} <span className="ap-role-chip">{whoami.role}</span></span>
           <button className="ap-signout" onClick={onSignOut}>Sign out</button>
         </div>
       </header>
 
+      <div className="ap-body">
+        <nav className="ap-sidebar">
+          <button className={`ap-sidebar-btn ${view === 'dashboard' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('dashboard')}>📊 Dashboard</button>
+          <button className={`ap-sidebar-btn ${view === 'grid' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('grid')}>🗂️ Grid View</button>
+          <button className={`ap-sidebar-btn ${view === 'clients' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('clients')}>📋 All Clients</button>
+          <button className="ap-sidebar-btn ap-sidebar-btn-accent" onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}>➕ Create Client</button>
+          <button className={`ap-sidebar-btn ${view === 'quotation' ? 'active' : ''}`} onClick={() => goto('quotation')}>🧾 Quotation</button>
+          <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
+        </nav>
+
       <main className="ap-main">
         {error && <div className="ap-error">{error}</div>}
 
-        {view === 'quotation' ? (
-          <QuotationTool />
-        ) : !selectedClientId ? (
+        {selectedClientId ? (
           <>
-            {!loading && (
-              <div className="ap-stats-bar">
-                <span className="ap-stat">👤 {stats.clients} Clients</span>
-                <span className="ap-stat ap-stat-amber">💰 ₹{stats.pendingTotal.toLocaleString('en-IN')} Pending</span>
-              </div>
-            )}
-            <div className="ap-toolbar">
-              <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
-              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
-            </div>
-            <div className="ap-filter-row">
-              <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>
-                All <span className="ap-filter-count">{projects.length}</span>
-              </button>
-              {PROGRESS_OPTIONS.map(opt => (
-                <button key={opt} className={`ap-filter-chip ap-filter-${opt.toLowerCase().replace(/\s+/g, '-')} ${projectFilter === opt ? 'active' : ''}`} onClick={() => setProjectFilter(opt)}>
-                  {opt} <span className="ap-filter-count">{statusCounts[opt] || 0}</span>
-                </button>
-              ))}
-            </div>
-            {loading ? <p className="ap-loading">Loading…</p> : filteredProjectCards.length === 0 ? (
-              <p className="ap-loading">No {projectFilter === 'All' ? '' : projectFilter.toLowerCase()} records match.</p>
-            ) : (
-              <div className="ap-cards-grid">
-                {filteredProjectCards.map(pc => (
-                  <ProjectCard key={pc.id} project={pc} client={pc.client}
-                    onOpen={() => setSelectedClientId(pc.clientId)}
-                    onShare={() => shareProjectUpdate(pc, pc.client)}
-                    onViewReceipt={() => setReceiptProjectId(pc.id)} />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <button className="ap-back" onClick={() => setSelectedClientId(null)}>← All Clients</button>
+            <button className="ap-back" onClick={() => setSelectedClientId(null)}>← Back</button>
             <div className="ap-client-detail">
               <div>
                 <h2>{selectedClient?.contactName}</h2>
@@ -444,8 +415,77 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               </tbody>
             </table>
           </>
+        ) : view === 'quotation' ? (
+          <QuotationTool />
+        ) : view === 'dashboard' ? (
+          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId} />
+        ) : view === 'linked' ? (
+          <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
+        ) : view === 'clients' ? (
+          <>
+            <div className="ap-toolbar">
+              <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
+            </div>
+            {loading ? <p className="ap-loading">Loading…</p> : (
+              <table className="ap-table">
+                <thead>
+                  <tr><th>Name</th><th>Phone</th><th>Society</th><th>Projects</th></tr>
+                </thead>
+                <tbody>
+                  {clients.filter(c => {
+                    const q = search.toLowerCase();
+                    return !q || c.contactName.toLowerCase().includes(q) || c.phone.includes(q) || c.society.toLowerCase().includes(q);
+                  }).map(c => (
+                    <tr key={c.id}>
+                      <td className="ap-link" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
+                      <td>{c.phone}</td>
+                      <td>{c.society || '—'}</td>
+                      <td>{projects.filter(p => p.clientId === c.id).length}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        ) : (
+          <>
+            {!loading && (
+              <div className="ap-stats-bar">
+                <span className="ap-stat">👤 {stats.clients} Clients</span>
+                <span className="ap-stat ap-stat-amber">💰 ₹{stats.pendingTotal.toLocaleString('en-IN')} Pending</span>
+              </div>
+            )}
+            <div className="ap-toolbar">
+              <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
+            </div>
+            <div className="ap-filter-row">
+              <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>
+                All <span className="ap-filter-count">{projects.length}</span>
+              </button>
+              {PROGRESS_OPTIONS.map(opt => (
+                <button key={opt} className={`ap-filter-chip ap-filter-${opt.toLowerCase().replace(/\s+/g, '-')} ${projectFilter === opt ? 'active' : ''}`} onClick={() => setProjectFilter(opt)}>
+                  {opt} <span className="ap-filter-count">{statusCounts[opt] || 0}</span>
+                </button>
+              ))}
+            </div>
+            {loading ? <p className="ap-loading">Loading…</p> : filteredProjectCards.length === 0 ? (
+              <p className="ap-loading">No {projectFilter === 'All' ? '' : projectFilter.toLowerCase()} records match.</p>
+            ) : (
+              <div className="ap-cards-grid">
+                {filteredProjectCards.map(pc => (
+                  <ProjectCard key={pc.id} project={pc} client={pc.client}
+                    onOpen={() => setSelectedClientId(pc.clientId)}
+                    onShare={() => shareProjectUpdate(pc, pc.client)}
+                    onViewReceipt={() => setReceiptProjectId(pc.id)} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
+      </div>
 
       {editingClient && (
         <ClientForm
@@ -490,6 +530,81 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         />
       )}
     </div>
+  );
+}
+
+// Overview landing page — big-picture status counts plus a quick-glance list
+// of the newest inquiries, so triage doesn't require opening Grid View first.
+function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient }) {
+  const recentInquiries = projects.filter(p => p.progress === 'Inquiry').slice(0, 5);
+  const tiles = [
+    { label: 'Total Clients', value: stats.clients, cls: '' },
+    { label: 'Inquiry', value: statusCounts['Inquiry'] || 0, cls: 'ap-tile-purple' },
+    { label: 'Pending Visit', value: statusCounts['Pending Visit'] || 0, cls: 'ap-tile-purple' },
+    { label: 'Not Started', value: statusCounts['Not Started'] || 0, cls: 'ap-tile-amber' },
+    { label: 'In Progress', value: statusCounts['In Progress'] || 0, cls: 'ap-tile-green' },
+    { label: 'Completed', value: statusCounts['Completed'] || 0, cls: 'ap-tile-blue' },
+    { label: 'Cancelled', value: statusCounts['Cancelled'] || 0, cls: 'ap-tile-red' },
+    { label: 'Total Pending ₹', value: `₹${stats.pendingTotal.toLocaleString('en-IN')}`, cls: 'ap-tile-amber' },
+  ];
+  return (
+    <div className="ap-dashboard">
+      <div className="ap-tiles-grid">
+        {tiles.map(t => (
+          <div key={t.label} className={`ap-tile ${t.cls}`}>
+            <div className="ap-tile-value">{t.value}</div>
+            <div className="ap-tile-label">{t.label}</div>
+          </div>
+        ))}
+      </div>
+      <h3 className="ap-dashboard-subhead">Newest Inquiries</h3>
+      {recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
+        <div className="ap-cards-grid">
+          {recentInquiries.map(p => {
+            const client = clients.find(c => c.id === p.clientId);
+            return (
+              <div key={p.id} className="ap-card ap-card-inquiry" onClick={() => onSelectClient(p.clientId)}>
+                <div className="ap-card-top">
+                  <div className="ap-card-name">{client?.contactName || '—'}</div>
+                  <span className="ap-progress-chip ap-progress-inquiry">Inquiry</span>
+                </div>
+                {client?.phone && <div className="ap-card-row">📞 <span>{client.phone}</span></div>}
+                {client?.society && <div className="ap-card-row">🏘️ <span>{client.society}</span></div>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Every client with a linked customer Google account, in one place — the
+// per-client LinkedAccountBox only shows one client at a time, this is the
+// "see everything at once" version for auditing who has portal access.
+function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
+  const linked = clients.filter(c => c.linkedUserId).map(c => ({
+    client: c, user: users.find(u => u.id === c.linkedUserId),
+  }));
+  if (linked.length === 0) return <p className="ap-loading">No clients have a linked account yet.</p>;
+  return (
+    <table className="ap-table">
+      <thead>
+        <tr><th>Client</th><th>Phone</th><th>Linked Account</th><th></th></tr>
+      </thead>
+      <tbody>
+        {linked.map(({ client, user }) => (
+          <tr key={client.id}>
+            <td className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</td>
+            <td>{client.phone}</td>
+            <td>{user ? `${user.name} (${user.email})` : '—'}</td>
+            <td className="ap-row-actions">
+              <button className="ap-danger" onClick={() => onUnlink(client.id)}>Unlink</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

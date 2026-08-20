@@ -25,7 +25,41 @@
 .ap-role-chip { background: rgba(242,135,31,.18); color: var(--gold-soft); padding: 2px 10px; border-radius: 10px; font-size: .7rem; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
 .ap-header .ap-signout { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.75); }
 
-.ap-main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+.ap-body { display: flex; align-items: flex-start; max-width: 1300px; margin: 0 auto; }
+.ap-sidebar {
+  flex-shrink: 0; width: 200px; display: flex; flex-direction: column; gap: 4px;
+  padding: 20px 12px; position: sticky; top: 0; align-self: flex-start;
+}
+.ap-sidebar-btn {
+  background: none; border: none; text-align: left; padding: 10px 14px; border-radius: 8px;
+  font-size: .88rem; font-weight: 700; color: var(--ink-soft); cursor: pointer;
+}
+.ap-sidebar-btn:hover { background: var(--ivory); color: var(--ink); }
+.ap-sidebar-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
+.ap-sidebar-btn-accent { color: var(--gold-deep); border: 1.5px dashed rgba(242,135,31,.4); margin: 6px 0; }
+
+.ap-main { flex: 1; min-width: 0; padding: 28px 24px 80px; }
+
+.ap-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.ap-tile { background: var(--ivory); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.04); }
+.ap-tile-value { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; color: var(--ink); }
+.ap-tile-label { font-size: .74rem; color: var(--ink-faint); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+.ap-tile-purple .ap-tile-value { color: #7c3aed; }
+.ap-tile-amber .ap-tile-value { color: #b45309; }
+.ap-tile-green .ap-tile-value { color: #16a34a; }
+.ap-tile-blue .ap-tile-value { color: #2563eb; }
+.ap-tile-red .ap-tile-value { color: #dc2626; }
+.ap-dashboard-subhead { font-family: var(--font-display); color: var(--ink); margin-bottom: 14px; }
+
+@media (max-width: 800px) {
+  .ap-body { flex-direction: column; }
+  .ap-sidebar {
+    width: 100%; flex-direction: row; overflow-x: auto; position: static;
+    padding: 10px 14px; gap: 6px; border-bottom: 1px solid var(--hairline);
+  }
+  .ap-sidebar-btn { flex-shrink: 0; white-space: nowrap; }
+  .ap-tiles-grid { grid-template-columns: repeat(2, 1fr); }
+}
 .ap-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .88rem; }
 .ap-loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
 

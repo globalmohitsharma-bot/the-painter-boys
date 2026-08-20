@@ -7,6 +7,21 @@ import Icon from './Icon.jsx';
 // time via VITE_GOOGLE_CLIENT_ID. See deployment.md for the setup this needs.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
+// google.accounts.id.initialize() configures GIS globally for the whole page
+// (not per-component) — calling it more than once makes GIS log a warning
+// and silently keep only the *last* call's config. Two AccountModal instances
+// exist at once (SiteHeader's + BottomNav's, one just CSS-hidden), and an
+// unstable onCredential reference used to make this effect re-run on every
+// unrelated parent re-render, so initialize() kept firing repeatedly — and
+// with two live instances, whichever one re-rendered *last* silently won,
+// which is how the button ended up wired to a config that could go stale.
+// Fix: call initialize() at most once, ever, with a stable wrapper callback
+// that always delegates to whichever instance most recently ran its effect
+// (i.e. whichever modal is actually open) — so the real per-instance
+// onCredential still gets used correctly without re-initializing GIS itself.
+let gisInitialized = false;
+let currentCredentialHandler = null;
+
 // Shared sign-in panel used by both the desktop header account icon
 // (SiteHeader.jsx) and the mobile bottom nav (BottomNav.jsx) — same modal,
 // same Google button, just triggered from two different places.
@@ -26,10 +41,14 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
         return;
       }
       setGsiReady(true);
-      // Temporary diagnostic — remove once the intermittent "missing client_id"
-      // report is root-caused. Logs the exact runtime value GIS receives.
-      console.log('[PB-DIAG] GOOGLE_CLIENT_ID at initialize():', JSON.stringify(GOOGLE_CLIENT_ID), 'length:', GOOGLE_CLIENT_ID.length, 'build:', 'DZuHYk1M-followup');
-      window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential });
+      currentCredentialHandler = onCredential;
+      if (!gisInitialized) {
+        gisInitialized = true;
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => currentCredentialHandler?.(response),
+        });
+      }
       if (buttonRef.current) {
         buttonRef.current.innerHTML = '';
         window.google.accounts.id.renderButton(buttonRef.current, {

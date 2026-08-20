@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 // Shared Google sign-in state, used independently by both SiteHeader (desktop
 // account icon) and BottomNav (mobile My Projects/Profile tabs) — each keeps
@@ -29,7 +29,13 @@ export function decodeIdToken(token) {
 export default function useGoogleAccount() {
   const [user, setUser] = useState(loadStoredUser);
 
-  async function handleCredential(response) {
+  // Memoized so AccountModal's effect (which depends on this callback) doesn't
+  // re-run — and re-call google.accounts.id.initialize() — on every parent
+  // re-render. GIS explicitly logs a warning when initialize() is called more
+  // than once and only keeps the *last* call's config, so an unstable callback
+  // reference here was silently causing the sign-in button to lose its client
+  // ID after any unrelated re-render (e.g. the header's scroll-position state).
+  const handleCredential = useCallback(async (response) => {
     const payload = decodeIdToken(response.credential);
     if (!payload) return;
     // Show the sign-in immediately from the (unverified) token payload, then
@@ -62,13 +68,13 @@ export default function useGoogleAccount() {
       // Backend unreachable — the customer sign-in above already succeeded,
       // this just means no staff/admin links this session.
     }
-  }
+  }, []);
 
-  function signOut() {
+  const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
-  }
+  }, []);
 
   return { user, handleCredential, signOut };
 }

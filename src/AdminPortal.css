@@ -29,6 +29,11 @@
 .ap-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .88rem; }
 .ap-loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
 
+.ap-stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.ap-stat { background: var(--ivory); border: 1px solid var(--hairline); border-radius: 20px; padding: 6px 14px; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
+.ap-stat-purple { background: #ede9fe; color: #6d28d9; border-color: transparent; }
+.ap-stat-green { background: #d1fae5; color: #065f46; border-color: transparent; }
+.ap-stat-amber { background: #fef3c7; color: #b45309; border-color: transparent; }
 .ap-toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; justify-content: space-between; }
 .ap-search { flex: 1; min-width: 220px; padding: 10px 16px; border: 1.5px solid var(--hairline); border-radius: 8px; font-size: .88rem; font-family: inherit; background: var(--ivory); }
 .ap-btn-primary {
@@ -89,6 +94,9 @@
 .ap-quote-item-row .ap-danger { flex-shrink: 0; background: none; border: 1px solid #fecaca; color: #b91c1c; border-radius: 6px; width: 32px; height: 32px; cursor: pointer; }
 .ap-add-item-btn { background: none; border: 1.5px dashed var(--hairline); color: var(--ink-soft); border-radius: 8px; padding: 8px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; margin-bottom: 6px; }
 .ap-add-item-btn:hover { border-color: var(--gold); color: var(--gold-deep); }
+.ap-painter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ap-painter-chip { background: var(--parchment); border: 1.5px solid var(--hairline); border-radius: 20px; padding: 6px 14px; font-size: .82rem; cursor: pointer; color: var(--ink-soft); }
+.ap-painter-chip-selected { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; color: var(--obsidian); font-weight: 700; }
 
 /* ── Quotation share card ── */
 .aq-overlay {

@@ -32,6 +32,21 @@ const EMPTY_PROJECT = {
   pendingAmount: 0, tokenHistory: [], additionalWork: '',
 };
 const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progress', 'Completed', 'Cancelled'];
+// Same built-in lists the Staff Portal ships with, for the same "select or
+// type a new one" behavior on Society/Painter fields.
+const DEFAULT_SOCIETIES = [
+  'Addela Palm Resort', 'Ajnara Fragrance', 'Ajnara Grace', 'Ajnara Integrity',
+  'Anthem Kingdom Homes', 'Charms Castle', 'Charms The Gateway Towers',
+  'Devika Skypers', 'Emenox Brave Hearts', 'Gaur Cascades', 'GAV Green View Heights',
+  'Jyoti Super Village', 'KDP Grand Savanna', 'KW Srishti', 'Landcraft River Heights',
+  'MCC Signature Heights', 'Migsun Atharva', 'Migsun Roof', 'Nilaya Greens',
+  'Officer City', 'Raj Nagar Residency', 'Royce Sentosa Parc', 'Sangwan Heights',
+  'SCC Blossom', 'SCC Heights', 'SCC Sapphire', 'SG Impression Plus',
+  'SG Impressions 58', 'SG Vista', 'Star Rameshwaram', 'SVP Gulmohur Garden',
+  'T and T Atlas', 'Uninav Eden', 'Uninav Residena', 'Uninav Utopia',
+  'VVIP Addresses', 'VVIP Homes', 'Windsor Majesty', 'Windsor Paradise 2',
+].sort();
+const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
 const EMPTY_QUOTATION = {
   society: '', customerName: '', mobile: '', bhk: '', paintType: '',
   workItems: ['Putty', 'Primer', 'Chalk Mitti', 'Paint'], totalAmount: '',
@@ -213,6 +228,47 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     setProjects(ps => ps.filter(p => p.id !== id));
   }
 
+  // Appends a payment to tokenHistory and recalculates received/pending —
+  // the flat number fields in ProjectForm only support overwriting a total,
+  // this is the "customer paid ₹X today" flow the Staff Portal has.
+  async function addPayment(projectId, date, amount) {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const newHistory = [...(project.tokenHistory || []), { date, amount }];
+    const newReceived = (project.tokenReceived || 0) + amount;
+    const newPending = project.amount > 0 ? Math.max(0, project.amount - newReceived) : Math.max(0, (project.pendingAmount || 0) - amount);
+    const payload = { ...project, tokenHistory: newHistory, tokenReceived: newReceived, pendingAmount: newPending };
+    const saved = await api(`/api/projects/${projectId}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+  }
+
+  // Quick WhatsApp status update — client-side only, no backend involved.
+  // Lighter-weight than the Staff Portal's job-link share, since Admin Portal
+  // doesn't have a customer-facing job page yet (separate, bigger piece of work).
+  function shareProjectUpdate(project, client) {
+    const name = client?.contactName ? `Mr. ${client.contactName}` : 'Customer';
+    const lines = [
+      `🎨 *The Painter Boys*`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `Dear ${name},`,
+      ``,
+      `Thank you for choosing *The Painter Boys*! 🙏`,
+      ``,
+      client?.society ? `🏘️ *Society:* ${client.society}` : '',
+      `📊 *Status:* ${project.progress}`,
+      project.paintType ? `🎨 *Paint Type:* ${project.paintType}` : '',
+      ``,
+      `For any queries, feel free to reach us:`,
+      `📞 *Corporate:* +91 7838888509`,
+      `🌐 www.thepainterboys.com`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `_The Painter Boys — Trusted Since 2010_`,
+    ].filter(Boolean).join('\n');
+    const digits = (client?.phone || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(lines)}`, '_blank', 'noopener');
+  }
+
   async function linkUser(clientId, userId) {
     const saved = await api(`/api/clients/${clientId}/link-user`, idToken, { method: 'POST', body: JSON.stringify({ userId }) });
     setClients(cs => cs.map(c => c.id === saved.id ? saved : c));
@@ -263,6 +319,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
+  const stats = {
+    clients: clients.length,
+    inProgress: projects.filter(p => p.progress === 'In Progress').length,
+    inquiries: projects.filter(p => p.progress === 'Inquiry').length,
+    pendingTotal: projects.reduce((s, p) => s + (p.pendingAmount || 0), 0),
+  };
+
   return (
     <div className="ap-root">
       <header className="ap-header">
@@ -287,6 +350,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <QuotationTool />
         ) : !selectedClientId ? (
           <>
+            {!loading && (
+              <div className="ap-stats-bar">
+                <span className="ap-stat">👤 {stats.clients} Clients</span>
+                <span className="ap-stat ap-stat-purple">💡 {stats.inquiries} Inquiries</span>
+                <span className="ap-stat ap-stat-green">🔨 {stats.inProgress} In Progress</span>
+                <span className="ap-stat ap-stat-amber">💰 ₹{stats.pendingTotal.toLocaleString('en-IN')} Pending</span>
+              </div>
+            )}
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search clients by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
               <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
@@ -341,6 +412,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       <button onClick={() => setEditingProject(p)}>Edit</button>
                       <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
                       <button onClick={() => setReceiptProjectId(p.id)}>Payment Receipt</button>
+                      <button onClick={() => shareProjectUpdate(p, selectedClient)}>Share Update</button>
                       <button className="ap-danger" onClick={() => deleteProject(p.id)}>Delete</button>
                     </td>
                   </tr>
@@ -352,10 +424,20 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       </main>
 
       {editingClient && (
-        <ClientForm client={editingClient} onCancel={() => setEditingClient(null)} onSave={saveClient} />
+        <ClientForm
+          client={editingClient}
+          onCancel={() => setEditingClient(null)}
+          onSave={saveClient}
+          societies={[...new Set([...DEFAULT_SOCIETIES, ...clients.map(c => c.society).filter(Boolean)])].sort()}
+        />
       )}
       {editingProject && (
-        <ProjectForm project={editingProject} onCancel={() => setEditingProject(null)} onSave={saveProject} />
+        <ProjectForm
+          project={editingProject}
+          onCancel={() => setEditingProject(null)}
+          onSave={saveProject}
+          knownPainters={[...new Set(projects.flatMap(p => p.painterNames || []))].sort()}
+        />
       )}
       {mediaProjectId && (
         <ProjectMediaModal
@@ -374,13 +456,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           project={projects.find(p => p.id === receiptProjectId)}
           client={clients.find(c => c.id === projects.find(p => p.id === receiptProjectId)?.clientId)}
           onClose={() => setReceiptProjectId(null)}
+          onAddPayment={addPayment}
         />
       )}
     </div>
   );
 }
 
-function ClientForm({ client, onCancel, onSave }) {
+function ClientForm({ client, onCancel, onSave, societies = [] }) {
   const [form, setForm] = useState(client);
   return (
     <div className="ap-modal-overlay" onClick={onCancel}>
@@ -389,9 +472,16 @@ function ClientForm({ client, onCancel, onSave }) {
         {['contactName', 'phone', 'email', 'address', 'society'].map(field => (
           <label key={field} className="ap-field">
             <span>{field}</span>
-            <input value={form[field] || ''} onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))} />
+            <input
+              value={form[field] || ''}
+              list={field === 'society' ? 'ap-society-options' : undefined}
+              onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+            />
           </label>
         ))}
+        <datalist id="ap-society-options">
+          {societies.map(s => <option key={s} value={s} />)}
+        </datalist>
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>
           <button className="ap-btn-primary" onClick={() => onSave(form)}>Save</button>
@@ -401,11 +491,23 @@ function ClientForm({ client, onCancel, onSave }) {
   );
 }
 
-function ProjectForm({ project, onCancel, onSave }) {
-  const [form, setForm] = useState({ ...project, painterNamesText: (project.painterNames || []).join(', ') });
+function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
+  const [form, setForm] = useState({ ...project });
+  const [newPainter, setNewPainter] = useState('');
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
-  function submit() {
-    onSave({ ...form, painterNames: form.painterNamesText.split(',').map(s => s.trim()).filter(Boolean) });
+  function submit() { onSave(form); }
+  const painterOptions = [...new Set([...DEFAULT_PAINTERS, ...knownPainters])].sort();
+  const selectedPainters = form.painterNames || [];
+  function togglePainter(name) {
+    field('painterNames', selectedPainters.includes(name)
+      ? selectedPainters.filter(p => p !== name)
+      : [...selectedPainters, name]);
+  }
+  function addNewPainter() {
+    const name = newPainter.trim();
+    if (!name || selectedPainters.includes(name)) return;
+    field('painterNames', [...selectedPainters, name]);
+    setNewPainter('');
   }
   return (
     <div className="ap-modal-overlay" onClick={onCancel}>
@@ -420,13 +522,29 @@ function ProjectForm({ project, onCancel, onSave }) {
             </select>
           </label>
           <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} /></label>
-          <label className="ap-field"><span>Date Contacted</span><input value={form.dateContacted} onChange={e => field('dateContacted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
-          <label className="ap-field"><span>Date Started</span><input value={form.dateStarted} onChange={e => field('dateStarted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
-          <label className="ap-field"><span>Date Completed</span><input value={form.dateCompleted} onChange={e => field('dateCompleted', e.target.value)} placeholder="YYYY-MM-DD" /></label>
+          <label className="ap-field"><span>Date Contacted</span><input type="date" value={form.dateContacted} onChange={e => field('dateContacted', e.target.value)} /></label>
+          <label className="ap-field"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={e => field('dateStarted', e.target.value)} /></label>
+          <label className="ap-field"><span>Date Completed</span><input type="date" value={form.dateCompleted} onChange={e => field('dateCompleted', e.target.value)} /></label>
           <label className="ap-field"><span>Amount (₹)</span><input type="number" value={form.amount} onChange={e => field('amount', Number(e.target.value))} /></label>
           <label className="ap-field"><span>Token Received (₹)</span><input type="number" value={form.tokenReceived} onChange={e => field('tokenReceived', Number(e.target.value))} /></label>
           <label className="ap-field"><span>Pending Amount (₹)</span><input type="number" value={form.pendingAmount} onChange={e => field('pendingAmount', Number(e.target.value))} /></label>
-          <label className="ap-field"><span>Painters (comma-separated)</span><input value={form.painterNamesText} onChange={e => field('painterNamesText', e.target.value)} /></label>
+        </div>
+        <label className="ap-field"><span>Painters</span></label>
+        <div className="ap-painter-chips">
+          {painterOptions.map(name => (
+            <button
+              key={name}
+              type="button"
+              className={`ap-painter-chip${selectedPainters.includes(name) ? ' ap-painter-chip-selected' : ''}`}
+              onClick={() => togglePainter(name)}
+            >
+              {selectedPainters.includes(name) ? '✓ ' : ''}{name}
+            </button>
+          ))}
+        </div>
+        <div className="ap-quote-item-row">
+          <input placeholder="Add a new painter…" value={newPainter} onChange={e => setNewPainter(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewPainter())} />
+          <button type="button" className="ap-add-item-btn" onClick={addNewPainter} disabled={!newPainter.trim()}>+ Add</button>
         </div>
         <label className="ap-field"><span>Remarks</span><textarea rows={2} value={form.remarks} onChange={e => field('remarks', e.target.value)} /></label>
         <div className="ap-modal-actions">
@@ -526,10 +644,21 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
 // Mirrors the Staff Portal's (Sheet-based) receipt feature — same idea, but
 // reading from this project's own tokenHistory/tokenReceived/pendingAmount
 // fields instead of parsing multiple sheet columns.
-function PaymentReceiptModal({ project, client, onClose }) {
+function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
+  const [newAmount, setNewAmount] = useState('');
+  const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [addingPayment, setAddingPayment] = useState(false);
   if (!project) return null;
+
+  async function handleAddPayment() {
+    const amount = Number(newAmount);
+    if (!amount || amount <= 0) return;
+    setAddingPayment(true);
+    try { await onAddPayment(project.id, newDate, amount); setNewAmount(''); }
+    finally { setAddingPayment(false); }
+  }
 
   const history = project.tokenHistory || [];
   const totalAmount = project.amount || 0;
@@ -629,6 +758,18 @@ function PaymentReceiptModal({ project, client, onClose }) {
             <div>📞 Corporate: 7838888509</div>
           </div>
         </div>
+
+        <div className="ap-calc-box" style={{ padding: 16 }}>
+          <div className="ap-calc-hint" style={{ marginBottom: 8 }}>Add a payment — appends to history and updates totals</div>
+          <div className="ap-quote-item-row">
+            <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} style={{ padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }} />
+            <input type="number" placeholder="Amount (₹)" value={newAmount} onChange={e => setNewAmount(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }} />
+            <button className="ap-btn-primary" disabled={!newAmount || addingPayment} onClick={handleAddPayment}>
+              {addingPayment ? 'Saving…' : 'Add'}
+            </button>
+          </div>
+        </div>
+
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}

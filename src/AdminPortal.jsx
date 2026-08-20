@@ -29,7 +29,7 @@ const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', socie
 const EMPTY_PROJECT = {
   name: '', progress: 'Inquiry', paintType: '', dateContacted: '', dateStarted: '', dateCompleted: '',
   remarks: '', noOfDays: '', amount: 0, otherDetails: '', painterNames: [], tokenReceived: 0,
-  pendingAmount: 0, tokenHistory: [], additionalWork: '',
+  pendingAmount: 0, tokenHistory: [], additionalWork: '', isActive: true,
 };
 const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progress', 'Completed', 'Cancelled'];
 // Same built-in lists the Staff Portal ships with, for the same "select or
@@ -182,6 +182,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [thankYouProjectId, setThankYouProjectId] = useState(null);
   const [search, setSearch] = useState('');
   const [projectFilter, setProjectFilter] = useState('Inquiry');
+  const [showInactive, setShowInactive] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -326,6 +327,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // each paired with its client for name/phone/society display and search.
   const projectCards = projects.map(p => ({ ...p, client: clients.find(c => c.id === p.clientId) }));
   const filteredProjectCards = projectCards.filter(pc => {
+    if (!showInactive && pc.isActive === false) return false;
     const q = search.toLowerCase();
     const matchesSearch = !q || (pc.client?.contactName || '').toLowerCase().includes(q)
       || (pc.client?.phone || '').includes(q) || (pc.client?.society || '').toLowerCase().includes(q);
@@ -407,8 +409,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       {p.progress === 'Inquiry' && (
                         <button onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
-                      {p.progress !== 'Cancelled' && (
-                        <button className="ap-danger" onClick={() => saveProject({ ...p, progress: 'Cancelled' })}>Deactivate</button>
+                      {p.isActive === false ? (
+                        <button onClick={() => saveProject({ ...p, isActive: true })}>Activate</button>
+                      ) : (
+                        <button className="ap-danger" onClick={() => saveProject({ ...p, isActive: false })}>Deactivate</button>
                       )}
                     </td>
                   </tr>
@@ -459,6 +463,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             )}
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <button className={`ap-filter-chip ${showInactive ? 'active' : ''}`} onClick={() => setShowInactive(s => !s)}>
+                {showInactive ? '👁 Showing Inactive' : '⚡ Active Only'}
+              </button>
               <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
             </div>
             <div className="ap-filter-row">
@@ -615,10 +622,11 @@ function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
 function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
   const startDate = project.dateStarted || project.dateContacted || '';
   return (
-    <div className={`ap-card ap-card-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`} onClick={onOpen}>
+    <div className={`ap-card ap-card-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')} ${project.isActive === false ? 'ap-card-inactive' : ''}`} onClick={onOpen}>
       <div className="ap-card-top">
         <div className="ap-card-name">{client?.contactName || '—'}</div>
         <div className="ap-card-top-right">
+          {project.isActive === false && <span className="ap-progress-chip ap-progress-inactive">Inactive</span>}
           <span className={`ap-progress-chip ap-progress-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
           <button className="ap-card-wa-btn" onClick={e => { e.stopPropagation(); onShare(); }} title="Share status on WhatsApp">💬</button>
         </div>

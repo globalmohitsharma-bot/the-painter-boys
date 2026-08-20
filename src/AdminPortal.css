@@ -96,6 +96,8 @@
 .ap-progress-not-started { background: #f59e0b; }
 .ap-progress-in-progress { background: #16a34a; }
 .ap-progress-inquiry, .ap-progress-pending-visit { background: #9333ea; }
+.ap-progress-inactive { background: #6b7280; }
+.ap-card-inactive { opacity: .6; }
 
 .ap-client-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .ap-client-detail-actions button { background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.2); border-radius: 8px; padding: 8px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; color: rgba(255,255,255,.85); }

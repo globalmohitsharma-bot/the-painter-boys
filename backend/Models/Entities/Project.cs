@@ -57,6 +57,13 @@ public class Project
     [JsonPropertyName("progress")]
     public string Progress { get; set; } = "Inquiry";
 
+    /// <summary>Soft hide/archive, independent of Progress — a deactivated project
+    /// isn't necessarily Cancelled (e.g. a duplicate entry), and a Cancelled job
+    /// isn't necessarily meant to disappear from view. Missing on older documents
+    /// deserializes to this default (true), so nothing already stored is hidden.</summary>
+    [JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = true;
+
     [JsonPropertyName("paintType")]
     public string PaintType { get; set; } = string.Empty;
 

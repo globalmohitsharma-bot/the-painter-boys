@@ -44,6 +44,14 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
       currentCredentialHandler = onCredential;
       if (!gisInitialized) {
         gisInitialized = true;
+        // Temporary diagnostic — remove once root-caused.
+        console.log('[PB-DIAG3]', JSON.stringify({
+          origin: window.location.origin,
+          href: window.location.href,
+          clientIdType: typeof GOOGLE_CLIENT_ID,
+          clientIdValue: GOOGLE_CLIENT_ID,
+          clientIdLen: GOOGLE_CLIENT_ID.length,
+        }));
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: (response) => currentCredentialHandler?.(response),

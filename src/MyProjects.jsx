@@ -117,15 +117,25 @@ export default function MyProjects() {
     <div className="mp-app">
       <div className="mp-app-topbar">
         <a href="/" className="mp-app-brand">🎨 The Painter Boys</a>
-        <a href="/" className="mp-app-back">← Back to site</a>
+        <a className="mp-app-cta" href="tel:+917838888509"><Icon name="phone" size={15} /> Book Free Estimate</a>
       </div>
       <div className="mp-app-body">
         <nav className="mp-sidebar">
-          <button className={`mp-sidebar-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>👤 Profile</button>
-          <button className={`mp-sidebar-btn ${view === 'projects' ? 'active' : ''}`} onClick={() => setView('projects')}>🖌️ Active Projects</button>
-          <button className={`mp-sidebar-btn ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}>📜 History</button>
+          <div className="mp-sidebar-label">Menu</div>
+          <button className={`mp-sidebar-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}><Icon name="user" size={16} /> Profile</button>
+          <button className={`mp-sidebar-btn ${view === 'projects' ? 'active' : ''}`} onClick={() => setView('projects')}><Icon name="brush" size={16} /> Active Projects</button>
+          <button className={`mp-sidebar-btn ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}><Icon name="calendar" size={16} /> History</button>
           <div className="mp-sidebar-spacer" />
           <button className="mp-sidebar-btn mp-sidebar-logout" onClick={signOut}>🚪 Log Out</button>
+          <div className="mp-sidebar-user">
+            {profile?.picture
+              ? <img src={profile.picture} alt="" className="mp-sidebar-user-avatar" referrerPolicy="no-referrer" />
+              : <div className="mp-sidebar-user-avatar mp-sidebar-user-avatar-fallback">{(profile?.name || '?')[0]}</div>}
+            <div className="mp-sidebar-user-info">
+              <div className="mp-sidebar-user-name">{profile?.name || '—'}</div>
+              <div className="mp-sidebar-user-email">{profile?.email || '—'}</div>
+            </div>
+          </div>
         </nav>
 
         <main className="mp-app-main">
@@ -134,14 +144,15 @@ export default function MyProjects() {
             <p className="mp-loading">Loading…</p>
           ) : view === 'profile' ? (
             <>
-              <h1 className="mp-page-title">Profile</h1>
-              <div className="mp-profile-card">
-                {profile?.picture
-                  ? <img src={profile.picture} alt="" className="mp-profile-avatar" referrerPolicy="no-referrer" />
-                  : <div className="mp-profile-avatar mp-profile-avatar-fallback"><Icon name="user" size={28} /></div>}
-                <div>
-                  <div className="mp-profile-name">{profile?.name || '—'}</div>
-                  <div className="mp-profile-email">{profile?.email || '—'}</div>
+              <h1 className="mp-page-title">Welcome, {(profile?.name || '').split(' ')[0] || 'there'}</h1>
+              <div className="mp-field-grid">
+                <div className="mp-field-box">
+                  <span className="mp-field-label">Name</span>
+                  <span className="mp-field-value">{profile?.name || '—'}</span>
+                </div>
+                <div className="mp-field-box">
+                  <span className="mp-field-label">Email</span>
+                  <span className="mp-field-value">{profile?.email || '—'}</span>
                 </div>
               </div>
               <div className="mp-contact-box">

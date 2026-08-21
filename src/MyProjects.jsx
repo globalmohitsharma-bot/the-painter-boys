@@ -116,17 +116,24 @@ export default function MyProjects() {
   return (
     <div className="mp-app">
       <div className="mp-app-topbar">
-        <a href="/" className="mp-app-brand">🎨 The Painter Boys</a>
-        <a className="mp-app-cta" href="tel:+917838888509"><Icon name="phone" size={15} /> Book Free Estimate</a>
+        <a href="/" className="mp-app-brand">
+          <img src="/logo.png" alt="" className="mp-app-brand-mark" />
+          <span className="mp-app-brand-name">The Painter Boys</span>
+        </a>
+        <div className="mp-app-topbar-user">
+          <span className="mp-app-topbar-greeting">Welcome, {(profile?.name || '').split(' ')[0] || 'there'}</span>
+          {profile?.picture
+            ? <img src={profile.picture} alt="" className="mp-app-topbar-avatar" referrerPolicy="no-referrer" />
+            : <div className="mp-app-topbar-avatar mp-app-topbar-avatar-fallback">{(profile?.name || '?')[0]}</div>}
+        </div>
       </div>
       <div className="mp-app-body">
         <nav className="mp-sidebar">
           <div className="mp-sidebar-label">Menu</div>
-          <button className={`mp-sidebar-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}><Icon name="user" size={16} /> Profile</button>
-          <button className={`mp-sidebar-btn ${view === 'projects' ? 'active' : ''}`} onClick={() => setView('projects')}><Icon name="brush" size={16} /> Active Projects</button>
-          <button className={`mp-sidebar-btn ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}><Icon name="calendar" size={16} /> History</button>
+          <button className={`mp-sidebar-btn ${view === 'projects' ? 'active' : ''}`} onClick={() => setView('projects')}><Icon name="folder" size={16} /> Active Projects</button>
+          <button className={`mp-sidebar-btn ${view === 'history' ? 'active' : ''}`} onClick={() => setView('history')}><Icon name="clock" size={16} /> History</button>
           <div className="mp-sidebar-spacer" />
-          <button className="mp-sidebar-btn mp-sidebar-logout" onClick={signOut}>🚪 Log Out</button>
+          <button className={`mp-sidebar-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}><Icon name="user" size={16} /> Profile</button>
           <div className="mp-sidebar-user">
             {profile?.picture
               ? <img src={profile.picture} alt="" className="mp-sidebar-user-avatar" referrerPolicy="no-referrer" />
@@ -142,71 +149,68 @@ export default function MyProjects() {
           {error && <div className="mp-error">{error}</div>}
           {projects === null ? (
             <p className="mp-loading">Loading…</p>
-          ) : view === 'profile' ? (
-            <>
-              <h1 className="mp-page-title">Welcome, {(profile?.name || '').split(' ')[0] || 'there'}</h1>
-              <div className="mp-field-grid">
-                <div className="mp-field-box">
-                  <span className="mp-field-label">Name</span>
-                  <span className="mp-field-value">{profile?.name || '—'}</span>
-                </div>
-                <div className="mp-field-box">
-                  <span className="mp-field-label">Email</span>
-                  <span className="mp-field-value">{profile?.email || '—'}</span>
-                </div>
-              </div>
-              <div className="mp-contact-box">
-                <h3>Need help with your project?</h3>
-                <p>Reach out to us directly — we're happy to answer any questions.</p>
-                <div className="mp-contact-actions">
-                  <a className="mp-contact-btn mp-contact-whatsapp" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
-                    <Icon name="whatsapp" size={18} /> WhatsApp Us
-                  </a>
-                  <a className="mp-contact-btn mp-contact-call" href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-                    <Icon name="phone" size={18} /> Call Us
-                  </a>
-                </div>
-              </div>
-            </>
-          ) : view === 'projects' ? (
-            <>
-              <h1 className="mp-page-title">Active Projects</h1>
-              {activeProjects.length === 0 ? (
-                <div className="mp-empty mp-empty-inline">
-                  <Icon name="folder" size={28} />
-                  <p>No active project right now.</p>
-                </div>
-              ) : (
-                <div className="mp-project-list">
-                  {activeProjects.map(p => <ProjectCard key={p.id} project={p} />)}
-                </div>
-              )}
-              <div className="mp-contact-box">
-                <h3>Need help with your project?</h3>
-                <p>Reach out to us directly — we're happy to answer any questions.</p>
-                <div className="mp-contact-actions">
-                  <a className="mp-contact-btn mp-contact-whatsapp" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
-                    <Icon name="whatsapp" size={18} /> WhatsApp Us
-                  </a>
-                  <a className="mp-contact-btn mp-contact-call" href={`tel:${PHONE.replace(/\s+/g, '')}`}>
-                    <Icon name="phone" size={18} /> Call Us
-                  </a>
-                </div>
-              </div>
-            </>
           ) : (
             <>
-              <h1 className="mp-page-title">History</h1>
-              {historyProjects.length === 0 ? (
-                <div className="mp-empty mp-empty-inline">
-                  <Icon name="folder" size={28} />
-                  <p>History empty.</p>
-                </div>
+              {view === 'profile' ? (
+                <>
+                  <h1 className="mp-page-title">Welcome, {(profile?.name || '').split(' ')[0] || 'there'}</h1>
+                  <div className="mp-field-grid">
+                    <div className="mp-field-box">
+                      <span className="mp-field-label">Name</span>
+                      <span className="mp-field-value">{profile?.name?.split(' ')[0] || '—'}</span>
+                    </div>
+                    <div className="mp-field-box">
+                      <span className="mp-field-label">Email</span>
+                      <span className="mp-field-value">{profile?.email || '—'}</span>
+                    </div>
+                  </div>
+                </>
+              ) : view === 'projects' ? (
+                <>
+                  <h1 className="mp-page-title">Active Projects</h1>
+                  {activeProjects.length === 0 ? (
+                    <div className="mp-empty mp-empty-inline">
+                      <Icon name="folder" size={28} />
+                      <p>No active project right now.</p>
+                    </div>
+                  ) : (
+                    <div className="mp-project-list">
+                      {activeProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="mp-project-list">
-                  {historyProjects.map(p => <ProjectCard key={p.id} project={p} />)}
-                </div>
+                <>
+                  <h1 className="mp-page-title">History</h1>
+                  {historyProjects.length === 0 ? (
+                    <div className="mp-empty mp-empty-inline">
+                      <Icon name="folder" size={28} />
+                      <p>History empty.</p>
+                    </div>
+                  ) : (
+                    <div className="mp-project-list">
+                      {historyProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+                    </div>
+                  )}
+                </>
               )}
+
+              <div className="mp-bottom-bar">
+                {view === 'profile' && (
+                  <button className="mp-profile-logout" onClick={signOut}><Icon name="lock" size={12} /> Log out</button>
+                )}
+                <div className="mp-contact-box">
+                  <h3>Need help?</h3>
+                  <div className="mp-contact-actions">
+                    <a className="mp-contact-btn mp-contact-whatsapp" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
+                      <Icon name="whatsapp" size={14} /> WhatsApp
+                    </a>
+                    <a className="mp-contact-btn mp-contact-call" href={`tel:${PHONE.replace(/\s+/g, '')}`}>
+                      <Icon name="phone" size={14} /> Call
+                    </a>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </main>

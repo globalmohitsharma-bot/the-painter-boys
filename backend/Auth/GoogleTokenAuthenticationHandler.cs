@@ -23,10 +23,18 @@ public class GoogleTokenAuthenticationHandler(
     ILoggerFactory logger,
     UrlEncoder encoder,
     IOptions<GoogleAuthOptions> googleAuthOptions,
-    IUserRepository userRepository)
+    IUserRepository userRepository,
+    IHostEnvironment hostEnvironment)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "GoogleToken";
+
+    /// <summary>Local-only shortcut so the customer dashboard can be exercised end to
+    /// end (real project data, real linked-client lookups) without a real Google
+    /// account — gated on IsDevelopment() so this sentinel can never authenticate
+    /// anything once deployed. See TestLoginHelper.cs for the frontend trigger.</summary>
+    public const string DevTestToken = "DEV_TEST_TOKEN";
+    public const string DevTestEmail = "testuser@test.com";
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -37,23 +45,30 @@ public class GoogleTokenAuthenticationHandler(
         }
 
         var idToken = authHeader.ToString()["Bearer ".Length..].Trim();
-        var clientId = googleAuthOptions.Value.ClientId;
-        if (string.IsNullOrEmpty(clientId))
-        {
-            return AuthenticateResult.Fail("Google sign-in is not configured on this server.");
-        }
 
         GoogleJsonWebSignature.Payload payload;
-        try
+        if (hostEnvironment.IsDevelopment() && idToken == DevTestToken)
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = [clientId]
-            });
+            payload = new GoogleJsonWebSignature.Payload { Email = DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
         }
-        catch (InvalidJwtException ex)
+        else
         {
-            return AuthenticateResult.Fail(ex);
+            var clientId = googleAuthOptions.Value.ClientId;
+            if (string.IsNullOrEmpty(clientId))
+            {
+                return AuthenticateResult.Fail("Google sign-in is not configured on this server.");
+            }
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(idToken, new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = [clientId]
+                });
+            }
+            catch (InvalidJwtException ex)
+            {
+                return AuthenticateResult.Fail(ex);
+            }
         }
 
         var claims = new List<Claim>

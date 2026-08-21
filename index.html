@@ -22,13 +22,26 @@
          title/description/JSON-LD are set dynamically via react-helmet-async in
          Home.jsx/Blog.jsx/etc. for everything that does run JS, e.g. Google). -->
     <meta property="og:site_name" content="The Painter Boys" />
-    <meta property="og:image" content="https://www.thepainterboys.com/images/logo.png" />
+    <meta property="og:image" content="https://www.thepainterboys.com/logo.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="The Painter Boys — Professional Home Painting Services" />
     <meta name="twitter:description" content="Interior, exterior, waterproofing & premium finishes across Ghaziabad, Noida & Delhi NCR. Trusted since 2010." />
-    <meta name="twitter:image" content="https://www.thepainterboys.com/images/logo.png" />
+    <meta name="twitter:image" content="https://www.thepainterboys.com/logo.png" />
+    <style>
+      /* Static (no-JS-required) splash shown the instant the HTML paints, so
+         there's never a blank white flash while the app's JS parses/mounts —
+         main.jsx fades and removes this once React has actually rendered. */
+      #splash {
+        position: fixed; inset: 0; z-index: 99999; background: #faf7f2;
+        display: flex; align-items: center; justify-content: center;
+        transition: opacity .4s ease;
+      }
+      #splash img { width: min(280px, 60vw); height: auto; }
+      #splash.splash-hide { opacity: 0; pointer-events: none; }
+    </style>
   </head>
   <body>
+    <div id="splash"><img src="/logo.png" alt="The Painter Boys" /></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

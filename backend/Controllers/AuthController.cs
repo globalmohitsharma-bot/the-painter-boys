@@ -18,7 +18,8 @@ public class AuthController(
     IUserRepository userRepository,
     IClientRepository clientRepository,
     IEmailService emailService,
-    IOptions<GoogleAuthOptions> googleAuthOptions) : ControllerBase
+    IOptions<GoogleAuthOptions> googleAuthOptions,
+    IHostEnvironment hostEnvironment) : ControllerBase
 {
     /// <summary>
     /// Verifies a Google ID token and reports the caller's role. Does NOT create a
@@ -30,23 +31,29 @@ public class AuthController(
     [HttpPost("google")]
     public async Task<ActionResult<WhoAmIResponse>> SignInWithGoogle([FromBody] GoogleSignInRequest request, CancellationToken ct)
     {
-        var clientId = googleAuthOptions.Value.ClientId;
-        if (string.IsNullOrEmpty(clientId))
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Google sign-in is not configured on this server.");
-        }
-
         GoogleJsonWebSignature.Payload payload;
-        try
+        if (hostEnvironment.IsDevelopment() && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestToken)
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = [clientId]
-            });
+            payload = new GoogleJsonWebSignature.Payload { Email = Auth.GoogleTokenAuthenticationHandler.DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
         }
-        catch (InvalidJwtException)
+        else
         {
-            return Unauthorized("Invalid Google credential.");
+            var clientId = googleAuthOptions.Value.ClientId;
+            if (string.IsNullOrEmpty(clientId))
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Google sign-in is not configured on this server.");
+            }
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = [clientId]
+                });
+            }
+            catch (InvalidJwtException)
+            {
+                return Unauthorized("Invalid Google credential.");
+            }
         }
 
         var user = await userRepository.GetByEmailAsync(payload.Email, ct);

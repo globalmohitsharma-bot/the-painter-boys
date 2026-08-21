@@ -3,6 +3,7 @@
 .ap-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--obsidian); padding: 24px; }
 .ap-gate-card { background: var(--ivory); border-radius: 16px; padding: 40px 36px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
 .ap-gate-icon { color: var(--gold-deep); margin-bottom: 16px; }
+.ap-gate-logo { width: 96px; height: auto; margin-bottom: 12px; }
 .ap-gate-card h1 { font-family: var(--font-display); font-size: 1.5rem; color: var(--ink); margin-bottom: 10px; }
 .ap-gate-card p { color: var(--ink-soft); font-size: .9rem; line-height: 1.6; margin-bottom: 20px; }
 .ap-gsi-btn { display: flex; justify-content: center; min-height: 44px; }
@@ -16,6 +17,7 @@
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
 }
 .ap-header-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; color: var(--gold-soft); }
+.ap-header-logo { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; background: #fff; padding: 3px; }
 .ap-header-nav { display: flex; gap: 6px; }
 .ap-nav-btn {
   background: none; border: 1.5px solid rgba(255,255,255,.15); color: rgba(255,255,255,.75);

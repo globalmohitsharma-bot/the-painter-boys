@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
+import { DEV_TEST_TOKEN } from './useGoogleAccount.js';
 
 // Google Identity Services client ID — not set yet. The sign-in button below
 // is real (Google's own renderButton, not a mock), but Google will reject it
@@ -99,6 +100,11 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
             )}
             {GOOGLE_CLIENT_ID && !gsiReady && (
               <p className="bn-modal-warn">Loading Google Sign-In…</p>
+            )}
+            {import.meta.env.DEV && (
+              <button className="bn-dev-login" onClick={() => onCredential({ credential: DEV_TEST_TOKEN })}>
+                🧪 Log in as testuser@test.com (local only)
+              </button>
             )}
           </div>
         )}

@@ -17,10 +17,18 @@ function loadStoredUser() {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
 }
 
+// Sentinel the backend's dev-only bypass recognizes (see
+// GoogleTokenAuthenticationHandler.DevTestToken) — lets the whole sign-in
+// flow, including real API calls, be exercised locally without a real
+// Google account. Only ever reachable via the DEV-gated button below.
+export const DEV_TEST_TOKEN = 'DEV_TEST_TOKEN';
+const DEV_TEST_PAYLOAD = { name: 'Test User', email: 'testuser@test.com', picture: null };
+
 // Decodes the ID token's payload for display only (name/email/picture) — this
 // is NOT a verified/secure auth check (verifying the signature needs a
 // backend, which doesn't exist yet), just enough to show a signed-in state.
 export function decodeIdToken(token) {
+  if (token === DEV_TEST_TOKEN) return DEV_TEST_PAYLOAD;
   try {
     const payload = token.split('.')[1];
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));

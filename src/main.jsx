@@ -23,3 +23,13 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// Fade out the static splash (see index.html) now that React has actually
+// painted — a short minimum hold avoids an awkward flash on very fast loads.
+const splash = document.getElementById('splash')
+if (splash) {
+  setTimeout(() => {
+    splash.classList.add('splash-hide')
+    setTimeout(() => splash.remove(), 400)
+  }, 400)
+}

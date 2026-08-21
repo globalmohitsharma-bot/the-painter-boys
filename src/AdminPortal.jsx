@@ -147,7 +147,7 @@ export default function AdminPortal() {
     return (
       <div className="ap-gate">
         <div className="ap-gate-card">
-          <Icon name="lock" size={28} className="ap-gate-icon" />
+          <img src="/logo.png" alt="" className="ap-gate-logo" />
           <h1>Admin Portal</h1>
           <p>Sign in with a Google account that's been granted admin access.</p>
           <div ref={buttonRef} className="ap-gsi-btn" />
@@ -360,8 +360,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     <div className="ap-root">
       <header className="ap-header">
         <div className="ap-header-brand">
-          <Icon name="lock" size={18} />
-          <span>The Painter Boys — Admin Portal</span>
+          <img src="/logo.png" alt="" className="ap-header-logo" />
+          <span>Admin Portal</span>
         </div>
         <div className="ap-header-user">
           <span>{whoami.name} <span className="ap-role-chip">{whoami.role}</span></span>

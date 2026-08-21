@@ -7,6 +7,7 @@
 .ap-gate-card p { color: var(--ink-soft); font-size: .9rem; line-height: 1.6; margin-bottom: 20px; }
 .ap-gsi-btn { display: flex; justify-content: center; min-height: 44px; }
 .ap-warn { font-size: .78rem; color: var(--ink-faint); margin-top: 14px; }
+.ap-warn-error { color: #dc2626; font-weight: 700; }
 .ap-signout { background: none; border: 1.5px solid var(--hairline); color: var(--ink-soft); padding: 8px 18px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
 .ap-signout:hover { border-color: var(--gold); color: var(--gold-deep); }
 

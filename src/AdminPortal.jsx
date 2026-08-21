@@ -67,25 +67,32 @@ export default function AdminPortal() {
     try { return JSON.parse(sessionStorage.getItem(WHOAMI_KEY) || 'null'); } catch { return null; }
   });
   const [checking, setChecking] = useState(!!idToken);
+  const [authError, setAuthError] = useState('');
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
 
   const handleCredential = useCallback(async (response) => {
     setChecking(true);
+    setAuthError('');
     try {
       const res = await fetch(`${API_BASE}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential }),
       });
-      if (!res.ok) throw new Error('Sign-in failed');
+      if (!res.ok) throw new Error(`Sign-in failed (${res.status})`);
       const data = await res.json();
       sessionStorage.setItem(TOKEN_KEY, response.credential);
       sessionStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
       setIdToken(response.credential);
       setWhoami(data);
-    } catch {
-      setWhoami({ isStaff: false, role: 'Client', email: '', name: '' });
+    } catch (err) {
+      // Surfaced instead of silently resetting to a blank sign-in screen —
+      // a transient backend hiccup (e.g. mid-deploy restart) used to look
+      // identical to nothing having happened at all when you clicked sign in.
+      setAuthError(err.message === 'Failed to fetch'
+        ? 'Could not reach the server — check your connection and try again.'
+        : `${err.message} — try again in a moment.`);
     } finally {
       setChecking(false);
     }
@@ -144,6 +151,7 @@ export default function AdminPortal() {
           <h1>Admin Portal</h1>
           <p>Sign in with a Google account that's been granted admin access.</p>
           <div ref={buttonRef} className="ap-gsi-btn" />
+          {authError && <p className="ap-warn ap-warn-error">{authError}</p>}
           {!GOOGLE_CLIENT_ID && <p className="ap-warn">Sign-in isn't configured on this deployment yet — no Google Client ID set.</p>}
           {GOOGLE_CLIENT_ID && !gsiReady && <p className="ap-warn">Loading Google Sign-In…</p>}
         </div>

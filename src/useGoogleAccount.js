@@ -6,6 +6,10 @@ import { useState, useCallback } from 'react';
 // lifting state up, since only one of the two triggers is ever visible at a
 // time (responsive CSS), so real-time cross-component reactivity isn't needed.
 const USER_KEY = 'pb_google_user';
+// Same key MyProjects.jsx reads its session token from — writing it here too
+// means signing in once from the header carries over to the dashboard
+// instead of prompting a second, separate Google sign-in for the same user.
+const DASHBOARD_TOKEN_KEY = 'pb_mine_id_token';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 
@@ -46,6 +50,7 @@ export default function useGoogleAccount() {
     const nextUser = { name: payload.name, email: payload.email, picture: payload.picture };
     setUser(nextUser);
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    sessionStorage.setItem(DASHBOARD_TOKEN_KEY, response.credential);
 
     try {
       const res = await fetch(`${API_BASE}/api/auth/google`, {
@@ -73,6 +78,7 @@ export default function useGoogleAccount() {
   const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(DASHBOARD_TOKEN_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
   }, []);
 

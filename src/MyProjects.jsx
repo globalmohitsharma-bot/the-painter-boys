@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
+import { PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
 import './Home.css';
 import './MyProjects.css';
 
@@ -26,6 +27,10 @@ export default function MyProjects() {
   const [error, setError] = useState('');
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
+
+  const allProjects = projects || [];
+  const activeProjects = allProjects.filter(p => !['Completed', 'Cancelled'].includes(p.progress));
+  const historyProjects = allProjects.filter(p => ['Completed', 'Cancelled'].includes(p.progress));
 
   const load = useCallback(async (token) => {
     setError('');
@@ -105,15 +110,45 @@ export default function MyProjects() {
                   {error && <div className="mp-error">{error}</div>}
                   {projects === null ? (
                     <p className="mp-loading">Loading your projects…</p>
-                  ) : projects.length === 0 ? (
-                    <div className="mp-empty">
-                      <Icon name="folder" size={32} />
-                      <p>No projects linked to your account yet. Once your project starts, it'll show up here automatically.</p>
-                    </div>
                   ) : (
-                    <div className="mp-project-list">
-                      {projects.map(p => <ProjectCard key={p.id} project={p} />)}
-                    </div>
+                    <>
+                      <h2 className="mp-section-title">Active Project</h2>
+                      {activeProjects.length === 0 ? (
+                        <div className="mp-empty mp-empty-inline">
+                          <Icon name="folder" size={28} />
+                          <p>No active project right now.</p>
+                        </div>
+                      ) : (
+                        <div className="mp-project-list">
+                          {activeProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+                        </div>
+                      )}
+
+                      <h2 className="mp-section-title">History</h2>
+                      {historyProjects.length === 0 ? (
+                        <div className="mp-empty mp-empty-inline">
+                          <Icon name="folder" size={28} />
+                          <p>History empty.</p>
+                        </div>
+                      ) : (
+                        <div className="mp-project-list">
+                          {historyProjects.map(p => <ProjectCard key={p.id} project={p} />)}
+                        </div>
+                      )}
+
+                      <div className="mp-contact-box">
+                        <h3>Need help with your project?</h3>
+                        <p>Reach out to us directly — we're happy to answer any questions.</p>
+                        <div className="mp-contact-actions">
+                          <a className="mp-contact-btn mp-contact-whatsapp" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
+                            <Icon name="whatsapp" size={18} /> WhatsApp Us
+                          </a>
+                          <a className="mp-contact-btn mp-contact-call" href={`tel:${PHONE.replace(/\s+/g, '')}`}>
+                            <Icon name="phone" size={18} /> Call Us
+                          </a>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </>
               )}

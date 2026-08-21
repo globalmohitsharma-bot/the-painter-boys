@@ -80,13 +80,11 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
                 <a className="bn-staff-link" href="/admin">Admin Portal</a>
                 <a className="bn-staff-link" href="/pb">Staff Portal</a>
               </div>
-            ) : tab === 'projects' ? (
+            ) : (
               <div className="bn-staff-links">
                 <p className="bn-modal-note">See your painting project's progress, photos, and payments.</p>
-                <a className="bn-staff-link" href="/my-projects">View My Projects</a>
+                <a className="bn-staff-link" href="/my-projects">Go to My Dashboard</a>
               </div>
-            ) : (
-              <p className="bn-modal-note">Full profile management is coming soon.</p>
             )}
             <button className="bn-signout" onClick={onSignOut}>Sign out</button>
           </div>

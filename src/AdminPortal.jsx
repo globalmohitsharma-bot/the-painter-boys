@@ -755,6 +755,7 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
   const [caption, setCaption] = useState('');
   const [shareUserId, setShareUserId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
   const fileRef = useRef(null);
   if (!project) return null;
 
@@ -786,7 +787,7 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
           <div className="ap-media-grid">
             {[...(project.images || [])].reverse().map(img => (
               <div key={img.url} className="ap-media-item">
-                <img src={img.url} alt={img.caption || ''} />
+                <img src={img.url} alt={img.caption || ''} onClick={() => setLightboxUrl(img.url)} style={{ cursor: 'pointer' }} />
                 {img.caption && <p className="ap-media-caption">{img.caption}</p>}
                 <button className="ap-media-delete" onClick={() => onDeleteImage(project.id, img.url)}>✕ Remove</button>
               </div>
@@ -830,6 +831,12 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
           <button onClick={onClose}>Close</button>
         </div>
       </div>
+
+      {lightboxUrl && (
+        <div className="ap-lightbox-overlay" onClick={e => { e.stopPropagation(); setLightboxUrl(null); }}>
+          <img src={lightboxUrl} alt="" />
+        </div>
+      )}
     </div>
   );
 }

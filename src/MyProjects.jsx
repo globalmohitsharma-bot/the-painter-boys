@@ -244,34 +244,66 @@ function ProjectCard({ project }) {
   const images = [...(project.images || [])].reverse();
   const receivedTotal = project.tokenReceived || 0;
   const pendingTotal = project.pendingAmount || 0;
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+
   return (
-    <div className="mp-card">
-      <div className="mp-card-head">
-        <h3>{project.name || project.paintType || 'Painting Project'}</h3>
-        <span className={`ap-progress-chip ap-progress-${project.progress.toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
+    <>
+      <div className={`mp-card ${images.length > 0 ? 'mp-card-clickable' : ''}`} onClick={() => images.length > 0 && setLightboxIndex(0)}>
+        <div className="mp-card-head">
+          <h3>{project.name || project.paintType || 'Painting Project'}</h3>
+          <span className={`ap-progress-chip ap-progress-${project.progress.toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
+        </div>
+        {(project.clientSociety || project.clientAddress) && (
+          <p className="mp-card-address">{[project.clientSociety, project.clientAddress].filter(Boolean).join(', ')}</p>
+        )}
+        {project.paintType && <p className="mp-card-detail">🎨 {project.paintType}</p>}
+
+        {images.length > 0 && (
+          <div className="mp-photo-grid">
+            {images.map((img, i) => (
+              <div key={img.url} className="mp-photo-item" onClick={e => { e.stopPropagation(); setLightboxIndex(i); }}>
+                <img src={img.url} alt={img.caption || ''} />
+                {img.caption && <p className="mp-photo-caption">{img.caption}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(project.amount > 0 || receivedTotal > 0) && (
+          <div className="mp-payment" onClick={e => e.stopPropagation()}>
+            {project.amount > 0 && <div className="mp-payment-row"><span>Total Project Amount</span><span>₹{project.amount.toLocaleString('en-IN')}</span></div>}
+            <div className="mp-payment-row"><span>Received</span><span>₹{receivedTotal.toLocaleString('en-IN')}</span></div>
+            {pendingTotal > 0 && <div className="mp-payment-row mp-payment-pending"><span>Pending</span><span>₹{pendingTotal.toLocaleString('en-IN')}</span></div>}
+          </div>
+        )}
       </div>
-      {(project.clientSociety || project.clientAddress) && (
-        <p className="mp-card-address">{[project.clientSociety, project.clientAddress].filter(Boolean).join(', ')}</p>
-      )}
-      {project.paintType && <p className="mp-card-detail">🎨 {project.paintType}</p>}
 
-      {images.length > 0 && (
-        <div className="mp-photo-grid">
-          {images.map(img => (
-            <div key={img.url} className="mp-photo-item">
-              <img src={img.url} alt={img.caption || ''} />
-              {img.caption && <p className="mp-photo-caption">{img.caption}</p>}
-            </div>
-          ))}
-        </div>
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={images}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
       )}
+    </>
+  );
+}
 
-      {(project.amount > 0 || receivedTotal > 0) && (
-        <div className="mp-payment">
-          {project.amount > 0 && <div className="mp-payment-row"><span>Total Project Amount</span><span>₹{project.amount.toLocaleString('en-IN')}</span></div>}
-          <div className="mp-payment-row"><span>Received</span><span>₹{receivedTotal.toLocaleString('en-IN')}</span></div>
-          {pendingTotal > 0 && <div className="mp-payment-row mp-payment-pending"><span>Pending</span><span>₹{pendingTotal.toLocaleString('en-IN')}</span></div>}
-        </div>
+function ImageLightbox({ images, index, onClose, onNavigate }) {
+  const img = images[index];
+  return (
+    <div className="mp-lightbox-overlay" onClick={onClose}>
+      <button className="mp-lightbox-close" onClick={onClose}><Icon name="close" size={20} /></button>
+      {images.length > 1 && (
+        <button className="mp-lightbox-nav mp-lightbox-prev" onClick={e => { e.stopPropagation(); onNavigate((index - 1 + images.length) % images.length); }}>‹</button>
+      )}
+      <div className="mp-lightbox-content" onClick={e => e.stopPropagation()}>
+        <img src={img.url} alt={img.caption || ''} />
+        {img.caption && <p className="mp-lightbox-caption">{img.caption}</p>}
+      </div>
+      {images.length > 1 && (
+        <button className="mp-lightbox-nav mp-lightbox-next" onClick={e => { e.stopPropagation(); onNavigate((index + 1) % images.length); }}>›</button>
       )}
     </div>
   );

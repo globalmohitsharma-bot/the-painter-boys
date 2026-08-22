@@ -26,6 +26,7 @@ export default function MyProjects() {
   const [projects, setProjects] = useState(null);
   const [error, setError] = useState('');
   const [view, setView] = useState('projects'); // 'profile' | 'projects' | 'history'
+  const [isStaff, setIsStaff] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
 
@@ -42,6 +43,17 @@ export default function MyProjects() {
     } catch (e) {
       setError('Could not load your projects — ' + e.message);
       setProjects([]);
+    }
+    // This page is customer-facing by default and has no concept of role —
+    // an admin/staff account landing here directly (bookmark, shared link,
+    // etc.) would otherwise see a bare customer view with no way back to
+    // the tools they actually need.
+    try {
+      const whoami = await api('/api/auth/whoami', token);
+      setIsStaff(!!whoami.isStaff);
+    } catch {
+      // Not staff, or backend unreachable — either way just stay on the
+      // regular customer view.
     }
   }, []);
 
@@ -146,6 +158,15 @@ export default function MyProjects() {
         </nav>
 
         <main className="mp-app-main">
+          {isStaff && (
+            <div className="mp-staff-banner">
+              <span>You're signed in with staff access.</span>
+              <div className="mp-staff-banner-links">
+                <a href="/admin">Admin Portal</a>
+                <a href="/pb">Staff Portal</a>
+              </div>
+            </div>
+          )}
           {error && <div className="mp-error">{error}</div>}
           {projects === null ? (
             <p className="mp-loading">Loading…</p>

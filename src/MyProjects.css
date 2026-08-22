@@ -9,6 +9,13 @@
 .mp-signout { background: none; border: 1.5px solid var(--hairline); color: var(--ink-soft); padding: 8px 18px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer; }
 .mp-signout:hover { border-color: var(--gold); color: var(--gold-deep); }
 .mp-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .88rem; }
+.mp-staff-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian);
+  padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .86rem; font-weight: 700;
+}
+.mp-staff-banner-links { display: flex; gap: 10px; }
+.mp-staff-banner-links a { color: var(--obsidian); text-decoration: underline; }
 .mp-loading { color: var(--ink-soft); text-align: center; padding: 40px 0; }
 .mp-empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
 .mp-empty svg { color: var(--gold-deep); margin-bottom: 12px; }

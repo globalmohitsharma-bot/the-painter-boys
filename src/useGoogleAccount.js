@@ -77,10 +77,10 @@ export default function useGoogleAccount() {
       };
       setUser(verifiedUser);
       localStorage.setItem(USER_KEY, JSON.stringify(verifiedUser));
-      // Staff still need the modal's choice between Admin Portal and Staff
-      // Portal — only regular customers skip straight through, since for
-      // them there's only ever one place to land anyway.
-      if (!whoami.isStaff) window.location.href = '/my-projects';
+      // Everyone lands on the dashboard now, staff included — it shows its
+      // own Admin/Staff Portal banner for staff accounts (see MyProjects.jsx),
+      // so the modal no longer needs to be the place that choice happens.
+      window.location.href = '/my-projects';
     } catch {
       // Backend unreachable — the customer sign-in above already succeeded
       // (its raw token is already stored for the dashboard to use), so send

@@ -108,6 +108,7 @@
 .mp-link-form .mp-btn-primary:disabled { opacity: .5; cursor: default; }
 .mp-link-success { color: #166534; font-size: .85rem; font-weight: 700; margin-top: 12px; }
 .mp-link-error { color: #b91c1c; font-size: .85rem; font-weight: 700; margin-top: 12px; }
+.mp-link-info { color: var(--ink-soft); font-size: .85rem; font-weight: 600; margin-top: 12px; }
 
 .mp-contact-logout {
   background: none; border: 1.5px solid rgba(185,28,28,.5); color: #f87171;

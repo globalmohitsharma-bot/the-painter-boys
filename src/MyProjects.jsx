@@ -24,7 +24,11 @@ async function apiPost(path, idToken, body) {
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(typeof data === 'string' ? data : (data?.title || `POST ${path} -> ${res.status}`));
+  if (!res.ok) {
+    const err = new Error(typeof data === 'string' ? data : (data?.title || `POST ${path} -> ${res.status}`));
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -85,7 +89,12 @@ export default function MyProjects() {
       };
       setLinkStatus({ ok: true, message: messages[result.status] || 'Request sent.' });
     } catch (e) {
-      setLinkStatus({ ok: false, message: e.message });
+      // A code that just doesn't match anything yet is an everyday typo/mixup,
+      // not a failure — keep that one calm and informational rather than red.
+      setLinkStatus({
+        ok: false, info: e.status === 404,
+        message: e.status === 404 ? "That code doesn't match a project yet — double-check it with your painter or admin." : e.message,
+      });
     } finally {
       setLinking(false);
     }
@@ -135,8 +144,7 @@ export default function MyProjects() {
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
-    setIdToken(null);
-    setProjects(null);
+    window.location.href = '/';
   }
 
   if (!idToken) {
@@ -252,7 +260,7 @@ export default function MyProjects() {
                       </button>
                     </div>
                     {linkStatus && (
-                      <p className={linkStatus.ok ? 'mp-link-success' : 'mp-link-error'}>{linkStatus.message}</p>
+                      <p className={linkStatus.ok ? 'mp-link-success' : linkStatus.info ? 'mp-link-info' : 'mp-link-error'}>{linkStatus.message}</p>
                     )}
                   </div>
                 </>

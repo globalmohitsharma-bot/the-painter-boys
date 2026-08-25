@@ -371,13 +371,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   return (
     <div className="ap-root">
       <header className="ap-header">
+        <button className="ap-signout" onClick={onSignOut}>Sign out</button>
         <div className="ap-header-brand">
           <img src="/logo.png" alt="" className="ap-header-logo" />
           <span>Admin Portal</span>
         </div>
         <div className="ap-header-user">
-          <span>{whoami.name} <span className="ap-role-chip">{whoami.role}</span></span>
-          <button className="ap-signout" onClick={onSignOut}>Sign out</button>
+          <span>{whoami.name}</span>
         </div>
       </header>
 

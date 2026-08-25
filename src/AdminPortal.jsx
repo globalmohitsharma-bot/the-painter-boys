@@ -238,6 +238,11 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     setEditingProject(null);
   }
 
+  async function generateLinkCode(projectId) {
+    const saved = await api(`/api/projects/${projectId}/generate-link-code`, idToken, { method: 'POST' });
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+  }
+
   async function deleteProject(id) {
     if (!confirm('Delete this project? This cannot be undone.')) return;
     await api(`/api/projects/${id}`, idToken, { method: 'DELETE' });
@@ -301,6 +306,12 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     setUsers(us => us.map(u => u.linkedClientId === clientId ? { ...u, linkedClientId: null } : u));
   }
 
+  async function generateInvite(clientId) {
+    const saved = await api(`/api/clients/${clientId}/generate-invite`, idToken, { method: 'POST' });
+    setClients(cs => cs.map(c => c.id === saved.id ? saved : c));
+    return saved.inviteToken;
+  }
+
   function updateProjectInState(saved) {
     setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
   }
@@ -353,6 +364,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     acc[opt] = projects.filter(p => p.progress === opt).length;
     return acc;
   }, {});
+  const pendingLinkCount = projects.reduce((n, p) => n + (p.sharedWith || []).filter(s => !s.visible).length, 0);
 
   function goto(v) { setSelectedClientId(null); setView(v); }
 
@@ -377,6 +389,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className="ap-sidebar-btn ap-sidebar-btn-accent" onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}>➕ Create Client</button>
           <button className={`ap-sidebar-btn ${view === 'quotation' ? 'active' : ''}`} onClick={() => goto('quotation')}>🧾 Quotation</button>
           <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
+          <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
+            ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
+          </button>
         </nav>
 
       <main className="ap-main">
@@ -395,10 +410,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
               </div>
             </div>
-            <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} />
+            <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
             <table className="ap-table">
               <thead>
-                <tr><th>Name</th><th>Progress</th><th>Paint Type</th><th>Amount</th><th>Pending</th><th>Painters</th><th></th></tr>
+                <tr><th>Name</th><th>Progress</th><th>Paint Type</th><th>Amount</th><th>Pending</th><th>Painters</th><th>Link Code</th><th></th></tr>
               </thead>
               <tbody>
                 {clientProjects.map(p => (
@@ -409,6 +424,16 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                     <td>₹{p.amount?.toLocaleString()}</td>
                     <td>₹{p.pendingAmount?.toLocaleString()}</td>
                     <td>{(p.painterNames || []).join(', ') || '—'}</td>
+                    <td>
+                      {p.linkCode ? (
+                        <a
+                          href={`https://wa.me/${(selectedClient?.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`🎨 *The Painter Boys*\n\nUse this code on your dashboard (thepainterboys.com) to link your project:\n\n*${p.linkCode}*`)}`}
+                          target="_blank" rel="noopener noreferrer" className="ap-link-code" title="Share this code via WhatsApp"
+                        >{p.linkCode}</a>
+                      ) : (
+                        <button onClick={() => generateLinkCode(p.id)}>Generate</button>
+                      )}
+                    </td>
                     <td className="ap-row-actions">
                       <button onClick={() => setEditingProject(p)}>Edit</button>
                       <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
@@ -434,6 +459,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId} />
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
+        ) : view === 'pending-links' ? (
+          <PendingLinksView projects={projects} clients={clients} users={users}
+            onApprove={toggleProjectShare} onReject={unshareProject} onSelectClient={setSelectedClientId} />
         ) : view === 'clients' ? (
           <>
             <div className="ap-toolbar">
@@ -616,6 +644,38 @@ function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
             <td>{user ? `${user.name} (${user.email})` : '—'}</td>
             <td className="ap-row-actions">
               <button className="ap-danger" onClick={() => onUnlink(client.id)}>Unlink</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Every project with at least one hidden (pending) share — i.e. a customer
+// submitted a project's link code from their dashboard and is waiting on an
+// admin to approve it. Approve/Reject just reuse the same show/hide-share and
+// unshare endpoints admins already use for manual sharing.
+function PendingLinksView({ projects, clients, users, onApprove, onReject, onSelectClient }) {
+  const rows = projects.flatMap(p => (p.sharedWith || [])
+    .filter(s => !s.visible)
+    .map(s => ({ project: p, share: s, client: clients.find(c => c.id === p.clientId), user: users.find(u => u.id === s.userId) })));
+
+  if (rows.length === 0) return <p className="ap-loading">No pending link requests right now.</p>;
+  return (
+    <table className="ap-table">
+      <thead>
+        <tr><th>Requested By</th><th>Project</th><th>Client</th><th></th></tr>
+      </thead>
+      <tbody>
+        {rows.map(({ project, share, client, user }) => (
+          <tr key={`${project.id}-${share.userId}`}>
+            <td>{user ? `${user.name} (${user.email})` : share.userId}</td>
+            <td className="ap-link" onClick={() => onSelectClient(project.clientId)}>{project.name || project.paintType || 'Project'}</td>
+            <td>{client?.contactName || '—'}</td>
+            <td className="ap-row-actions">
+              <button className="ap-btn-primary" onClick={() => onApprove(project.id, share.userId)}>Approve</button>
+              <button className="ap-danger" onClick={() => onReject(project.id, share.userId)}>Reject</button>
             </td>
           </tr>
         ))}
@@ -1070,9 +1130,10 @@ function ThankYouCardModal({ client, onClose }) {
 
 // ── Manual client↔user link (fallback for when auto-link-by-email
 // on sign-in didn't happen, e.g. missing/wrong email at intake) ────
-function LinkedAccountBox({ client, users, onLink, onUnlink }) {
+function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite }) {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sendingInvite, setSendingInvite] = useState(false);
   if (!client) return null;
 
   const linkedUser = users.find(u => u.id === client.linkedUserId);
@@ -1091,6 +1152,34 @@ function LinkedAccountBox({ client, users, onLink, onUnlink }) {
     try { await onUnlink(client.id); }
     finally { setBusy(false); }
   }
+  async function handleSendInvite() {
+    setSendingInvite(true);
+    try {
+      const token = await onGenerateInvite(client.id);
+      const link = `https://www.thepainterboys.com/my-projects?invite=${token}`;
+      const name = client.contactName ? `Mr./Ms. ${client.contactName}` : 'there';
+      const lines = [
+        `🎨 *The Painter Boys*`,
+        `━━━━━━━━━━━━━━━━━━━━━━`,
+        ``,
+        `Dear ${name},`,
+        ``,
+        `You can now track your painting project — progress updates, photos, and payments — right from your own dashboard.`,
+        ``,
+        `👉 Tap the link below and sign in with your Google account. It will connect automatically, no code needed:`,
+        link,
+        ``,
+        `━━━━━━━━━━━━━━━━━━━━━━`,
+        `📞 Corporate: +91 7838888509`,
+        `🌐 www.thepainterboys.com`,
+        `_The Painter Boys — Trusted Since 2010_`,
+      ].join('\n');
+      const digits = (client.phone || '').replace(/\D/g, '');
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(lines)}`, '_blank', 'noopener');
+    } finally {
+      setSendingInvite(false);
+    }
+  }
 
   return (
     <div className="ap-calc-box" style={{ marginBottom: 20 }}>
@@ -1104,8 +1193,13 @@ function LinkedAccountBox({ client, users, onLink, onUnlink }) {
         <>
           <p className="ap-calc-hint">
             No account linked yet — this happens automatically when someone signs in with an email matching
-            {client.email ? ` "${client.email}"` : ' this client\'s email'}. Use this to link manually if that hasn't worked.
+            {client.email ? ` "${client.email}"` : ' this client\'s email'}, or send them an invite link below.
           </p>
+          <button className="ap-btn-primary" disabled={sendingInvite || !client.phone} onClick={handleSendInvite} style={{ marginBottom: 14 }}>
+            {sendingInvite ? 'Preparing…' : '💬 Send Invite Link via WhatsApp'}
+          </button>
+          {!client.phone && <p className="ap-calc-hint">Add a phone number for this client to send an invite.</p>}
+          <p className="ap-calc-hint">Or link a signed-in account manually:</p>
           <div className="ap-quote-item-row">
             <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
               <option value="">Select a signed-in user…</option>

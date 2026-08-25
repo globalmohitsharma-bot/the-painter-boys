@@ -54,6 +54,19 @@ public class ProjectRepository : IProjectRepository
         return results;
     }
 
+    public async Task<Project?> GetByLinkCodeAsync(string code, CancellationToken ct)
+    {
+        var query = new QueryDefinition("SELECT * FROM c WHERE c.linkCode = @code")
+            .WithParameter("@code", code);
+        using var iterator = _container.GetItemQueryIterator<Project>(query);
+        if (iterator.HasMoreResults)
+        {
+            var page = await iterator.ReadNextAsync(ct);
+            return page.FirstOrDefault();
+        }
+        return null;
+    }
+
     public async Task<Project?> GetByIdAsync(string id, CancellationToken ct)
     {
         try

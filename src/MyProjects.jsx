@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { decodeIdToken } from './useGoogleAccount.js';
+import { decodeIdToken, USER_KEY } from './useGoogleAccount.js';
 import { PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
 import './Home.css';
 import './MyProjects.css';
@@ -17,6 +17,17 @@ async function api(path, idToken) {
   return res.json();
 }
 
+async function apiPost(path, idToken, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(typeof data === 'string' ? data : (data?.title || `POST ${path} -> ${res.status}`));
+  return data;
+}
+
 // Customer-facing dashboard — any signed-in Google account, not staff-only.
 // Reads the same session token the header's sign-in writes (see
 // useGoogleAccount.js) so signing in once there carries over here instead
@@ -27,6 +38,9 @@ export default function MyProjects() {
   const [error, setError] = useState('');
   const [view, setView] = useState('projects'); // 'profile' | 'projects' | 'history'
   const [isStaff, setIsStaff] = useState(false);
+  const [linkCode, setLinkCode] = useState('');
+  const [linkStatus, setLinkStatus] = useState(null); // { ok: bool, message: string }
+  const [linking, setLinking] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
 
@@ -57,9 +71,39 @@ export default function MyProjects() {
     }
   }, []);
 
-  const handleCredential = useCallback((response) => {
+  async function submitLinkCode() {
+    if (!linkCode.trim()) return;
+    setLinking(true);
+    setLinkStatus(null);
+    try {
+      const result = await apiPost('/api/my-projects/link', idToken, { code: linkCode.trim() });
+      setLinkCode('');
+      const messages = {
+        requested: "Request sent — you'll see the project on your dashboard once an admin approves it.",
+        'already-pending': 'Already requested — waiting on admin approval.',
+        'already-linked': "That project's already linked to your account.",
+      };
+      setLinkStatus({ ok: true, message: messages[result.status] || 'Request sent.' });
+    } catch (e) {
+      setLinkStatus({ ok: false, message: e.message });
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  const handleCredential = useCallback(async (response) => {
     sessionStorage.setItem(TOKEN_KEY, response.credential);
     setIdToken(response.credential);
+    // An invite link (?invite=... from an admin-shared WhatsApp message) auto-links
+    // the project to whichever Google account signs in via it — that linking only
+    // happens server-side in /api/auth/google, which this page otherwise never
+    // calls (it only ever fetched /api/my-projects), so it'd silently do nothing
+    // without this.
+    const inviteToken = new URLSearchParams(window.location.search).get('invite');
+    if (inviteToken) {
+      try { await apiPost('/api/auth/google', response.credential, { idToken: response.credential, inviteToken }); }
+      catch { /* Sign-in above already succeeded; worst case the invite just didn't apply. */ }
+    }
     load(response.credential);
   }, [load]);
 
@@ -89,6 +133,8 @@ export default function MyProjects() {
 
   function signOut() {
     sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    window.google?.accounts?.id?.disableAutoSelect?.();
     setIdToken(null);
     setProjects(null);
   }
@@ -175,6 +221,10 @@ export default function MyProjects() {
               {view === 'profile' ? (
                 <>
                   <h1 className="mp-page-title">Welcome, {(profile?.name || '').split(' ')[0] || 'there'}</h1>
+                  <div className="mp-profile-quicklinks">
+                    <button onClick={() => setView('projects')}><Icon name="folder" size={16} /> Active Projects</button>
+                    <button onClick={() => setView('history')}><Icon name="clock" size={16} /> History</button>
+                  </div>
                   <div className="mp-field-grid">
                     <div className="mp-field-box">
                       <span className="mp-field-label">Name</span>
@@ -184,6 +234,26 @@ export default function MyProjects() {
                       <span className="mp-field-label">Email</span>
                       <span className="mp-field-value">{profile?.email || '—'}</span>
                     </div>
+                  </div>
+
+                  <div className="mp-link-box">
+                    <h3>Have a project code?</h3>
+                    <p>Your painter or admin can give you a short code to link a project to your dashboard.</p>
+                    <div className="mp-link-form">
+                      <input
+                        value={linkCode}
+                        onChange={e => setLinkCode(e.target.value.toUpperCase())}
+                        placeholder="e.g. AB3CD9"
+                        maxLength={6}
+                        onKeyDown={e => e.key === 'Enter' && submitLinkCode()}
+                      />
+                      <button className="mp-btn-primary" disabled={!linkCode.trim() || linking} onClick={submitLinkCode}>
+                        {linking ? 'Sending…' : 'Link Project'}
+                      </button>
+                    </div>
+                    {linkStatus && (
+                      <p className={linkStatus.ok ? 'mp-link-success' : 'mp-link-error'}>{linkStatus.message}</p>
+                    )}
                   </div>
                 </>
               ) : view === 'projects' ? (
@@ -205,8 +275,8 @@ export default function MyProjects() {
                   <h1 className="mp-page-title">History</h1>
                   {historyProjects.length === 0 ? (
                     <div className="mp-empty mp-empty-inline">
-                      <Icon name="folder" size={28} />
-                      <p>History empty.</p>
+                      <Icon name="badgeCheck" size={28} />
+                      <p>Nothing here yet — completed and cancelled projects will show up once you have some.</p>
                     </div>
                   ) : (
                     <div className="mp-project-list">

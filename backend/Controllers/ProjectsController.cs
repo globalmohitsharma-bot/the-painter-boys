@@ -109,6 +109,26 @@ public class ProjectsController(
         return Ok(saved);
     }
 
+    /// <summary>(Re)generates the short code a customer enters on their dashboard to
+    /// self-request access — see MyProjectsController.LinkByCode. Overwrites any
+    /// previous code, so an old code stops working once a new one is issued.</summary>
+    [HttpPost("{id}/generate-link-code")]
+    public async Task<ActionResult<Project>> GenerateLinkCode(string id, CancellationToken ct)
+    {
+        var project = await projectRepository.GetByIdAsync(id, ct);
+        if (project is null) return NotFound("Project not found.");
+
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — easier to read aloud
+        var random = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[6];
+        random.GetBytes(bytes);
+        project.LinkCode = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
+
+        project.UpdatedAt = DateTimeOffset.UtcNow;
+        var saved = await projectRepository.UpsertAsync(project, ct);
+        return Ok(saved);
+    }
+
     /// <summary>Grants (or re-shows, if already shared but hidden) a user visibility into this project.</summary>
     [HttpPost("{id}/share")]
     public async Task<ActionResult<Project>> Share(string id, [FromBody] ShareProjectRequest request, CancellationToken ct)

@@ -12,6 +12,8 @@ public record MyProjectDto(
     List<TokenHistoryEntry> TokenHistory, List<ProjectImage> Images,
     string? ClientSociety, string? ClientAddress);
 
+public record LinkByCodeRequest(string Code);
+
 /// <summary>
 /// Customer-facing (any signed-in role, not Admin-only) view of a user's own
 /// projects — via their linked Client record, plus anything an admin has
@@ -66,5 +68,34 @@ public class MyProjectsController(
         }
 
         return Ok(dtos);
+    }
+
+    /// <summary>Self-service request to see a project — the code comes from an admin
+    /// out-of-band (WhatsApp/call). Creates a hidden (pending) share rather than an
+    /// immediately-visible one, so it only shows up on the dashboard once an admin
+    /// approves it from the Pending Links view (the same show/hide toggle admins
+    /// already use for shares generally).</summary>
+    [HttpPost("link")]
+    public async Task<IActionResult> LinkByCode([FromBody] LinkByCodeRequest request, CancellationToken ct)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var code = (request.Code ?? "").Trim().ToUpperInvariant();
+        if (string.IsNullOrEmpty(code)) return BadRequest("Enter a code.");
+
+        var project = await projectRepository.GetByLinkCodeAsync(code, ct);
+        if (project is null) return NotFound("That code doesn't match any project. Double-check it with your painter.");
+
+        var existing = project.SharedWith.FirstOrDefault(s => s.UserId == userId);
+        if (existing is not null)
+        {
+            return Ok(new { status = existing.Visible ? "already-linked" : "already-pending" });
+        }
+
+        project.SharedWith.Add(new ProjectShare { UserId = userId, Visible = false });
+        project.UpdatedAt = DateTimeOffset.UtcNow;
+        await projectRepository.UpsertAsync(project, ct);
+        return Ok(new { status = "requested" });
     }
 }

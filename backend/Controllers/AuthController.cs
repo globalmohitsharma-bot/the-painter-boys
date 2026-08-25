@@ -36,6 +36,10 @@ public class AuthController(
         {
             payload = new GoogleJsonWebSignature.Payload { Email = Auth.GoogleTokenAuthenticationHandler.DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
         }
+        else if (hostEnvironment.IsDevelopment() && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestAdminToken)
+        {
+            payload = new GoogleJsonWebSignature.Payload { Email = Auth.GoogleTokenAuthenticationHandler.DevTestAdminEmail, Name = "Test Admin", Subject = "dev-test-admin-subject" };
+        }
         else
         {
             var clientId = googleAuthOptions.Value.ClientId;

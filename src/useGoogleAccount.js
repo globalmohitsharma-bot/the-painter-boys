@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 // its own React state, kept in sync via the same localStorage key rather than
 // lifting state up, since only one of the two triggers is ever visible at a
 // time (responsive CSS), so real-time cross-component reactivity isn't needed.
-const USER_KEY = 'pb_google_user';
+export const USER_KEY = 'pb_google_user';
 // Same key MyProjects.jsx reads its session token from — writing it here too
 // means signing in once from the header carries over to the dashboard
 // instead of prompting a second, separate Google sign-in for the same user.
@@ -22,13 +22,16 @@ function loadStoredUser() {
 // flow, including real API calls, be exercised locally without a real
 // Google account. Only ever reachable via the DEV-gated button below.
 export const DEV_TEST_TOKEN = 'DEV_TEST_TOKEN';
+export const DEV_TEST_ADMIN_TOKEN = 'DEV_TEST_ADMIN_TOKEN';
 const DEV_TEST_PAYLOAD = { name: 'Test User', email: 'testuser@test.com', picture: null };
+const DEV_TEST_ADMIN_PAYLOAD = { name: 'Test Admin', email: 'testadmin@test.com', picture: null };
 
 // Decodes the ID token's payload for display only (name/email/picture) — this
 // is NOT a verified/secure auth check (verifying the signature needs a
 // backend, which doesn't exist yet), just enough to show a signed-in state.
 export function decodeIdToken(token) {
   if (token === DEV_TEST_TOKEN) return DEV_TEST_PAYLOAD;
+  if (token === DEV_TEST_ADMIN_TOKEN) return DEV_TEST_ADMIN_PAYLOAD;
   try {
     const payload = token.split('.')[1];
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));

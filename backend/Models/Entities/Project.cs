@@ -109,6 +109,12 @@ public class Project
     [JsonPropertyName("sharedWith")]
     public List<ProjectShare> SharedWith { get; set; } = [];
 
+    /// <summary>Short code an admin hands a customer (WhatsApp/call) so they can
+    /// self-request access to this project from their dashboard — see
+    /// MyProjectsController.LinkByCode. Null until an admin generates one.</summary>
+    [JsonPropertyName("linkCode")]
+    public string? LinkCode { get; set; }
+
     /// <summary>Original row number from the migrated Google Sheet, kept for traceability.</summary>
     [JsonPropertyName("sheetRef")]
     public string SheetRef { get; set; } = string.Empty;

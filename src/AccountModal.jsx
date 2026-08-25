@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
-import { DEV_TEST_TOKEN } from './useGoogleAccount.js';
+import { DEV_TEST_TOKEN, DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
 
 // Google Identity Services client ID — not set yet. The sign-in button below
 // is real (Google's own renderButton, not a mock), but Google will reject it
@@ -29,6 +29,16 @@ let currentCredentialHandler = null;
 export default function AccountModal({ open, tab, onClose, user, onCredential, onSignOut }) {
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
+
+  // Reopening the modal while already signed in (e.g. a later visit, or the
+  // 2nd AccountModal instance) never re-runs handleCredential, so its own
+  // post-sign-in redirect never fires — this covers that case directly,
+  // once role verification has actually resolved ('isStaff' present).
+  useEffect(() => {
+    if (open && user && 'isStaff' in user && !user.isStaff) {
+      window.location.href = '/my-projects';
+    }
+  }, [open, user]);
 
   useEffect(() => {
     if (!open || user) return;
@@ -102,9 +112,14 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
               <p className="bn-modal-warn">Loading Google Sign-In…</p>
             )}
             {import.meta.env.DEV && (
-              <button className="bn-dev-login" onClick={() => onCredential({ credential: DEV_TEST_TOKEN })}>
-                🧪 Log in as testuser@test.com (local only)
-              </button>
+              <>
+                <button className="bn-dev-login" onClick={() => onCredential({ credential: DEV_TEST_TOKEN })}>
+                  🧪 Log in as testuser@test.com (local only)
+                </button>
+                <button className="bn-dev-login" onClick={() => onCredential({ credential: DEV_TEST_ADMIN_TOKEN })}>
+                  🧪 Log in as testadmin@test.com (local only)
+                </button>
+              </>
             )}
           </div>
         )}

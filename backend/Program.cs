@@ -38,6 +38,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // One-off local promotion for the 🧪 dev test-admin account — not
+    // reachable once deployed, removed once no longer needed.
+    app.MapPost("/api/dev/promote-test-admin", async (IUserRepository userRepo, CancellationToken ct) =>
+    {
+        const string email = GoogleTokenAuthenticationHandler.DevTestAdminEmail;
+        var user = await userRepo.GetByEmailAsync(email, ct)
+            ?? new ThePainterBoys.Api.Models.Entities.User { Email = email, Name = "Test Admin" };
+        user.Role = ThePainterBoys.Api.Models.Entities.UserRole.Admin;
+        var saved = await userRepo.UpsertAsync(user, ct);
+        return Results.Ok(new { saved.Id, saved.Email, saved.Role });
+    });
 }
 
 app.UseCors();

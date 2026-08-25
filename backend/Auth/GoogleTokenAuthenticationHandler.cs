@@ -35,6 +35,8 @@ public class GoogleTokenAuthenticationHandler(
     /// anything once deployed. See TestLoginHelper.cs for the frontend trigger.</summary>
     public const string DevTestToken = "DEV_TEST_TOKEN";
     public const string DevTestEmail = "testuser@test.com";
+    public const string DevTestAdminToken = "DEV_TEST_ADMIN_TOKEN";
+    public const string DevTestAdminEmail = "testadmin@test.com";
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -50,6 +52,10 @@ public class GoogleTokenAuthenticationHandler(
         if (hostEnvironment.IsDevelopment() && idToken == DevTestToken)
         {
             payload = new GoogleJsonWebSignature.Payload { Email = DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
+        }
+        else if (hostEnvironment.IsDevelopment() && idToken == DevTestAdminToken)
+        {
+            payload = new GoogleJsonWebSignature.Payload { Email = DevTestAdminEmail, Name = "Test Admin", Subject = "dev-test-admin-subject" };
         }
         else
         {

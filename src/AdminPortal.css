@@ -29,7 +29,14 @@
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
 }
 .ap-header-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; color: var(--gold-soft); }
-.ap-header-logo { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; background: #fff; padding: 3px; }
+.ap-header-logo {
+  height: 46px; width: auto; object-fit: contain;
+  animation: ap-logo-glow 2.4s ease-in-out infinite;
+}
+@keyframes ap-logo-glow {
+  0%, 100% { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+  50% { filter: drop-shadow(0 0 12px rgba(242,135,31,.85)); }
+}
 .ap-header-nav { display: flex; gap: 6px; }
 .ap-nav-btn {
   background: none; border: 1.5px solid rgba(255,255,255,.15); color: rgba(255,255,255,.75);

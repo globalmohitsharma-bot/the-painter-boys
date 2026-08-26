@@ -254,7 +254,7 @@ export default function MyProjects() {
     <div className="mp-app">
       <div className="mp-app-topbar">
         <a href="/" className="mp-app-brand">
-          <img src="/logo.png" alt="" className="mp-app-brand-mark" />
+          <img src="/logo-header.png" alt="" className="mp-app-brand-mark" />
           <span className="mp-app-brand-name">The Painter Boys</span>
         </a>
         <div className="mp-app-topbar-user">

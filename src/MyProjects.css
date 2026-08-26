@@ -42,7 +42,7 @@
 }
 .mp-app-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .mp-app-brand-mark {
-  width: 64px; height: 64px; object-fit: contain;
+  height: 64px; width: auto; object-fit: contain;
   animation: mp-logo-glow 2.4s ease-in-out infinite;
 }
 @keyframes mp-logo-glow {

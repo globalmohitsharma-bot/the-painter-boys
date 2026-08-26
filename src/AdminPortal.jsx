@@ -415,7 +415,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     <div className="ap-root">
       <header className="ap-header">
         <div className="ap-header-brand">
-          <img src="/logo.png" alt="" className="ap-header-logo" />
+          <img src="/logo-header.png" alt="" className="ap-header-logo" />
           <span>Admin Portal</span>
         </div>
         <div className="ap-header-user">

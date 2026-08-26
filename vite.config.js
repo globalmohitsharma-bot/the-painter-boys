@@ -6,8 +6,10 @@ export default defineConfig({
   server: {
     // The ASP.NET Core backend lives in backend/ within this same repo —
     // its build output (bin/obj) churns constantly during `dotnet build`
-    // and has crashed Vite's watcher with EBUSY on Windows before.
-    watch: { ignored: ['**/backend/**'] },
+    // and has crashed Vite's watcher with EBUSY on Windows before. Same
+    // failure mode from assets/ — a scratch folder for raw source images
+    // (logo drafts etc.) that briefly get Windows file-locked on copy.
+    watch: { ignored: ['**/backend/**', '**/assets/**'] },
   },
   plugins: [
     react(),

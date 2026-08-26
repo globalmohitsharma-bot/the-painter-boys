@@ -29,7 +29,7 @@ export default function SiteHeader() {
       <div className={`topbar${scrolled ? ' topbar-sm' : ''}`}>
         <div className="topbar-inner">
           <Link to="/" className="topbar-brand" aria-label="The Painter Boys — Home">
-            <img src="/logo.png" alt="" className="topbar-logo-img" />
+            <img src="/logo-header.png" alt="" className="topbar-logo-img" />
             <div className="topbar-brand-text">
               <div className="topbar-name">
                 <span className="tn-the">The </span>

@@ -98,4 +98,25 @@ public class MyProjectsController(
         await projectRepository.UpsertAsync(project, ct);
         return Ok(new { status = "requested" });
     }
+
+    /// <summary>Self-service "I don't have a code, please help" request — no project
+    /// is known yet, so this just flags the caller's own User record. Shows up in
+    /// the Admin Portal's Requests queue (see UsersController) until an admin finds
+    /// and shares the right project, then marks it resolved.</summary>
+    [HttpPost("request-link")]
+    public async Task<IActionResult> RequestLink(CancellationToken ct)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var user = await userRepository.GetByIdAsync(userId, ct);
+        if (user is null) return Unauthorized();
+
+        if (user.ProjectRequestPending) return Ok(new { status = "already-pending" });
+
+        user.ProjectRequestPending = true;
+        user.ProjectRequestedAt = DateTimeOffset.UtcNow;
+        await userRepository.UpsertAsync(user, ct);
+        return Ok(new { status = "requested" });
+    }
 }

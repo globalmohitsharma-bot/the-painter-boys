@@ -54,6 +54,8 @@ export default function MyProjects() {
   const [linkCode, setLinkCode] = useState('');
   const [linkStatus, setLinkStatus] = useState(null); // { ok: bool, message: string }
   const [linking, setLinking] = useState(false);
+  const [requestStatus, setRequestStatus] = useState(null); // { ok: bool, message: string }
+  const [requesting, setRequesting] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
 
@@ -111,6 +113,27 @@ export default function MyProjects() {
       });
     } finally {
       setLinking(false);
+    }
+  }
+
+  // For a customer who doesn't have a link code handy — flags their own
+  // account so it shows up in the Admin Portal's Requests queue, where an
+  // admin can find and share the right project, then mark it resolved.
+  async function requestProjectLink() {
+    setRequesting(true);
+    setRequestStatus(null);
+    try {
+      const result = await apiPost('/api/my-projects/request-link', idToken, {});
+      setRequestStatus({
+        ok: true,
+        message: result.status === 'already-pending'
+          ? "Already asked — an admin's been notified and will link your project soon."
+          : "Request sent — an admin will link your project to this dashboard soon.",
+      });
+    } catch (e) {
+      setRequestStatus({ ok: false, message: e.message });
+    } finally {
+      setRequesting(false);
     }
   }
 
@@ -289,6 +312,16 @@ export default function MyProjects() {
                     </div>
                     {linkStatus && (
                       <p className={linkStatus.ok ? 'mp-link-success' : linkStatus.info ? 'mp-link-info' : 'mp-link-error'}>{linkStatus.message}</p>
+                    )}
+
+                    <div className="mp-request-row">
+                      <span>Don't have a code?</span>
+                      <button className="mp-btn-secondary" disabled={requesting} onClick={requestProjectLink}>
+                        {requesting ? 'Sending…' : '📨 Ask Admin to Add My Project'}
+                      </button>
+                    </div>
+                    {requestStatus && (
+                      <p className={requestStatus.ok ? 'mp-link-success' : 'mp-link-error'}>{requestStatus.message}</p>
                     )}
                   </div>
                 </>

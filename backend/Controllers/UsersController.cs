@@ -33,4 +33,18 @@ public class UsersController(IUserRepository userRepository, IDataProtectionProv
         var payload = protector.Protect(user.Id, TimeSpan.FromHours(2));
         return Ok(new { token = Auth.GoogleTokenAuthenticationHandler.ImpersonationPrefix + payload, user.Name, user.Email });
     }
+
+    /// <summary>Clears a customer's "please link my project" request — call once
+    /// an admin has found and shared the right project with them (see
+    /// MyProjectsController.RequestLink for where the flag gets set).</summary>
+    [HttpPost("{id}/resolve-request")]
+    public async Task<ActionResult<User>> ResolveRequest(string id, CancellationToken ct)
+    {
+        var user = await userRepository.GetByIdAsync(id, ct);
+        if (user is null) return NotFound("User not found.");
+
+        user.ProjectRequestPending = false;
+        var saved = await userRepository.UpsertAsync(user, ct);
+        return Ok(saved);
+    }
 }

@@ -347,6 +347,11 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     window.open(`/my-projects?impersonate=${encodeURIComponent(token)}`, '_blank', 'noopener');
   }
 
+  async function resolveRequest(userId) {
+    const saved = await api(`/api/users/${userId}/resolve-request`, idToken, { method: 'POST' });
+    setUsers(us => us.map(u => u.id === saved.id ? saved : u));
+  }
+
   const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -373,6 +378,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     return acc;
   }, {});
   const pendingLinkCount = projects.reduce((n, p) => n + (p.sharedWith || []).filter(s => !s.visible).length, 0);
+  const projectRequestCount = users.filter(u => u.projectRequestPending).length;
 
   function goto(v) { setSelectedClientId(null); setView(v); }
 
@@ -399,6 +405,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
           <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
             ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
+          </button>
+          <button className={`ap-sidebar-btn ${view === 'requests' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('requests')}>
+            📨 Requests{projectRequestCount > 0 ? ` (${projectRequestCount})` : ''}
           </button>
           <button className={`ap-sidebar-btn ${view === 'users' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('users')}>👥 Users</button>
         </nav>
@@ -471,6 +480,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'pending-links' ? (
           <PendingLinksView projects={projects} clients={clients} users={users}
             onApprove={toggleProjectShare} onReject={unshareProject} onSelectClient={setSelectedClientId} />
+        ) : view === 'requests' ? (
+          <ProjectRequestsView users={users} clients={clients} onResolve={resolveRequest} onSelectClient={setSelectedClientId} />
         ) : view === 'users' ? (
           <UsersView users={users} clients={clients} onImpersonate={impersonateUser} onSelectClient={setSelectedClientId} />
         ) : view === 'clients' ? (
@@ -690,6 +701,57 @@ function PendingLinksView({ projects, clients, users, onApprove, onReject, onSel
             </td>
           </tr>
         ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Customers who clicked "Ask Admin to Add My Project" on the dashboard
+// without a link code — no project is known yet, so this is a triage list:
+// find/create the right project via the client's own detail page (or
+// Photos & Sharing on any project) and share it, then mark resolved.
+function ProjectRequestsView({ users, clients, onResolve, onSelectClient }) {
+  const [busyId, setBusyId] = useState(null);
+  const requests = users.filter(u => u.projectRequestPending);
+
+  async function handleResolve(userId) {
+    setBusyId(userId);
+    try {
+      await onResolve(userId);
+    } catch (e) {
+      alert('Could not mark resolved — ' + e.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (requests.length === 0) return <p className="ap-loading">No open project requests.</p>;
+  return (
+    <table className="ap-table">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Linked Client</th><th>Requested</th><th></th></tr>
+      </thead>
+      <tbody>
+        {requests.map(u => {
+          const client = clients.find(c => c.id === u.linkedClientId);
+          return (
+            <tr key={u.id}>
+              <td>{u.name || '—'}</td>
+              <td>{u.email}</td>
+              <td>
+                {client
+                  ? <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
+                  : <span className="ap-warn">Not linked yet</span>}
+              </td>
+              <td>{u.projectRequestedAt ? new Date(u.projectRequestedAt).toLocaleDateString('en-IN') : '—'}</td>
+              <td className="ap-row-actions">
+                <button className="ap-btn-primary" disabled={busyId === u.id} onClick={() => handleResolve(u.id)}>
+                  {busyId === u.id ? 'Saving…' : 'Mark Resolved'}
+                </button>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

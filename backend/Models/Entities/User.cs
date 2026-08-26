@@ -42,4 +42,13 @@ public class User
 
     [JsonPropertyName("lastLoginAt")]
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>Set when this customer has asked (from the dashboard) for an
+    /// admin to link a project to their account without already knowing a
+    /// code — shown in the Admin Portal's Requests queue until resolved.</summary>
+    [JsonPropertyName("projectRequestPending")]
+    public bool ProjectRequestPending { get; set; }
+
+    [JsonPropertyName("projectRequestedAt")]
+    public DateTimeOffset? ProjectRequestedAt { get; set; }
 }

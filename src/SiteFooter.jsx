@@ -55,6 +55,9 @@ export default function SiteFooter() {
         <div className="footer-bottom">
           <div className="footer-copy">© 2026 The Painter Boys · All Rights Reserved</div>
           <div className="footer-bottom-links">
+            <Link className="footer-link" to="/privacy">Privacy Policy</Link>
+            <Link className="footer-link" to="/terms">Terms of Service</Link>
+            <Link className="footer-link" to="/data-deletion">Data Deletion</Link>
             <a className="footer-link" href="/pb">Staff Portal</a>
           </div>
         </div>

@@ -12,6 +12,7 @@ import CustomerView from './CustomerView.jsx'
 import PainterCard from './PainterCard.jsx'
 import AdminPortal from './AdminPortal.jsx'
 import MyProjects from './MyProjects.jsx'
+import { PrivacyPolicy, TermsOfService, DataDeletion } from './LegalPages.jsx'
 
 // React Router doesn't reset scroll position on navigation by default —
 // without this, clicking a link while scrolled down a long page (e.g. the
@@ -50,6 +51,9 @@ export default function App() {
           <Route path="/job/:code" element={<CustomerView />} />
           <Route path="/customer" element={<CustomerView />} />
           <Route path="/card" element={<PainterCard />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/data-deletion" element={<DataDeletion />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

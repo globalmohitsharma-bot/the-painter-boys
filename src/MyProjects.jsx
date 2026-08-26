@@ -37,18 +37,31 @@ async function apiPost(path, idToken, body) {
 // useGoogleAccount.js) so signing in once there carries over here instead
 // of prompting a second, separate Google sign-in for the same person.
 export default function MyProjects() {
-  const [idToken, setIdToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
+  // An admin's "Log in as" link (see AdminPortal.jsx) lands here with
+  // ?impersonate=TOKEN — that token isn't a Google ID token (decodeIdToken
+  // can't read it), so treat it exactly like a normal session token but pull
+  // the URL immediately after so it's never left sitting in history/bookmarks.
+  const [idToken, setIdToken] = useState(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('impersonate');
+    if (fromUrl) { sessionStorage.setItem(TOKEN_KEY, fromUrl); return fromUrl; }
+    return sessionStorage.getItem(TOKEN_KEY);
+  });
   const [projects, setProjects] = useState(null);
   const [error, setError] = useState('');
   const [view, setView] = useState('projects'); // 'profile' | 'projects' | 'history'
   const [isStaff, setIsStaff] = useState(false);
+  const [whoami, setWhoami] = useState(null);
   const [linkCode, setLinkCode] = useState('');
   const [linkStatus, setLinkStatus] = useState(null); // { ok: bool, message: string }
   const [linking, setLinking] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
 
-  const profile = idToken ? decodeIdToken(idToken) : null;
+  const isImpersonating = !!idToken && idToken.startsWith('IMPERSONATE_');
+  // Impersonation tokens carry no client-readable payload, so fall back to
+  // the server-verified whoami response (fetched in load()) for name/email.
+  const profile = (idToken ? decodeIdToken(idToken) : null)
+    || (whoami ? { name: whoami.name, email: whoami.email, picture: null } : null);
   const allProjects = projects || [];
   const activeProjects = allProjects.filter(p => !['Completed', 'Cancelled'].includes(p.progress));
   const historyProjects = allProjects.filter(p => ['Completed', 'Cancelled'].includes(p.progress));
@@ -67,8 +80,9 @@ export default function MyProjects() {
     // etc.) would otherwise see a bare customer view with no way back to
     // the tools they actually need.
     try {
-      const whoami = await api('/api/auth/whoami', token);
-      setIsStaff(!!whoami.isStaff);
+      const who = await api('/api/auth/whoami', token);
+      setIsStaff(!!who.isStaff);
+      setWhoami(who);
     } catch {
       // Not staff, or backend unreachable — either way just stay on the
       // regular customer view.
@@ -117,6 +131,12 @@ export default function MyProjects() {
   }, [load]);
 
   useEffect(() => { if (idToken) load(idToken); }, [idToken, load]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('impersonate')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (idToken) return;
@@ -212,7 +232,15 @@ export default function MyProjects() {
         </nav>
 
         <main className="mp-app-main">
-          {isStaff && (
+          {isImpersonating && (
+            <div className="mp-staff-banner mp-impersonate-banner">
+              <span>👁️ Viewing as {profile?.name || profile?.email || 'this customer'} — admin impersonation.</span>
+              <div className="mp-staff-banner-links">
+                <button className="mp-impersonate-end" onClick={signOut}>End Session</button>
+              </div>
+            </div>
+          )}
+          {isStaff && !isImpersonating && (
             <div className="mp-staff-banner">
               <span>You're signed in with staff access.</span>
               <div className="mp-staff-banner-links">

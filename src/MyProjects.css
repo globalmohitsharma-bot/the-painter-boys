@@ -16,6 +16,12 @@
 }
 .mp-staff-banner-links { display: flex; gap: 10px; }
 .mp-staff-banner-links a { color: var(--obsidian); text-decoration: underline; }
+.mp-impersonate-banner { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: #fff; }
+.mp-impersonate-end {
+  background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.4);
+  border-radius: 6px; padding: 5px 12px; font-size: .82rem; font-weight: 700; cursor: pointer;
+}
+.mp-impersonate-end:hover { background: rgba(255,255,255,.3); }
 .mp-loading { color: var(--ink-soft); text-align: center; padding: 40px 0; }
 .mp-empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
 .mp-empty svg { color: var(--gold-deep); margin-bottom: 12px; }

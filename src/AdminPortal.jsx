@@ -339,6 +339,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     updateProjectInState(saved);
   }
 
+  // Opens the customer dashboard, signed in as that user, in a new tab —
+  // lets an admin see exactly what a customer sees (and link/edit on their
+  // behalf) without knowing or resetting their Google account.
+  async function impersonateUser(userId) {
+    const { token } = await api(`/api/users/${userId}/impersonate`, idToken, { method: 'POST' });
+    window.open(`/my-projects?impersonate=${encodeURIComponent(token)}`, '_blank', 'noopener');
+  }
+
   const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -392,6 +400,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
             ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
           </button>
+          <button className={`ap-sidebar-btn ${view === 'users' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('users')}>👥 Users</button>
         </nav>
 
       <main className="ap-main">
@@ -462,6 +471,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'pending-links' ? (
           <PendingLinksView projects={projects} clients={clients} users={users}
             onApprove={toggleProjectShare} onReject={unshareProject} onSelectClient={setSelectedClientId} />
+        ) : view === 'users' ? (
+          <UsersView users={users} clients={clients} onImpersonate={impersonateUser} onSelectClient={setSelectedClientId} />
         ) : view === 'clients' ? (
           <>
             <div className="ap-toolbar">
@@ -679,6 +690,56 @@ function PendingLinksView({ projects, clients, users, onApprove, onReject, onSel
             </td>
           </tr>
         ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Every account that's ever signed in to the customer dashboard, with its
+// linked client (if any) and a one-click "Log in as" that opens the
+// dashboard in a new tab under that user's own identity — see
+// impersonateUser above for how the short-lived token is issued.
+function UsersView({ users, clients, onImpersonate, onSelectClient }) {
+  const [busyId, setBusyId] = useState(null);
+
+  async function handleImpersonate(userId) {
+    setBusyId(userId);
+    try {
+      await onImpersonate(userId);
+    } catch (e) {
+      alert('Could not start impersonation — ' + e.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (users.length === 0) return <p className="ap-loading">No users have signed in yet.</p>;
+  return (
+    <table className="ap-table">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Linked Client</th><th></th></tr>
+      </thead>
+      <tbody>
+        {users.map(u => {
+          const client = clients.find(c => c.id === u.linkedClientId);
+          return (
+            <tr key={u.id}>
+              <td>{u.name || '—'}</td>
+              <td>{u.email}</td>
+              <td>{u.role === 'Client' || !u.role ? 'Customer' : u.role}</td>
+              <td>
+                {client
+                  ? <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
+                  : '—'}
+              </td>
+              <td className="ap-row-actions">
+                <button className="ap-btn-primary" disabled={busyId === u.id} onClick={() => handleImpersonate(u.id)}>
+                  {busyId === u.id ? 'Opening…' : '👁️ Log in as'}
+                </button>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

@@ -461,6 +461,10 @@ function ImageLightbox({ images, index, onClose, onNavigate }) {
   const img = images[index];
   return (
     <div className="mp-lightbox-overlay" onClick={onClose}>
+      <a className="mp-lightbox-download" href={img.url} download target="_blank" rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()} title="Download full-size image">
+        ⬇
+      </a>
       <button className="mp-lightbox-close" onClick={onClose}><Icon name="close" size={20} /></button>
       {images.length > 1 && (
         <button className="mp-lightbox-nav mp-lightbox-prev" onClick={e => { e.stopPropagation(); onNavigate((index - 1 + images.length) % images.length); }}>‹</button>

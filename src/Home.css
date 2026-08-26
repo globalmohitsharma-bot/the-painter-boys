@@ -794,6 +794,15 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   .topbar-account { display: none; }
   .nav-hamburger { display: flex; }
   .nav { display: none; }
+  .topbar-inner { padding: 0 14px; gap: 8px; }
+}
+@media (max-width: 480px) {
+  /* Logo+wordmark was wide enough to push the phone icon off-screen on
+     narrow phones — shrink and tighten it instead of the icon losing. */
+  .topbar-logo-img, .topbar-sm .topbar-logo-img { height: 38px; }
+  .topbar-brand { gap: 6px; }
+  .topbar-name { font-size: 1rem; }
+  .topbar-sub { display: none; }
   /* Hero */
   .hero { text-align: center; padding: 90px 20px 48px; min-height: auto; align-items: flex-start; }
   .hero-title { margin-bottom: 8px; }

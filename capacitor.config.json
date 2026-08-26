@@ -1,0 +1,9 @@
+{
+  "appId": "com.thepainterboys.app",
+  "appName": "The Painter Boys",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "backgroundColor": "#0d2137"
+}

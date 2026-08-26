@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 
 // Shared Google sign-in state, used independently by both SiteHeader (desktop
 // account icon) and BottomNav (mobile My Projects/Profile tabs) — each keeps
@@ -97,6 +98,7 @@ export default function useGoogleAccount() {
     localStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(DASHBOARD_TOKEN_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
+    nativeGoogleSignOut();
   }, []);
 
   return { user, handleCredential, signOut };

@@ -5,3 +5,12 @@ dist/
 backend/publish-out/
 backend/bin/
 backend/obj/
+android-keystore/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/app/release/
+assets-src/
+android/keystore.properties

@@ -3,6 +3,7 @@ import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
 import { decodeIdToken, USER_KEY } from './useGoogleAccount.js';
+import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 import { PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
 import './Home.css';
 import './MyProjects.css';
@@ -58,6 +59,8 @@ export default function MyProjects() {
   const [requesting, setRequesting] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
+  const [nativeSigningIn, setNativeSigningIn] = useState(false);
+  const [nativeError, setNativeError] = useState('');
 
   const isImpersonating = !!idToken && idToken.startsWith('IMPERSONATE_');
   // Impersonation tokens carry no client-readable payload, so fall back to
@@ -162,7 +165,7 @@ export default function MyProjects() {
   }, []);
 
   useEffect(() => {
-    if (idToken) return;
+    if (idToken || isNativeApp()) return;
     let cancelled = false;
     let attempts = 0;
     const tryInit = () => {
@@ -183,10 +186,24 @@ export default function MyProjects() {
     return () => { cancelled = true; };
   }, [idToken, handleCredential]);
 
+  async function handleNativeSignIn() {
+    setNativeSigningIn(true);
+    setNativeError('');
+    try {
+      const response = await nativeGoogleSignIn();
+      await handleCredential(response);
+    } catch (e) {
+      if (e?.code !== 'SIGN_IN_CANCELED') setNativeError('Sign-in failed — please try again.');
+    } finally {
+      setNativeSigningIn(false);
+    }
+  }
+
   function signOut() {
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
+    nativeGoogleSignOut();
     window.location.href = '/';
   }
 
@@ -209,9 +226,20 @@ export default function MyProjects() {
                   <Icon name="folder" size={28} className="mp-gate-icon" />
                   <h3>Sign in to view your dashboard</h3>
                   <p>Use the same Google account you shared with The Painter Boys team.</p>
-                  <div ref={buttonRef} className="mp-gsi-btn" />
-                  {!GOOGLE_CLIENT_ID && <p className="mp-warn">Sign-in isn't configured on this deployment yet.</p>}
-                  {GOOGLE_CLIENT_ID && !gsiReady && <p className="mp-warn">Loading Google Sign-In…</p>}
+                  {isNativeApp() ? (
+                    <>
+                      <button className="mp-native-gsi-btn" onClick={handleNativeSignIn} disabled={nativeSigningIn}>
+                        {nativeSigningIn ? 'Signing in…' : 'Sign in with Google'}
+                      </button>
+                      {nativeError && <p className="mp-warn">{nativeError}</p>}
+                    </>
+                  ) : (
+                    <>
+                      <div ref={buttonRef} className="mp-gsi-btn" />
+                      {!GOOGLE_CLIENT_ID && <p className="mp-warn">Sign-in isn't configured on this deployment yet.</p>}
+                      {GOOGLE_CLIENT_ID && !gsiReady && <p className="mp-warn">Loading Google Sign-In…</p>}
+                    </>
+                  )}
                 </div>
               </div>
             </div>

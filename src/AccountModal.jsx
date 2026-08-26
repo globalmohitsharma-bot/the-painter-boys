@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon.jsx';
 import { DEV_TEST_TOKEN, DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
+import { isNativeApp, nativeGoogleSignIn } from './nativeGoogleSignIn.js';
 
 // Google Identity Services client ID — not set yet. The sign-in button below
 // is real (Google's own renderButton, not a mock), but Google will reject it
@@ -29,6 +30,21 @@ let currentCredentialHandler = null;
 export default function AccountModal({ open, tab, onClose, user, onCredential, onSignOut }) {
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
+  const [nativeSigningIn, setNativeSigningIn] = useState(false);
+  const [nativeError, setNativeError] = useState('');
+
+  async function handleNativeSignIn() {
+    setNativeSigningIn(true);
+    setNativeError('');
+    try {
+      const response = await nativeGoogleSignIn();
+      onCredential(response);
+    } catch (e) {
+      if (e?.code !== 'SIGN_IN_CANCELED') setNativeError('Sign-in failed — please try again.');
+    } finally {
+      setNativeSigningIn(false);
+    }
+  }
 
   // Reopening the modal while already signed in (e.g. a later visit, or the
   // 2nd AccountModal instance) never re-runs handleCredential, so its own
@@ -41,7 +57,7 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
   }, [open, user]);
 
   useEffect(() => {
-    if (!open || user) return;
+    if (!open || user || isNativeApp()) return;
     let cancelled = false;
     let attempts = 0;
     const tryInit = () => {
@@ -104,12 +120,23 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
             <div className="bn-modal-icon"><Icon name={tab === 'projects' ? 'folder' : 'user'} size={26} /></div>
             <h3 className="bn-modal-title">{tab === 'projects' ? 'My Projects' : 'My Profile'}</h3>
             <p className="bn-modal-sub">Sign in with Google to see your painting projects, photos, and progress here.</p>
-            <div ref={buttonRef} className="bn-gsi-btn" />
-            {!GOOGLE_CLIENT_ID && (
-              <p className="bn-modal-warn">Sign-in isn't fully configured on this deployment yet — the button above won't complete until a Google Client ID is added.</p>
-            )}
-            {GOOGLE_CLIENT_ID && !gsiReady && (
-              <p className="bn-modal-warn">Loading Google Sign-In…</p>
+            {isNativeApp() ? (
+              <>
+                <button className="bn-native-gsi-btn" onClick={handleNativeSignIn} disabled={nativeSigningIn}>
+                  <Icon name="user" size={16} /> {nativeSigningIn ? 'Signing in…' : 'Sign in with Google'}
+                </button>
+                {nativeError && <p className="bn-modal-warn">{nativeError}</p>}
+              </>
+            ) : (
+              <>
+                <div ref={buttonRef} className="bn-gsi-btn" />
+                {!GOOGLE_CLIENT_ID && (
+                  <p className="bn-modal-warn">Sign-in isn't fully configured on this deployment yet — the button above won't complete until a Google Client ID is added.</p>
+                )}
+                {GOOGLE_CLIENT_ID && !gsiReady && (
+                  <p className="bn-modal-warn">Loading Google Sign-In…</p>
+                )}
+              </>
             )}
             {import.meta.env.DEV && (
               <>

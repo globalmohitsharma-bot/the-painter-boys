@@ -3,6 +3,13 @@
 .mp-gate h3 { font-family: var(--font-display); color: var(--ink); margin-bottom: 8px; }
 .mp-gate p { color: var(--ink-soft); font-size: .9rem; margin-bottom: 20px; }
 .mp-gsi-btn { display: flex; justify-content: center; }
+.mp-native-gsi-btn {
+  display: block; width: 100%; max-width: 260px; margin: 0 auto; min-height: 44px;
+  background: #fff; border: 1px solid #dadce0; border-radius: 8px;
+  color: #3c4043; font-size: .88rem; font-weight: 600; cursor: pointer;
+}
+.mp-native-gsi-btn:hover { background: #f8f9fa; }
+.mp-native-gsi-btn:disabled { opacity: .6; cursor: default; }
 .mp-warn { font-size: .78rem; color: var(--ink-faint); margin-top: 14px; }
 
 .mp-toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }

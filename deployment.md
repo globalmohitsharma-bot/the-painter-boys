@@ -4,6 +4,80 @@
 already caught several real, repeatable failures (see "Known deployment
 issues" below) that will happen again if skipped.**
 
+## Android app (added 2026-08-26)
+
+Wrapped with **Capacitor** — the app bundles the same `dist/` web build the
+site itself ships, running in a native WebView (`appId`
+`com.thepainterboys.app`). Same UI/functionality as the website by
+construction, not a separate codebase.
+
+- **Toolchain** (installed locally, not portable — reinstall if moving
+  machines): JDK 21 (`C:\Program Files\Microsoft\jdk-21.0.12.101-hotspot` —
+  Capacitor 8 specifically needs 21, not 17, or `compileDebugJavaWithJavac`
+  fails with `invalid source release: 21`), Android SDK command-line tools
+  at `C:\Android\Sdk` (`ANDROID_HOME`/`JAVA_HOME` set as **User** env vars).
+- **Release signing keystore**: `android-keystore/thepainterboys-release.keystore`
+  (gitignored, password in `android/keystore.properties`, also gitignored).
+  **This file must be backed up somewhere durable outside this machine and
+  outside git** — losing it means losing the ability to ever publish an
+  update to this app under its existing Play Store listing. There's no
+  recovery path once uploaded to Play with Play App Signing if the *original
+  upload key* is lost before it's ever been used — back it up now, not
+  later.
+- **Rebuild after any web change**:
+  ```bash
+  npm run build              # refresh dist/
+  npx cap sync android       # copy dist/ + plugin changes into the native project
+  cd android
+  ./gradlew.bat bundleRelease   # -> app/build/outputs/bundle/release/app-release.aab
+  ```
+  (`JAVA_HOME`/`ANDROID_HOME` must be set in the shell running gradlew —
+  they're User env vars so a fresh terminal picks them up automatically;
+  the Bash tool's Git Bash shell sometimes doesn't inherit User env vars
+  set via PowerShell in the same session — export them manually if
+  `gradlew.bat` can't find the SDK.)
+- **Native Google Sign-In, not the web GIS widget**: Google's web Identity
+  Services SDK refuses to complete sign-in inside *any* embedded app
+  WebView (policy-level block, returns a generic `origin not allowed`
+  error — confirmed not fixable by whitelisting, see testing.md's GSI
+  false-alarm section for the closely related Playwright case). Fixed via
+  `@capawesome/capacitor-google-sign-in`, which uses Android's Credential
+  Manager API — see `src/nativeGoogleSignIn.js`, branched into from
+  `AccountModal.jsx`/`MyProjects.jsx`/`AdminPortal.jsx` via
+  `Capacitor.isNativePlatform()`. Still issues a token for the **same Web
+  OAuth Client ID** the backend already verifies against
+  (`GoogleTokenAuthenticationHandler`) — no backend auth code changed.
+- **Requires a manual step in Google Cloud Console** (same project as the
+  existing Web OAuth client): add a new **Android**-type OAuth Client ID,
+  package name `com.thepainterboys.app`, with the SHA-1 fingerprint(s)
+  below registered. Sign-in in the app will fail until this is done.
+  - Debug keystore SHA-1 (`~/.android/debug.keystore`, auto-created by the
+    first `gradlew assembleDebug`): `B0:9E:06:FA:87:55:53:5E:0D:FF:19:00:00:2C:B7:69:ED:C5:DD:6D`
+  - Release keystore SHA-1 (the upload key above):
+    `D2:7A:60:F4:74:9B:D5:EA:16:5D:C4:E6:D5:CA:6A:10:25:65:39:67`
+  - **A third SHA-1 will appear after the first Play Store upload** if Play
+    App Signing is used (Google re-signs the app with its own key) — that
+    one also needs adding once visible in Play Console (App integrity →
+    App signing key certificate).
+- **Backend CORS**: `https://localhost` added as `AllowedOrigins__4` (Azure
+  App Service app setting) — this is the origin Capacitor's default
+  `androidScheme: "https"` config serves the WebView from, so it's what the
+  app's `fetch()` calls to `api.thepainterboys.com` present as `Origin`.
+- **No Android emulator available on this dev machine** — `Get-ComputerInfo`
+  shows `HyperVRequirementVirtualizationFirmwareEnabled: False` (nested
+  virtualization not exposed), so an AVD would run unaccelerated at best,
+  more likely fail to boot. **Test on a real device via
+  `adb install app-debug.apk`** (USB debugging enabled) instead — also just
+  a better test than an emulator regardless.
+- **App icon/splash source**: `assets/icon.png` (1024×1024, mark on white),
+  `assets/icon-foreground.png` + `assets/icon-background.png` (adaptive
+  icon layers), `assets/splash.png` (2732×2732, mark on `#0d2137` navy) —
+  cropped from `public/logo.png`'s icon mark (excluding the wordmark text,
+  which doesn't read at icon size) with a manual background-removal pass
+  (color-distance threshold against the off-white source background; sharp
+  has no built-in chroma-key). Regenerate all densities after changing a
+  source file: `npx capacitor-assets generate --android`.
+
 ## Current hosting (updated 2026-08-20 — Netlify fully retired)
 
 - **Frontend**: Azure Static Web Apps. `develop` → `ThePainterBoys-web`

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import Icon from './Icon.jsx';
+import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 import './AdminPortal.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -70,6 +71,7 @@ export default function AdminPortal() {
   const [authError, setAuthError] = useState('');
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
+  const [nativeSigningIn, setNativeSigningIn] = useState(false);
 
   const handleCredential = useCallback(async (response) => {
     setChecking(true);
@@ -111,7 +113,7 @@ export default function AdminPortal() {
   }, [idToken, whoami]);
 
   useEffect(() => {
-    if (idToken) return;
+    if (idToken || isNativeApp()) return;
     let cancelled = false;
     let attempts = 0;
     const tryInit = () => {
@@ -132,11 +134,24 @@ export default function AdminPortal() {
     return () => { cancelled = true; };
   }, [idToken, handleCredential]);
 
+  async function handleNativeSignIn() {
+    setNativeSigningIn(true);
+    try {
+      const response = await nativeGoogleSignIn();
+      await handleCredential(response);
+    } catch (e) {
+      if (e?.code !== 'SIGN_IN_CANCELED') setAuthError('Sign-in failed — please try again.');
+    } finally {
+      setNativeSigningIn(false);
+    }
+  }
+
   function signOut() {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(WHOAMI_KEY);
     setIdToken(null);
     setWhoami(null);
+    nativeGoogleSignOut();
   }
 
   if (checking) {
@@ -150,10 +165,18 @@ export default function AdminPortal() {
           <img src="/logo.png" alt="" className="ap-gate-logo" />
           <h1>Admin Portal</h1>
           <p>Sign in with a Google account that's been granted admin access.</p>
-          <div ref={buttonRef} className="ap-gsi-btn" />
+          {isNativeApp() ? (
+            <button className="ap-native-gsi-btn" onClick={handleNativeSignIn} disabled={nativeSigningIn}>
+              {nativeSigningIn ? 'Signing in…' : 'Sign in with Google'}
+            </button>
+          ) : (
+            <>
+              <div ref={buttonRef} className="ap-gsi-btn" />
+              {!GOOGLE_CLIENT_ID && <p className="ap-warn">Sign-in isn't configured on this deployment yet — no Google Client ID set.</p>}
+              {GOOGLE_CLIENT_ID && !gsiReady && <p className="ap-warn">Loading Google Sign-In…</p>}
+            </>
+          )}
           {authError && <p className="ap-warn ap-warn-error">{authError}</p>}
-          {!GOOGLE_CLIENT_ID && <p className="ap-warn">Sign-in isn't configured on this deployment yet — no Google Client ID set.</p>}
-          {GOOGLE_CLIENT_ID && !gsiReady && <p className="ap-warn">Loading Google Sign-In…</p>}
         </div>
       </div>
     );

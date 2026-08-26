@@ -482,17 +482,17 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       )}
                     </td>
                     <td className="ap-row-actions" data-label="Actions">
-                      <button onClick={() => setEditingProject(p)}>Edit</button>
-                      <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
-                      <button onClick={() => setReceiptProjectId(p.id)}>Payment Receipt</button>
-                      <button onClick={() => shareProjectUpdate(p, selectedClient)}>Share Update</button>
+                      <button className="ap-act ap-act-edit" onClick={() => setEditingProject(p)}>✏️ Edit</button>
+                      <button className="ap-act ap-act-photos" onClick={() => setMediaProjectId(p.id)}>📷 Photos & Sharing</button>
+                      <button className="ap-act ap-act-receipt" onClick={() => setReceiptProjectId(p.id)}>🧾 Payment Receipt</button>
+                      <button className="ap-act ap-act-share" onClick={() => shareProjectUpdate(p, selectedClient)}>💬 Share Update</button>
                       {p.progress === 'Inquiry' && (
-                        <button onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
+                        <button className="ap-act ap-act-thankyou" onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
                       {p.isActive === false ? (
-                        <button onClick={() => saveProject({ ...p, isActive: true })}>Activate</button>
+                        <button className="ap-act ap-act-activate" onClick={() => saveProject({ ...p, isActive: true })}>✅ Activate</button>
                       ) : (
-                        <button className="ap-danger" onClick={() => saveProject({ ...p, isActive: false })}>Deactivate</button>
+                        <button className="ap-act ap-act-deactivate" onClick={() => saveProject({ ...p, isActive: false })}>🚫 Deactivate</button>
                       )}
                     </td>
                   </tr>
@@ -511,7 +511,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <PendingLinksView projects={projects} clients={clients} users={users}
             onApprove={toggleProjectShare} onReject={unshareProject} onSelectClient={setSelectedClientId} />
         ) : view === 'requests' ? (
-          <ProjectRequestsView users={users} clients={clients} onResolve={resolveRequest} onSelectClient={setSelectedClientId} />
+          <ProjectRequestsView users={users} clients={clients} onResolve={resolveRequest} onSelectClient={setSelectedClientId} onLinkUser={linkUser} />
         ) : view === 'users' ? (
           <UsersView users={users} clients={clients} onImpersonate={impersonateUser} onSelectClient={setSelectedClientId} />
         ) : view === 'clients' ? (
@@ -742,8 +742,10 @@ function PendingLinksView({ projects, clients, users, onApprove, onReject, onSel
 // without a link code — no project is known yet, so this is a triage list:
 // find/create the right project via the client's own detail page (or
 // Photos & Sharing on any project) and share it, then mark resolved.
-function ProjectRequestsView({ users, clients, onResolve, onSelectClient }) {
+function ProjectRequestsView({ users, clients, onResolve, onSelectClient, onLinkUser }) {
   const [busyId, setBusyId] = useState(null);
+  const [pickerFor, setPickerFor] = useState(null);
+  const [pickedClientId, setPickedClientId] = useState('');
   const requests = users.filter(u => u.projectRequestPending);
 
   async function handleResolve(userId) {
@@ -752,6 +754,20 @@ function ProjectRequestsView({ users, clients, onResolve, onSelectClient }) {
       await onResolve(userId);
     } catch (e) {
       alert('Could not mark resolved — ' + e.message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleLink(userId) {
+    if (!pickedClientId) return;
+    setBusyId(userId);
+    try {
+      await onLinkUser(pickedClientId, userId);
+      setPickerFor(null);
+      setPickedClientId('');
+    } catch (e) {
+      alert('Could not link — ' + e.message);
     } finally {
       setBusyId(null);
     }
@@ -771,12 +787,31 @@ function ProjectRequestsView({ users, clients, onResolve, onSelectClient }) {
               <td data-label="Name">{u.name || '—'}</td>
               <td data-label="Email">{u.email}</td>
               <td data-label="Linked Client">
-                {client
-                  ? <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
-                  : <span className="ap-warn">Not linked yet</span>}
+                {client ? (
+                  <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
+                ) : pickerFor === u.id ? (
+                  <span className="ap-request-picker">
+                    <select value={pickedClientId} onChange={e => setPickedClientId(e.target.value)}>
+                      <option value="">Pick the matching client…</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.contactName} — {c.phone}</option>
+                      ))}
+                    </select>
+                    <button className="ap-act ap-act-activate" disabled={!pickedClientId || busyId === u.id}
+                      onClick={() => handleLink(u.id)}>{busyId === u.id ? 'Linking…' : 'Confirm'}</button>
+                    <button className="ap-act ap-act-deactivate" onClick={() => { setPickerFor(null); setPickedClientId(''); }}>Cancel</button>
+                  </span>
+                ) : (
+                  <span className="ap-warn">Not linked yet</span>
+                )}
               </td>
               <td data-label="Requested">{u.projectRequestedAt ? new Date(u.projectRequestedAt).toLocaleDateString('en-IN') : '—'}</td>
               <td className="ap-row-actions" data-label="Actions">
+                {client ? (
+                  <button className="ap-act ap-act-photos" onClick={() => onSelectClient(client.id)}>🔗 Go Link a Project</button>
+                ) : pickerFor !== u.id && (
+                  <button className="ap-act ap-act-edit" onClick={() => setPickerFor(u.id)}>🔗 Link to Client</button>
+                )}
                 <button className="ap-btn-primary" disabled={busyId === u.id} onClick={() => handleResolve(u.id)}>
                   {busyId === u.id ? 'Saving…' : 'Mark Resolved'}
                 </button>

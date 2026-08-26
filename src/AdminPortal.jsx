@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import Icon from './Icon.jsx';
 import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
+import { DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
 import './AdminPortal.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -177,6 +178,11 @@ export default function AdminPortal() {
             </>
           )}
           {authError && <p className="ap-warn ap-warn-error">{authError}</p>}
+          {import.meta.env.DEV && (
+            <button type="button" className="ap-dev-login" onClick={() => handleCredential({ credential: DEV_TEST_ADMIN_TOKEN })}>
+              🧪 Sign in as testadmin@test.com (local only)
+            </button>
+          )}
         </div>
       </div>
     );
@@ -408,13 +414,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   return (
     <div className="ap-root">
       <header className="ap-header">
-        <button className="ap-signout" onClick={onSignOut}>Sign out</button>
         <div className="ap-header-brand">
           <img src="/logo.png" alt="" className="ap-header-logo" />
           <span>Admin Portal</span>
         </div>
         <div className="ap-header-user">
           <span>{whoami.name}</span>
+          <button className="ap-signout-icon" onClick={onSignOut} title="Sign out" aria-label="Sign out">!</button>
         </div>
       </header>
 
@@ -459,13 +465,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               <tbody>
                 {clientProjects.map(p => (
                   <tr key={p.id}>
-                    <td>{p.name || '—'}</td>
-                    <td><span className={`ap-progress-chip ap-progress-${p.progress.toLowerCase().replace(/\s+/g, '-')}`}>{p.progress}</span></td>
-                    <td>{p.paintType || '—'}</td>
-                    <td>₹{p.amount?.toLocaleString()}</td>
-                    <td>₹{p.pendingAmount?.toLocaleString()}</td>
-                    <td>{(p.painterNames || []).join(', ') || '—'}</td>
-                    <td>
+                    <td data-label="Name">{p.name || '—'}</td>
+                    <td data-label="Progress"><span className={`ap-progress-chip ap-progress-${p.progress.toLowerCase().replace(/\s+/g, '-')}`}>{p.progress}</span></td>
+                    <td data-label="Paint Type">{p.paintType || '—'}</td>
+                    <td data-label="Amount">₹{p.amount?.toLocaleString()}</td>
+                    <td data-label="Pending">₹{p.pendingAmount?.toLocaleString()}</td>
+                    <td data-label="Painters">{(p.painterNames || []).join(', ') || '—'}</td>
+                    <td data-label="Link Code">
                       {p.linkCode ? (
                         <a
                           href={`https://wa.me/${(selectedClient?.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(`🎨 *The Painter Boys*\n\nUse this code on your dashboard (thepainterboys.com) to link your project:\n\n*${p.linkCode}*`)}`}
@@ -475,7 +481,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                         <button onClick={() => generateLinkCode(p.id)}>Generate</button>
                       )}
                     </td>
-                    <td className="ap-row-actions">
+                    <td className="ap-row-actions" data-label="Actions">
                       <button onClick={() => setEditingProject(p)}>Edit</button>
                       <button onClick={() => setMediaProjectId(p.id)}>Photos & Sharing</button>
                       <button onClick={() => setReceiptProjectId(p.id)}>Payment Receipt</button>
@@ -497,7 +503,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'quotation' ? (
           <QuotationTool />
         ) : view === 'dashboard' ? (
-          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId} />
+          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
+            onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
@@ -524,10 +531,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                     return !q || c.contactName.toLowerCase().includes(q) || c.phone.includes(q) || c.society.toLowerCase().includes(q);
                   }).map(c => (
                     <tr key={c.id}>
-                      <td className="ap-link" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
-                      <td>{c.phone}</td>
-                      <td>{c.society || '—'}</td>
-                      <td>{projects.filter(p => p.clientId === c.id).length}</td>
+                      <td className="ap-link" data-label="Name" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
+                      <td data-label="Phone">{c.phone}</td>
+                      <td data-label="Society">{c.society || '—'}</td>
+                      <td data-label="Projects">{projects.filter(p => p.clientId === c.id).length}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -624,23 +631,25 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
 
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
-function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient }) {
+function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus }) {
   const recentInquiries = projects.filter(p => p.progress === 'Inquiry').slice(0, 5);
   const tiles = [
     { label: 'Total Clients', value: stats.clients, cls: '' },
-    { label: 'Inquiry', value: statusCounts['Inquiry'] || 0, cls: 'ap-tile-purple' },
-    { label: 'Pending Visit', value: statusCounts['Pending Visit'] || 0, cls: 'ap-tile-purple' },
-    { label: 'Not Started', value: statusCounts['Not Started'] || 0, cls: 'ap-tile-amber' },
-    { label: 'In Progress', value: statusCounts['In Progress'] || 0, cls: 'ap-tile-green' },
-    { label: 'Completed', value: statusCounts['Completed'] || 0, cls: 'ap-tile-blue' },
-    { label: 'Cancelled', value: statusCounts['Cancelled'] || 0, cls: 'ap-tile-red' },
+    { label: 'Inquiry', value: statusCounts['Inquiry'] || 0, cls: 'ap-tile-purple', status: 'Inquiry' },
+    { label: 'Pending Visit', value: statusCounts['Pending Visit'] || 0, cls: 'ap-tile-purple', status: 'Pending Visit' },
+    { label: 'Not Started', value: statusCounts['Not Started'] || 0, cls: 'ap-tile-amber', status: 'Not Started' },
+    { label: 'In Progress', value: statusCounts['In Progress'] || 0, cls: 'ap-tile-green', status: 'In Progress' },
+    { label: 'Completed', value: statusCounts['Completed'] || 0, cls: 'ap-tile-blue', status: 'Completed' },
+    { label: 'Cancelled', value: statusCounts['Cancelled'] || 0, cls: 'ap-tile-red', status: 'Cancelled' },
     { label: 'Total Pending ₹', value: `₹${stats.pendingTotal.toLocaleString('en-IN')}`, cls: 'ap-tile-amber' },
   ];
   return (
     <div className="ap-dashboard">
       <div className="ap-tiles-grid">
         {tiles.map(t => (
-          <div key={t.label} className={`ap-tile ${t.cls}`}>
+          <div key={t.label} className={`ap-tile ${t.cls} ${t.status ? 'ap-tile-clickable' : ''}`}
+            onClick={t.status ? () => onFilterStatus(t.status) : undefined}
+            title={t.status ? `See all ${t.status} projects` : undefined}>
             <div className="ap-tile-value">{t.value}</div>
             <div className="ap-tile-label">{t.label}</div>
           </div>
@@ -684,10 +693,10 @@ function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
       <tbody>
         {linked.map(({ client, user }) => (
           <tr key={client.id}>
-            <td className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</td>
-            <td>{client.phone}</td>
-            <td>{user ? `${user.name} (${user.email})` : '—'}</td>
-            <td className="ap-row-actions">
+            <td className="ap-link" data-label="Client" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</td>
+            <td data-label="Phone">{client.phone}</td>
+            <td data-label="Linked Account">{user ? `${user.name} (${user.email})` : '—'}</td>
+            <td className="ap-row-actions" data-label="Actions">
               <button className="ap-danger" onClick={() => onUnlink(client.id)}>Unlink</button>
             </td>
           </tr>
@@ -715,10 +724,10 @@ function PendingLinksView({ projects, clients, users, onApprove, onReject, onSel
       <tbody>
         {rows.map(({ project, share, client, user }) => (
           <tr key={`${project.id}-${share.userId}`}>
-            <td>{user ? `${user.name} (${user.email})` : share.userId}</td>
-            <td className="ap-link" onClick={() => onSelectClient(project.clientId)}>{project.name || project.paintType || 'Project'}</td>
-            <td>{client?.contactName || '—'}</td>
-            <td className="ap-row-actions">
+            <td data-label="Requested By">{user ? `${user.name} (${user.email})` : share.userId}</td>
+            <td className="ap-link" data-label="Project" onClick={() => onSelectClient(project.clientId)}>{project.name || project.paintType || 'Project'}</td>
+            <td data-label="Client">{client?.contactName || '—'}</td>
+            <td className="ap-row-actions" data-label="Actions">
               <button className="ap-btn-primary" onClick={() => onApprove(project.id, share.userId)}>Approve</button>
               <button className="ap-danger" onClick={() => onReject(project.id, share.userId)}>Reject</button>
             </td>
@@ -759,15 +768,15 @@ function ProjectRequestsView({ users, clients, onResolve, onSelectClient }) {
           const client = clients.find(c => c.id === u.linkedClientId);
           return (
             <tr key={u.id}>
-              <td>{u.name || '—'}</td>
-              <td>{u.email}</td>
-              <td>
+              <td data-label="Name">{u.name || '—'}</td>
+              <td data-label="Email">{u.email}</td>
+              <td data-label="Linked Client">
                 {client
                   ? <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
                   : <span className="ap-warn">Not linked yet</span>}
               </td>
-              <td>{u.projectRequestedAt ? new Date(u.projectRequestedAt).toLocaleDateString('en-IN') : '—'}</td>
-              <td className="ap-row-actions">
+              <td data-label="Requested">{u.projectRequestedAt ? new Date(u.projectRequestedAt).toLocaleDateString('en-IN') : '—'}</td>
+              <td className="ap-row-actions" data-label="Actions">
                 <button className="ap-btn-primary" disabled={busyId === u.id} onClick={() => handleResolve(u.id)}>
                   {busyId === u.id ? 'Saving…' : 'Mark Resolved'}
                 </button>
@@ -809,15 +818,15 @@ function UsersView({ users, clients, onImpersonate, onSelectClient }) {
           const client = clients.find(c => c.id === u.linkedClientId);
           return (
             <tr key={u.id}>
-              <td>{u.name || '—'}</td>
-              <td>{u.email}</td>
-              <td>{u.role === 'Client' || !u.role ? 'Customer' : u.role}</td>
-              <td>
+              <td data-label="Name">{u.name || '—'}</td>
+              <td data-label="Email">{u.email}</td>
+              <td data-label="Role">{u.role === 'Client' || !u.role ? 'Customer' : u.role}</td>
+              <td data-label="Linked Client">
                 {client
                   ? <span className="ap-link" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</span>
                   : '—'}
               </td>
-              <td className="ap-row-actions">
+              <td className="ap-row-actions" data-label="Actions">
                 <button className="ap-btn-primary" disabled={busyId === u.id} onClick={() => handleImpersonate(u.id)}>
                   {busyId === u.id ? 'Opening…' : '👁️ Log in as'}
                 </button>
@@ -1108,6 +1117,10 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
           const a = document.createElement('a');
           a.href = url; a.download = 'receipt-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+          // Direct-to-WhatsApp sharing needs the OS share sheet (navigator.share
+          // with files), which only real phone browsers support — desktop/this
+          // preview just downloads instead, so say so rather than looking broken.
+          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
         };
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try { await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' }); }
@@ -1221,6 +1234,7 @@ function ThankYouCardModal({ client, onClose }) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a'); a.href = url; a.download = 'thankyou-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
         };
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try { await navigator.share({ files: [file], title: 'The Painter Boys' }); }
@@ -1503,6 +1517,7 @@ function QuotationCard({ quotation, onClose }) {
           const a = document.createElement('a');
           a.href = url; a.download = 'quotation-thepainterboys.png'; a.click();
           URL.revokeObjectURL(url);
+          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
         };
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try { await navigator.share({ files: [file], title: 'Quotation — The Painter Boys' }); }

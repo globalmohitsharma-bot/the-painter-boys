@@ -150,9 +150,16 @@
 
 @media (max-width: 800px) {
   .mp-app-body { flex-direction: column; }
-  .mp-sidebar { width: 100%; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; min-height: auto; padding: 10px 14px; gap: 6px; border-bottom: 1px solid var(--hairline); }
+  /* Wrapping pill row, not a horizontal scroll strip — on a touch device
+     there's no visible scrollbar hinting more tabs sit off to the right,
+     so "Profile" was getting cut off with no way to discover it. */
+  .mp-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; overflow-x: visible; min-height: auto; padding: 10px 14px; gap: 8px; border-bottom: 1px solid var(--hairline); }
   .mp-sidebar-label { display: none; }
-  .mp-sidebar-btn { flex-shrink: 0; white-space: nowrap; padding: 9px 12px; font-size: .84rem; }
+  .mp-sidebar-btn {
+    white-space: nowrap; padding: 9px 14px; font-size: .84rem;
+    background: var(--ivory); border: 1px solid var(--hairline); border-radius: 20px;
+  }
+  .mp-sidebar-btn.active { border-color: transparent; }
   .mp-sidebar-spacer { display: none; }
   .mp-sidebar-user { display: none; }
 }

@@ -1,6 +1,6 @@
 {
   "appId": "com.thepainterboys.app",
-  "appName": "The Painter Boys",
+  "appName": "ThePainterBoys",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

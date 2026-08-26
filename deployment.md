@@ -103,6 +103,47 @@ if you know to expect them:
     valid at a root domain per DNS rules. (Ended up unused once the
     www-forwarding approach was chosen instead, but worth knowing if a
     future project's registrar *does* support ALIAS/ANAME.)
+13. **Item 8's `Compress-Archive` fix isn't actually reliable** (found
+    2026-08-26, backend has since grown enough dependencies — Data
+    Protection, more Cosmos/Azure packages — that a plain `dotnet publish`
+    without `-r linux-x64` again produced nested folders with
+    backslash-separated zip entries, breaking Kudu's `rsync` the same way
+    item 7 describes). `Compress-Archive` **and**
+    `[System.IO.Compression.ZipFile]::CreateFromDirectory` both write
+    OS-native (backslash) separators for nested paths on Windows — neither
+    is spec-correct. The reliable fix is to build the zip entry-by-entry
+    and force forward slashes explicitly, via the PowerShell tool:
+    ```powershell
+    Add-Type -AssemblyName System.IO.Compression
+    $base = "<repo>\backend\publish-out"
+    $zipPath = "<repo>\backend\deploy.zip"
+    $fs = [System.IO.File]::Open($zipPath, [System.IO.FileMode]::Create)
+    $archive = New-Object System.IO.Compression.ZipArchive($fs, [System.IO.Compression.ZipArchiveMode]::Create)
+    Get-ChildItem -Path $base -Recurse -File | ForEach-Object {
+        $rel = $_.FullName.Substring($base.Length + 1).Replace([System.IO.Path]::DirectorySeparatorChar, [char]47)
+        $entry = $archive.CreateEntry($rel, [System.IO.Compression.CompressionLevel]::Optimal)
+        $entryStream = $entry.Open()
+        $fileStream = [System.IO.File]::OpenRead($_.FullName)
+        $fileStream.CopyTo($entryStream)
+        $fileStream.Close(); $entryStream.Close()
+    }
+    $archive.Dispose(); $fs.Close()
+    ```
+    This works regardless of whether `-r linux-x64` was used, so it's the
+    one to reach for now — items 7/8 are kept above for context but this
+    supersedes them. Verify before deploying: open the zip and confirm
+    zero entries contain a backslash.
+14. **`dotnet publish -o publish-out` has left (or regenerates) a stale
+    nested `publish-out/publish/` subfolder** containing a handful of
+    duplicate/RID-specific files (`appsettings*.json`, `*.deps.json`,
+    `*.runtimeconfig.json`, `*.staticwebassets.endpoints.json`) —
+    redundant with the copies already at `publish-out/`'s root. Git Bash's
+    `rm -rf publish-out` did not reliably clear it on a re-publish; using
+    PowerShell's `Remove-Item -Recurse -Force` on the whole `publish-out`
+    directory before republishing did. Always check
+    `find publish-out -maxdepth 1 -type d` (should show only `publish-out`
+    itself plus `runtimes` if present, nothing named `publish`) before
+    zipping — delete the subfolder if it's there.
 
 ## Current deployment configuration — everything set up so far (2026-08-19)
 

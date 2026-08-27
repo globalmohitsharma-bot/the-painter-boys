@@ -63,6 +63,63 @@ const EMPTY_QUOTATION = {
 // by layout, so it's editable rather than baked in as an exact constant.
 const DEFAULT_AREA_MULTIPLIER = 2.5;
 
+// html2canvas renders a scrollable ancestor at its CURRENT scroll clip —
+// these receipt/quotation cards sit inside a `.aq-wrap` with overflow-y:auto
+// (so the modal itself fits the screen), which meant anything below the
+// visible scroll position silently never made it into the captured image.
+// Temporarily lifting that clip for the capture, then restoring it, gets
+// the full card regardless of scroll position.
+async function captureCard(cardEl, backgroundColor) {
+  const wrap = cardEl.parentElement;
+  const prevOverflow = wrap.style.overflowY;
+  const prevMaxHeight = wrap.style.maxHeight;
+  wrap.style.overflowY = 'visible';
+  wrap.style.maxHeight = 'none';
+  try {
+    return await html2canvas(cardEl, { scale: 2, useCORS: true, backgroundColor, logging: false });
+  } finally {
+    wrap.style.overflowY = prevOverflow;
+    wrap.style.maxHeight = prevMaxHeight;
+  }
+}
+
+// Shows the generated card image before it goes anywhere, with the actual
+// share/download action gated behind a second click — previously the image
+// was captured and immediately shared/downloaded in one step, so there was
+// no chance to confirm it looked right first.
+function SharePreviewModal({ blob, filename, shareTitle, onClose }) {
+  const [url] = useState(() => URL.createObjectURL(blob));
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+
+  function downloadFallback() {
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
+  }
+
+  async function handleShare() {
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: shareTitle }); }
+      catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+    } else {
+      downloadFallback();
+    }
+  }
+
+  return (
+    <div className="ap-lightbox-overlay" onClick={onClose}>
+      <div className="ap-share-preview" onClick={e => e.stopPropagation()}>
+        <img src={url} alt="Generated preview" />
+        <div className="ap-share-preview-actions">
+          <button className="ap-act ap-act-share" onClick={handleShare}>📤 Share via WhatsApp</button>
+          <button className="ap-act ap-act-deactivate" onClick={onClose}>✕ Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPortal() {
   const [idToken, setIdToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
   const [whoami, setWhoami] = useState(() => {
@@ -1098,6 +1155,7 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
 function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState(null);
   const [newAmount, setNewAmount] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [addingPayment, setAddingPayment] = useState(false);
@@ -1144,27 +1202,8 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
     try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: '#0d2137', logging: false });
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'receipt-thepainterboys.png', { type: 'image/png' });
-        const downloadFallback = () => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'receipt-thepainterboys.png'; a.click();
-          URL.revokeObjectURL(url);
-          // Direct-to-WhatsApp sharing needs the OS share sheet (navigator.share
-          // with files), which only real phone browsers support — desktop/this
-          // preview just downloads instead, so say so rather than looking broken.
-          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
-        };
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Payment Summary — The Painter Boys' }); }
-          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
-        } else {
-          downloadFallback();
-        }
-        setCapturing(false);
-      }, 'image/png');
+      const canvas = await captureCard(cardRef.current, '#0d2137');
+      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
     } catch { setCapturing(false); }
   }
 
@@ -1179,7 +1218,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card" ref={cardRef}>
           <div className="aq-card-header">
-            <div className="aq-card-logo">🎨</div>
+            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
@@ -1235,6 +1274,10 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
+      {previewBlob && (
+        <SharePreviewModal blob={previewBlob} filename="receipt-thepainterboys.png"
+          shareTitle="Payment Summary — The Painter Boys" onClose={() => setPreviewBlob(null)} />
+      )}
     </div>
   );
 }
@@ -1243,6 +1286,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
 function ThankYouCardModal({ client, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState(null);
   const name = client?.contactName ? `Mr. ${client.contactName}` : 'Customer';
 
   const waText = [
@@ -1262,23 +1306,8 @@ function ThankYouCardModal({ client, onClose }) {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
     try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: null, logging: false });
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'thankyou-thepainterboys.png', { type: 'image/png' });
-        const downloadFallback = () => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a'); a.href = url; a.download = 'thankyou-thepainterboys.png'; a.click();
-          URL.revokeObjectURL(url);
-          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
-        };
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'The Painter Boys' }); }
-          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
-        } else {
-          downloadFallback();
-        }
-        setCapturing(false);
-      }, 'image/png');
+      const canvas = await captureCard(cardRef.current, null);
+      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
     } catch { setCapturing(false); }
   }
 
@@ -1292,7 +1321,7 @@ function ThankYouCardModal({ client, onClose }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card ap-ty-card" ref={cardRef}>
           <div className="aq-card-header">
-            <div className="aq-card-logo">🎨</div>
+            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
@@ -1319,6 +1348,10 @@ function ThankYouCardModal({ client, onClose }) {
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
+      {previewBlob && (
+        <SharePreviewModal blob={previewBlob} filename="thankyou-thepainterboys.png"
+          shareTitle="The Painter Boys" onClose={() => setPreviewBlob(null)} />
+      )}
     </div>
   );
 }
@@ -1506,6 +1539,7 @@ function QuotationTool() {
 function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState(null);
   const { society, customerName, mobile, bhk, paintType, workItems, amount, areaSqFt, ratePerSqFt } = quotation;
   const items = workItems.filter(w => w.name.trim() && Number(w.price) > 0);
   const quoteDate = new Date();
@@ -1544,24 +1578,8 @@ function QuotationCard({ quotation, onClose }) {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
     try {
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: '#0d2137', logging: false });
-      canvas.toBlob(async (blob) => {
-        const file = new File([blob], 'quotation-thepainterboys.png', { type: 'image/png' });
-        const downloadFallback = () => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'quotation-thepainterboys.png'; a.click();
-          URL.revokeObjectURL(url);
-          alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
-        };
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Quotation — The Painter Boys' }); }
-          catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
-        } else {
-          downloadFallback();
-        }
-        setCapturing(false);
-      }, 'image/png');
+      const canvas = await captureCard(cardRef.current, '#0d2137');
+      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
     } catch { setCapturing(false); }
   }
 
@@ -1576,7 +1594,7 @@ function QuotationCard({ quotation, onClose }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card" ref={cardRef}>
           <div className="aq-card-header">
-            <img className="aq-card-logo-img" src="/icon.svg" alt="" />
+            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
@@ -1624,6 +1642,10 @@ function QuotationCard({ quotation, onClose }) {
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
+      {previewBlob && (
+        <SharePreviewModal blob={previewBlob} filename="quotation-thepainterboys.png"
+          shareTitle="Quotation — The Painter Boys" onClose={() => setPreviewBlob(null)} />
+      )}
     </div>
   );
 }

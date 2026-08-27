@@ -16,6 +16,7 @@
 .ap-native-gsi-btn:disabled { opacity: .6; cursor: default; }
 .ap-warn { font-size: .78rem; color: var(--ink-faint); margin-top: 14px; }
 .ap-warn-error { color: #dc2626; font-weight: 700; }
+.ap-add-payment-ok { font-size: .82rem; color: #15803d; font-weight: 700; }
 .ap-dev-login {
   margin-top: 14px; width: 100%; background: #fef3c7; border: 1.5px dashed #d97706; color: #92400e;
   padding: 9px 14px; border-radius: 8px; font-size: .78rem; font-weight: 700; cursor: pointer;

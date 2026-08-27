@@ -1159,14 +1159,27 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
   const [newAmount, setNewAmount] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [addingPayment, setAddingPayment] = useState(false);
+  const [addStatus, setAddStatus] = useState(null); // { ok: bool, text: string } | null
   if (!project) return null;
 
   async function handleAddPayment() {
     const amount = Number(newAmount);
     if (!amount || amount <= 0) return;
     setAddingPayment(true);
-    try { await onAddPayment(project.id, newDate, amount); setNewAmount(''); }
-    finally { setAddingPayment(false); }
+    setAddStatus(null);
+    try {
+      await onAddPayment(project.id, newDate, amount);
+      setNewAmount('');
+      // Payment History sits above this form, off-screen once you've
+      // scrolled down to add one — without this, a successful add looked
+      // identical to a silently failed one.
+      setAddStatus({ ok: true, text: `✓ Added ₹${amount.toLocaleString('en-IN')} — see updated totals above` });
+      setTimeout(() => setAddStatus(null), 5000);
+    } catch (e) {
+      setAddStatus({ ok: false, text: `Could not add payment — ${e.message}` });
+    } finally {
+      setAddingPayment(false);
+    }
   }
 
   const history = project.tokenHistory || [];
@@ -1262,6 +1275,9 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
               {addingPayment ? 'Saving…' : 'Add'}
             </button>
           </div>
+          {addStatus && (
+            <p className={addStatus.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'} style={{ marginTop: 8 }}>{addStatus.text}</p>
+          )}
         </div>
 
         <div className="aq-actions">

@@ -3,7 +3,8 @@
   "appName": "ThePainterBoys",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "url": "https://www.thepainterboys.com"
   },
   "backgroundColor": "#0d2137"
 }

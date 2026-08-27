@@ -291,32 +291,53 @@
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
 .aq-wrap { width: 100%; max-width: 400px; max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.aq-card { background: var(--ivory); border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
-.aq-card-header { background: linear-gradient(150deg, var(--obsidian) 0%, var(--ink) 60%, var(--obsidian) 100%); padding: 32px 24px 22px; text-align: center; }
+/* Dark navy + gold invoice look throughout, not just the header — bordered
+   gold-outline boxes on a deep navy field, matching the reference design. */
+.aq-card {
+  background: linear-gradient(180deg, var(--obsidian) 0%, var(--ink) 100%);
+  border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  padding-bottom: 18px;
+}
+.aq-card-header { padding: 32px 24px 22px; text-align: center; }
 .aq-card-logo-img { height: 96px; width: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
 .aq-card-company { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--gold-soft); letter-spacing: .02em; }
 .aq-card-tagline { font-size: .72rem; color: rgba(255,255,255,.55); letter-spacing: .14em; text-transform: uppercase; margin-top: 6px; }
-.aq-card-badge { background: rgba(242,135,31,.1); text-align: center; font-size: .7rem; font-weight: 900; letter-spacing: .14em; color: var(--gold-deep); padding: 10px; border-bottom: 2px solid rgba(242,135,31,.2); text-transform: uppercase; }
-.aq-card-section { padding: 18px 22px; border-bottom: 1px solid var(--hairline); }
-.aq-card-section-title { font-size: .65rem; font-weight: 800; letter-spacing: .12em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 12px; }
-.aq-card-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .9rem; color: var(--ink); }
-.aq-card-row span:first-child { color: var(--ink-faint); }
-.aq-card-row span:last-child { font-weight: 700; text-align: right; }
+.aq-card-badge {
+  text-align: center; font-size: .8rem; font-weight: 900; letter-spacing: .16em; color: var(--gold-soft);
+  padding: 10px; text-transform: uppercase; border-top: 1px solid rgba(255,191,115,.25);
+  border-bottom: 1px solid rgba(255,191,115,.25); margin: 0 22px 16px;
+}
+.aq-card-section {
+  margin: 0 18px 14px; padding: 16px 18px; border: 1.5px solid rgba(255,191,115,.35);
+  border-radius: 12px; background: rgba(255,255,255,.03);
+}
+.aq-card-section-title {
+  font-size: .68rem; font-weight: 800; letter-spacing: .14em; color: var(--gold-soft);
+  text-transform: uppercase; text-align: center; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid rgba(255,191,115,.25);
+}
+.aq-card-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .88rem; color: rgba(255,255,255,.9); }
+.aq-card-row span:first-child { color: rgba(255,255,255,.55); }
+.aq-card-row span:last-child { font-weight: 700; text-align: right; color: #fff; }
 .aq-card-item-table { display: flex; flex-direction: column; }
 .aq-card-item-row {
   display: flex; justify-content: space-between; gap: 12px; padding: 7px 0;
-  font-size: .9rem; color: var(--ink); border-bottom: 1px dashed var(--hairline);
+  font-size: .88rem; color: rgba(255,255,255,.9); border-bottom: 1px dashed rgba(255,191,115,.2);
 }
 .aq-card-item-row:last-child { border-bottom: none; }
-.aq-card-item-row span:last-child { font-weight: 700; color: var(--gold-deep); }
+.aq-card-item-row span:last-child { font-weight: 700; color: var(--gold-soft); }
 .aq-card-total {
-  display: flex; justify-content: space-between; align-items: center; padding: 18px 22px;
-  background: rgba(242,135,31,.1); border-top: 1.5px solid rgba(242,135,31,.3);
-  font-family: var(--font-display); font-weight: 800; color: var(--gold-deep);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+  margin: 0 18px 14px; padding: 18px 22px; border: 1.5px solid rgba(255,191,115,.4); border-radius: 12px;
+  background: rgba(255,191,115,.07); font-family: var(--font-display); font-weight: 800; color: var(--gold-soft);
 }
-.aq-card-total span:last-child { font-size: 1.5rem; font-weight: 900; }
-.aq-card-terms { padding: 12px 22px; background: var(--parchment); font-size: .76rem; color: var(--ink-soft); border-bottom: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 4px; }
-.aq-card-footer { background: var(--parchment); padding: 16px 20px; text-align: center; font-size: .85rem; color: var(--ink-soft); }
+.aq-card-total span:first-child { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
+.aq-card-total span:last-child { font-size: 1.9rem; font-weight: 900; }
+.aq-card-terms {
+  margin: 0 18px 14px; padding: 12px 18px; border: 1.5px solid rgba(255,191,115,.35); border-radius: 12px;
+  font-size: .76rem; color: rgba(255,255,255,.7); display: flex; flex-direction: column; gap: 4px;
+}
+.aq-card-footer { padding: 14px 20px 4px; text-align: center; font-size: .85rem; color: rgba(255,255,255,.75); }
 .aq-actions { display: flex; flex-direction: column; gap: 8px; }
 .aq-share-btn {
   width: 100%; border: none; cursor: pointer; padding: 15px; border-radius: 14px;
@@ -328,9 +349,9 @@
 .aq-close-btn { padding: 12px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7); border-radius: 12px; font-size: .9rem; font-weight: 600; cursor: pointer; }
 .ap-ty-body { padding: 30px 28px; text-align: center; }
 .ap-ty-stars { color: var(--gold); letter-spacing: .3em; margin-bottom: 14px; }
-.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
-.ap-ty-dear { font-size: .95rem; color: var(--ink-soft); margin-bottom: 14px; }
-.ap-ty-body p { font-size: .88rem; color: var(--ink); line-height: 1.6; margin-bottom: 10px; }
+.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--gold-soft); margin-bottom: 10px; }
+.ap-ty-dear { font-size: .95rem; color: rgba(255,255,255,.85); margin-bottom: 14px; }
+.ap-ty-body p { font-size: .88rem; color: rgba(255,255,255,.85); line-height: 1.6; margin-bottom: 10px; }
 
 /* ── Project media (photos + sharing) modal ── */
 .ap-media-section { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--hairline); }

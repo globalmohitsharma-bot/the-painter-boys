@@ -14,7 +14,11 @@ const TOKEN_KEY = 'pb_mine_id_token';
 
 async function api(path, idToken) {
   const res = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${idToken}` } });
-  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(`GET ${path} -> ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -61,6 +65,7 @@ export default function MyProjects() {
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
   const [nativeError, setNativeError] = useState('');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const isImpersonating = !!idToken && idToken.startsWith('IMPERSONATE_');
   // Impersonation tokens carry no client-readable payload, so fall back to
@@ -77,6 +82,18 @@ export default function MyProjects() {
       const data = await api('/api/my-projects', token);
       setProjects(data);
     } catch (e) {
+      if (e.status === 401) {
+        // Google ID tokens expire in ~1 hour. On mobile, "closing" a tab
+        // often just backgrounds it rather than clearing it, so a tab left
+        // open overnight still decodes fine client-side (that's just
+        // reading the JWT payload, no server round-trip) but the server
+        // correctly rejects it — send back to a clean sign-in instead of
+        // leaving a "Welcome, X" header up next to a raw error.
+        sessionStorage.removeItem(TOKEN_KEY);
+        setIdToken(null);
+        setSessionExpired(true);
+        return;
+      }
       setError('Could not load your projects — ' + e.message);
       setProjects([]);
     }
@@ -226,6 +243,7 @@ export default function MyProjects() {
                   <Icon name="folder" size={28} className="mp-gate-icon" />
                   <h3>Sign in to view your dashboard</h3>
                   <p>Use the same Google account you shared with The Painter Boys team.</p>
+                  {sessionExpired && <p className="mp-warn">Your session expired — please sign in again.</p>}
                   {isNativeApp() ? (
                     <>
                       <button className="mp-native-gsi-btn" onClick={handleNativeSignIn} disabled={nativeSigningIn}>

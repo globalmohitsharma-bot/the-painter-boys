@@ -72,6 +72,16 @@ done (find PIDs via `tasklist`), and delete any `_test_*.mjs` /
 
 ## Live prod smoke testing (do this after every push)
 
+**Run `npm run smoke:prod`** — checked-in reusable script
+([testing/prod-smoke-test.mjs](testing/prod-smoke-test.mjs)) covering the
+universal, feature-independent checks below across desktop and mobile: all
+main pages load with no unexpected console errors and no horizontal
+overflow, and every protected API route correctly 401s with no token. Exits
+non-zero on any failure. If you just shipped a specific new feature, also
+grep the live bundle for a string unique to it (see the "Bundle check"
+snippet further down) — that part needs to be tailored per deploy and isn't
+automated in the script.
+
 Prod has **no auth bypass** (by design — see the security note in project
 memory about why an open "any email" bypass was declined). That caps what
 can be verified live to three things:

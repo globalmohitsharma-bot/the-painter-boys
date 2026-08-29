@@ -72,8 +72,9 @@ const DEFAULT_SOCIETIES = [
   'VVIP Addresses', 'VVIP Homes', 'Windsor Majesty', 'Windsor Paradise 2',
 ].sort();
 const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
+const SPACE_TYPES = ['Wall', 'Room', 'Full Home', 'Commercial', 'Shop'];
 const EMPTY_QUOTATION = {
-  society: '', customerName: '', mobile: '', bhk: '', paintType: '',
+  society: '', customerName: '', mobile: '', bhk: '', paintType: '', spaceType: '',
   workItems: [
     { name: 'Putty (2 Coat)', price: '' },
     { name: 'Primer', price: '' },
@@ -302,6 +303,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [showInactive, setShowInactive] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null); // { ok, message } | null
+  const [utilitiesOpen, setUtilitiesOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -534,7 +536,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className={`ap-sidebar-btn ${view === 'grid' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('grid')}>🗂️ Grid View</button>
           <button className={`ap-sidebar-btn ${view === 'clients' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('clients')}>📋 All Clients</button>
           <button className="ap-sidebar-btn ap-sidebar-btn-accent" onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}>➕ Create Client</button>
-          <button className={`ap-sidebar-btn ${view === 'quotation' ? 'active' : ''}`} onClick={() => goto('quotation')}>🧾 Quotation</button>
           <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
           <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
             ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
@@ -542,7 +543,19 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className={`ap-sidebar-btn ${view === 'requests' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('requests')}>
             📨 Requests{projectRequestCount > 0 ? ` (${projectRequestCount})` : ''}
           </button>
-          <button className={`ap-sidebar-btn ${view === 'users' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('users')}>👥 Users</button>
+          <button
+            className={`ap-sidebar-btn ${['quotation', 'users', 'sync'].includes(view) && !selectedClientId ? 'active' : ''}`}
+            onClick={() => setUtilitiesOpen(o => !o)}
+          >
+            🔧 Utilities {utilitiesOpen ? '▾' : '▸'}
+          </button>
+          {utilitiesOpen && (
+            <div className="ap-sidebar-subgroup">
+              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'quotation' ? 'active' : ''}`} onClick={() => goto('quotation')}>🧾 Quotation & Calculator</button>
+              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'users' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('users')}>👥 Users</button>
+              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'sync' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('sync')}>🔄 Google Sheet Sync</button>
+            </div>
+          )}
         </nav>
 
       <main className="ap-main">
@@ -606,21 +619,22 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           </>
         ) : view === 'quotation' ? (
           <QuotationTool />
-        ) : view === 'dashboard' ? (
+        ) : view === 'sync' ? (
           <>
             <div className="ap-sync-box">
               <div>
                 <strong>Google Sheet sync</strong>
-                <p>One-way pull — checks the Staff Portal's sheet for new entries and imports them. Never writes back to the sheet.</p>
+                <p>One-way pull — checks the Staff Portal's sheet for new entries and imports them. Never writes back to the sheet. Also runs automatically once a week in the background.</p>
               </div>
               <button className="ap-btn-primary" onClick={syncSheet} disabled={syncing}>
                 {syncing ? '⏳ Checking sheet…' : '🔄 Sync from Google Sheet'}
               </button>
             </div>
             {syncResult && <p className={syncResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{syncResult.message}</p>}
-            <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
-              onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
           </>
+        ) : view === 'dashboard' ? (
+          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
+            onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
@@ -1693,6 +1707,24 @@ function QuotationTool() {
           </label>
           <label className="ap-field"><span>BHK</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. 3 BHK" /></label>
         </div>
+        <label className="ap-field"><span>Space Type</span></label>
+        <div className="ap-paint-type-tiles">
+          {SPACE_TYPES.map(name => (
+            <button
+              key={name}
+              type="button"
+              className={`ap-paint-type-tile${form.spaceType === name ? ' selected' : ''}`}
+              onClick={() => field('spaceType', form.spaceType === name ? '' : name)}
+            >
+              {form.spaceType === name && <span className="ap-paint-type-check">✓</span>}
+              {name}
+            </button>
+          ))}
+        </div>
+        <label className="ap-field">
+          <span>Or describe it yourself</span>
+          <input value={SPACE_TYPES.includes(form.spaceType) ? '' : form.spaceType} onChange={e => field('spaceType', e.target.value)} placeholder="e.g. Basement, Terrace, Office lobby" />
+        </label>
         <label className="ap-field"><span>Paint Type — tap all that apply</span></label>
         <div className="ap-paint-type-tiles">
           {PAINT_TYPES.map(name => (
@@ -1734,7 +1766,7 @@ function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const { society, customerName, mobile, bhk, paintType, workItems, amount, areaSqFt, ratePerSqFt } = quotation;
+  const { society, customerName, mobile, bhk, paintType, spaceType, workItems, amount, areaSqFt, ratePerSqFt } = quotation;
   const items = workItems.filter(w => w.name.trim() && Number(w.price) > 0);
   const quoteDate = new Date();
   const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -1799,6 +1831,7 @@ function QuotationCard({ quotation, onClose }) {
             {society && <div className="aq-card-row"><span>Society</span><span>{society}</span></div>}
             {bhk && <div className="aq-card-row"><span>Configuration</span><span>{bhk}</span></div>}
             {mobile && <div className="aq-card-row"><span>Phone</span><span>{mobile}</span></div>}
+            {spaceType && <div className="aq-card-row"><span>Space Type</span><span>{spaceType}</span></div>}
             {paintType && <div className="aq-card-row"><span>Paint Type</span><span>{paintType}</span></div>}
             {areaSqFt && <div className="aq-card-row"><span>Est. Painting Area</span><span>{areaSqFt.toLocaleString('en-IN')} sq ft</span></div>}
           </div>

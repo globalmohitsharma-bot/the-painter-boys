@@ -65,6 +65,8 @@
 .ap-sidebar-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
 .ap-sidebar-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
 .ap-sidebar-btn-accent { color: var(--gold-soft); border: 1.5px dashed rgba(242,135,31,.4); margin: 6px 0; }
+.ap-sidebar-subgroup { display: flex; flex-direction: column; gap: 2px; margin-left: 14px; border-left: 1.5px solid rgba(255,255,255,.1); padding-left: 8px; }
+.ap-sidebar-subbtn { font-size: .82rem; opacity: .9; }
 
 .ap-main { flex: 1; min-width: 0; padding: 28px 24px 80px; }
 

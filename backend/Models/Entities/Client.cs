@@ -30,6 +30,11 @@ public class Client
     [JsonPropertyName("customerUrl")]
     public string CustomerUrl { get; set; } = string.Empty;
 
+    /// <summary>Free-text notes about the customer themselves (not tied to any
+    /// one project) — preferences, access instructions, family details, etc.</summary>
+    [JsonPropertyName("otherDetails")]
+    public string OtherDetails { get; set; } = string.Empty;
+
     [JsonPropertyName("linkedUserId")]
     public string? LinkedUserId { get; set; }
 

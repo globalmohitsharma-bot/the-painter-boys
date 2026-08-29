@@ -88,6 +88,12 @@ public class Project
     [JsonPropertyName("otherDetails")]
     public string OtherDetails { get; set; } = string.Empty;
 
+    /// <summary>The work steps committed to the customer, e.g. "2 Coat Putty,
+    /// Primer, 2 Coat Paint" — a comma-joined list, same convention as PaintType,
+    /// so both can grow their tile options without a schema change.</summary>
+    [JsonPropertyName("workProcess")]
+    public string WorkProcess { get; set; } = string.Empty;
+
     [JsonPropertyName("painterNames")]
     public List<string> PainterNames { get; set; } = [];
 

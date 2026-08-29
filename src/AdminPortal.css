@@ -80,6 +80,12 @@
 .ap-tile-blue .ap-tile-value { color: #2563eb; }
 .ap-tile-red .ap-tile-value { color: #dc2626; }
 .ap-dashboard-subhead { font-family: var(--font-display); color: #fff; margin-bottom: 14px; }
+.ap-sync-box {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  background: var(--ivory); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.04);
+}
+.ap-sync-box strong { color: var(--ink); font-size: .92rem; }
+.ap-sync-box p { color: var(--ink-faint); font-size: .78rem; margin-top: 3px; }
 
 @media (max-width: 800px) {
   .ap-body { flex-direction: column; }
@@ -238,6 +244,10 @@
   padding: 9px 12px; border: 1.5px solid var(--hairline); border-radius: 6px; font-size: .88rem; font-family: inherit; color: var(--ink); background: var(--parchment);
 }
 .ap-field input:focus, .ap-field select:focus, .ap-field textarea:focus { outline: none; border-color: var(--gold); background: var(--ivory); }
+.ap-primary-painter-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
+.ap-primary-painter-row { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
+.ap-primary-badge { background: rgba(242,135,31,.15); color: var(--gold-deep); font-weight: 800; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; }
+.ap-secondary-badge { background: var(--parchment); color: var(--ink-faint); font-weight: 700; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; }
 .ap-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 .ap-modal-actions button { padding: 9px 20px; border-radius: 8px; font-size: .85rem; font-weight: 700; cursor: pointer; border: 1.5px solid var(--hairline); background: none; }
 
@@ -284,6 +294,36 @@
 .ap-painter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .ap-painter-chip { background: var(--parchment); border: 1.5px solid var(--hairline); border-radius: 20px; padding: 6px 14px; font-size: .82rem; cursor: pointer; color: var(--ink-soft); }
 .ap-painter-chip-selected { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; color: var(--obsidian); font-weight: 700; }
+
+.ap-painter-icon-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+.ap-painter-icon-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; width: 68px;
+  background: none; border: none; cursor: pointer; padding: 4px; border-radius: 10px;
+}
+.ap-painter-icon-btn:hover { background: var(--parchment); }
+.ap-painter-avatar {
+  position: relative; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 800; font-size: 1.1rem; font-family: var(--font-display);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15); transition: transform .12s, box-shadow .12s;
+}
+.ap-painter-icon-btn.selected .ap-painter-avatar { box-shadow: 0 0 0 3px var(--gold), 0 2px 8px rgba(0,0,0,.2); transform: scale(1.05); }
+.ap-painter-check {
+  position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gold); color: var(--obsidian); font-size: .68rem; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; border: 2px solid var(--ivory);
+}
+.ap-painter-icon-name { font-size: .74rem; color: var(--ink-soft); text-align: center; line-height: 1.2; max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-painter-icon-btn.selected .ap-painter-icon-name { color: var(--ink); font-weight: 700; }
+
+.ap-paint-type-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.ap-paint-type-tile {
+  display: flex; align-items: center; gap: 6px; background: var(--parchment); border: 1.5px solid var(--hairline);
+  border-radius: 10px; padding: 9px 16px; font-size: .84rem; font-weight: 600; color: var(--ink-soft); cursor: pointer;
+}
+.ap-paint-type-tile:hover { border-color: var(--gold); }
+.ap-paint-type-tile.selected { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; color: var(--obsidian); font-weight: 800; }
+.ap-paint-type-check { font-size: .78rem; }
 
 /* ── Quotation share card ── */
 .aq-overlay {

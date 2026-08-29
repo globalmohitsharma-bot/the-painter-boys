@@ -27,25 +27,48 @@ async function api(path, idToken, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', society: '' };
+const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', society: '', otherDetails: '' };
 const EMPTY_PROJECT = {
   name: '', progress: 'Inquiry', paintType: '', dateContacted: '', dateStarted: '', dateCompleted: '',
   remarks: '', noOfDays: '', amount: 0, otherDetails: '', painterNames: [], tokenReceived: 0,
-  pendingAmount: 0, tokenHistory: [], additionalWork: '', isActive: true,
+  pendingAmount: 0, tokenHistory: [], additionalWork: '', workProcess: '', isActive: true,
 };
 const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progress', 'Completed', 'Cancelled'];
+// A short, real product list — not restrictive: this is a datalist (like Society),
+// so typing anything else (the "Others" case) still works, just without a suggestion.
+const PAINT_TYPES = ['Distemper', 'Emulsion', 'Tractor Emulsion', 'Royale', 'Royale Shyne', 'Apex', 'Deco Paint', 'PU Paint'];
+// The step-by-step scope committed to the customer — kept separate from
+// PaintType so "what product" and "what process" can both be tracked.
+const WORK_PROCESS_STEPS = [
+  '1 Coat Putty', '2 Coat Putty', 'Primer', 'Wall Repair', 'Crack Filling',
+  'Texture', '1 Coat Paint', '2 Coat Paint', 'Waterproofing', 'Polish',
+];
+const NO_OF_DAYS_OPTIONS = ['2', '3', '5', '7', '10', '12', '15', '20', '30'];
+const PAINTER_AVATAR_COLORS = ['#c96a0f', '#7c3aed', '#16a34a', '#2563eb', '#dc2626', '#0891b2', '#be185d', '#65a30d'];
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return PAINTER_AVATAR_COLORS[Math.abs(hash) % PAINTER_AVATAR_COLORS.length];
+}
+// Order in painterNames carries meaning — first is Primary — so the display
+// string flags it rather than listing everyone identically.
+function formatPainters(names) {
+  if (!names || names.length === 0) return '';
+  if (names.length === 1) return names[0];
+  return `★ ${names[0]}, ${names.slice(1).join(', ')}`;
+}
 // Same built-in lists the Staff Portal ships with, for the same "select or
 // type a new one" behavior on Society/Painter fields.
 const DEFAULT_SOCIETIES = [
-  'Addela Palm Resort', 'Ajnara Fragrance', 'Ajnara Grace', 'Ajnara Integrity',
+  'Aashiyana', 'Addela Palm Resort', 'Ajnara Fragrance', 'Ajnara Grace', 'Ajnara Integrity',
   'Anthem Kingdom Homes', 'Charms Castle', 'Charms The Gateway Towers',
   'Devika Skypers', 'Emenox Brave Hearts', 'Gaur Cascades', 'GAV Green View Heights',
-  'Jyoti Super Village', 'KDP Grand Savanna', 'KW Srishti', 'Landcraft River Heights',
+  'Jyoti Super Village', 'KDP Grand Savanna', 'KDP Grand Savannah', 'KW Srishti', 'Landcraft River Heights',
   'MCC Signature Heights', 'Migsun Atharva', 'Migsun Roof', 'Nilaya Greens',
-  'Officer City', 'Raj Nagar Residency', 'Royce Sentosa Parc', 'Sangwan Heights',
-  'SCC Blossom', 'SCC Heights', 'SCC Sapphire', 'SG Impression Plus',
+  'Officer City', 'Officer City 1', 'Officer City 2', 'Raj Nagar Residency', 'Royce Sentosa Parc', 'Sangwan Heights',
+  'SCC Blossom', 'SCC Heights', 'SCC Sapphire', 'SG Impression', 'SG Impression Plus',
   'SG Impressions 58', 'SG Vista', 'Star Rameshwaram', 'SVP Gulmohur Garden',
-  'T and T Atlas', 'Uninav Eden', 'Uninav Residena', 'Uninav Utopia',
+  'T and T Atlas', 'Uninav Eden', 'Uninav Residena', 'Uninav Utopia', 'Vasundhara',
   'VVIP Addresses', 'VVIP Homes', 'Windsor Majesty', 'Windsor Paradise 2',
 ].sort();
 const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
@@ -277,6 +300,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [search, setSearch] = useState('');
   const [projectFilter, setProjectFilter] = useState('Inquiry');
   const [showInactive, setShowInactive] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null); // { ok, message } | null
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -298,6 +323,28 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   }, [idToken]);
 
   useEffect(() => { load(); }, [load]);
+
+  // One-way pull from the legacy Staff Portal's Google Sheet — never writes
+  // back to it. Compares each sheet row's "#" against SheetRef already in
+  // Cosmos and only imports rows that aren't here yet.
+  async function syncSheet() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const result = await api('/api/admin/sheet-sync', idToken, { method: 'POST' });
+      setSyncResult({
+        ok: true,
+        message: result.imported === 0
+          ? 'Already up to date — no new entries in the sheet.'
+          : `Imported ${result.imported} new ${result.imported === 1 ? 'entry' : 'entries'}: ${result.entries.map(e => e.name).join(', ')}`,
+      });
+      if (result.imported > 0) await load();
+    } catch (e) {
+      setSyncResult({ ok: false, message: e.message });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function saveClient(client) {
     const isNew = !client.id;
@@ -511,7 +558,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               </div>
               <div className="ap-client-detail-actions">
                 <button onClick={() => setEditingClient(selectedClient)}>Edit Client</button>
-                <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId })}>+ New Project</button>
+                <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId, dateContacted: new Date().toISOString().slice(0, 10) })}>+ New Project</button>
               </div>
             </div>
             <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
@@ -527,7 +574,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                     <td data-label="Paint Type">{p.paintType || '—'}</td>
                     <td data-label="Amount">₹{p.amount?.toLocaleString()}</td>
                     <td data-label="Pending">₹{p.pendingAmount?.toLocaleString()}</td>
-                    <td data-label="Painters">{(p.painterNames || []).join(', ') || '—'}</td>
+                    <td data-label="Painters">{formatPainters(p.painterNames) || '—'}</td>
                     <td data-label="Link Code">
                       {p.linkCode ? (
                         <a
@@ -560,8 +607,20 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'quotation' ? (
           <QuotationTool />
         ) : view === 'dashboard' ? (
-          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
-            onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
+          <>
+            <div className="ap-sync-box">
+              <div>
+                <strong>Google Sheet sync</strong>
+                <p>One-way pull — checks the Staff Portal's sheet for new entries and imports them. Never writes back to the sheet.</p>
+              </div>
+              <button className="ap-btn-primary" onClick={syncSheet} disabled={syncing}>
+                {syncing ? '⏳ Checking sheet…' : '🔄 Sync from Google Sheet'}
+              </button>
+            </div>
+            {syncResult && <p className={syncResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{syncResult.message}</p>}
+            <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
+              onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
+          </>
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
@@ -950,10 +1009,11 @@ function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
       {client?.society && <div className="ap-card-row">🏘️ <span>{client.society}</span></div>}
       {client?.address && <div className="ap-card-row ap-card-addr">📍 <span>{client.address}</span></div>}
       {project.paintType && <div className="ap-card-row">🎨 <span>{project.paintType}</span></div>}
+      {project.workProcess && <div className="ap-card-row">📋 <span>{project.workProcess}</span></div>}
       {startDate && <div className="ap-card-row">📅 <span>{new Date(startDate).toLocaleDateString('en-IN')}</span></div>}
       {project.amount > 0 && <div className="ap-card-row">💰 <span>Amount: ₹{project.amount.toLocaleString('en-IN')}</span></div>}
       {project.pendingAmount > 0 && <div className="ap-card-row">⏳ <span>Pending: ₹{project.pendingAmount.toLocaleString('en-IN')}</span></div>}
-      {(project.painterNames || []).length > 0 && <div className="ap-card-row">👷 <span>{project.painterNames.join(', ')}</span></div>}
+      {(project.painterNames || []).length > 0 && <div className="ap-card-row">👷 <span>{formatPainters(project.painterNames)}</span></div>}
       {project.remarks && <div className="ap-card-remarks">{project.remarks}</div>}
       {project.tokenReceived > 0 && (
         <button className="ap-card-receipt-btn" onClick={e => { e.stopPropagation(); onViewReceipt(); }}>
@@ -964,15 +1024,18 @@ function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
   );
 }
 
+const REQUIRED_CLIENT_FIELDS = ['contactName', 'phone'];
+
 function ClientForm({ client, onCancel, onSave, societies = [] }) {
   const [form, setForm] = useState(client);
+  const canSave = REQUIRED_CLIENT_FIELDS.every(f => (form[f] || '').trim());
   return (
     <div className="ap-modal-overlay" onClick={onCancel}>
       <div className="ap-modal" onClick={e => e.stopPropagation()}>
         <h3>{form.id ? 'Edit Client' : 'New Client'}</h3>
         {['contactName', 'phone', 'email', 'address', 'society'].map(field => (
           <label key={field} className="ap-field">
-            <span>{field}</span>
+            <span>{field}{REQUIRED_CLIENT_FIELDS.includes(field) ? ' *' : ''}</span>
             <input
               value={form[field] || ''}
               list={field === 'society' ? 'ap-society-options' : undefined}
@@ -983,9 +1046,14 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
         <datalist id="ap-society-options">
           {societies.map(s => <option key={s} value={s} />)}
         </datalist>
+        <label className="ap-field">
+          <span>Other Details — notes about the customer</span>
+          <textarea rows={2} value={form.otherDetails || ''} onChange={e => setForm(f => ({ ...f, otherDetails: e.target.value }))} />
+        </label>
+        {!canSave && <p className="ap-warn">Name and Phone are required — everything else can be filled in later.</p>}
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>
-          <button className="ap-btn-primary" onClick={() => onSave(form)}>Save</button>
+          <button className="ap-btn-primary" onClick={() => onSave(form)} disabled={!canSave}>Save</button>
         </div>
       </div>
     </div>
@@ -995,10 +1063,32 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
 function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
   const [form, setForm] = useState({ ...project });
   const [newPainter, setNewPainter] = useState('');
+  const [newPaintType, setNewPaintType] = useState('');
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
   function submit() { onSave(form); }
   const painterOptions = [...new Set([...DEFAULT_PAINTERS, ...knownPainters])].sort();
   const selectedPainters = form.painterNames || [];
+  // paintType stays a plain string on the backend (no schema change) — tiles
+  // just read/write it as a comma-joined list, same as the old free-text field did.
+  const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
+  function togglePaintType(name) {
+    const next = selectedPaintTypes.includes(name)
+      ? selectedPaintTypes.filter(p => p !== name)
+      : [...selectedPaintTypes, name];
+    field('paintType', next.join(', '));
+  }
+  function addNewPaintType() {
+    const name = newPaintType.trim();
+    if (!name || selectedPaintTypes.includes(name)) return;
+    field('paintType', [...selectedPaintTypes, name].join(', '));
+    setNewPaintType('');
+  }
+  const selectedSteps = (form.workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
+  function toggleStep(name) {
+    field('workProcess', (selectedSteps.includes(name)
+      ? selectedSteps.filter(s => s !== name)
+      : [...selectedSteps, name]).join(', '));
+  }
   function togglePainter(name) {
     field('painterNames', selectedPainters.includes(name)
       ? selectedPainters.filter(p => p !== name)
@@ -1009,6 +1099,11 @@ function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
     if (!name || selectedPainters.includes(name)) return;
     field('painterNames', [...selectedPainters, name]);
     setNewPainter('');
+  }
+  // Order carries the meaning — first selected is Primary, the rest Secondary
+  // (matches how painterNames is already stored, so no schema change needed).
+  function makePrimary(name) {
+    field('painterNames', [name, ...selectedPainters.filter(p => p !== name)]);
   }
   return (
     <div className="ap-modal-overlay" onClick={onCancel}>
@@ -1022,31 +1117,88 @@ function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
               {PROGRESS_OPTIONS.map(o => <option key={o}>{o}</option>)}
             </select>
           </label>
-          <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} /></label>
           <label className="ap-field"><span>Date Contacted</span><input type="date" value={form.dateContacted} onChange={e => field('dateContacted', e.target.value)} /></label>
           <label className="ap-field"><span>Date Started</span><input type="date" value={form.dateStarted} onChange={e => field('dateStarted', e.target.value)} /></label>
           <label className="ap-field"><span>Date Completed</span><input type="date" value={form.dateCompleted} onChange={e => field('dateCompleted', e.target.value)} /></label>
+          <label className="ap-field">
+            <span>No Of Days</span>
+            <input value={form.noOfDays} onChange={e => field('noOfDays', e.target.value)} list="ap-no-of-days-options" />
+            <datalist id="ap-no-of-days-options">
+              {NO_OF_DAYS_OPTIONS.map(n => <option key={n} value={n} />)}
+            </datalist>
+          </label>
           <label className="ap-field"><span>Amount (₹)</span><input type="number" value={form.amount} onChange={e => field('amount', Number(e.target.value))} /></label>
           <label className="ap-field"><span>Token Received (₹)</span><input type="number" value={form.tokenReceived} onChange={e => field('tokenReceived', Number(e.target.value))} /></label>
           <label className="ap-field"><span>Pending Amount (₹)</span><input type="number" value={form.pendingAmount} onChange={e => field('pendingAmount', Number(e.target.value))} /></label>
         </div>
-        <label className="ap-field"><span>Painters</span></label>
-        <div className="ap-painter-chips">
-          {painterOptions.map(name => (
+        <label className="ap-field"><span>Paint Type — tap all used on this job</span></label>
+        <div className="ap-paint-type-tiles">
+          {PAINT_TYPES.map(name => (
             <button
               key={name}
               type="button"
-              className={`ap-painter-chip${selectedPainters.includes(name) ? ' ap-painter-chip-selected' : ''}`}
-              onClick={() => togglePainter(name)}
+              className={`ap-paint-type-tile${selectedPaintTypes.includes(name) ? ' selected' : ''}`}
+              onClick={() => togglePaintType(name)}
             >
-              {selectedPainters.includes(name) ? '✓ ' : ''}{name}
+              {selectedPaintTypes.includes(name) && <span className="ap-paint-type-check">✓</span>}
+              {name}
             </button>
           ))}
+        </div>
+        <div className="ap-quote-item-row">
+          <input placeholder="Add another paint type…" value={newPaintType} onChange={e => setNewPaintType(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewPaintType())} />
+          <button type="button" className="ap-add-item-btn" onClick={addNewPaintType} disabled={!newPaintType.trim()}>+ Add</button>
+        </div>
+        <label className="ap-field"><span>Process — what's committed to the customer</span></label>
+        <div className="ap-paint-type-tiles">
+          {WORK_PROCESS_STEPS.map(name => (
+            <button
+              key={name}
+              type="button"
+              className={`ap-paint-type-tile${selectedSteps.includes(name) ? ' selected' : ''}`}
+              onClick={() => toggleStep(name)}
+            >
+              {selectedSteps.includes(name) && <span className="ap-paint-type-check">✓</span>}
+              {name}
+            </button>
+          ))}
+        </div>
+        <label className="ap-field"><span>Painters — tap all who worked this job</span></label>
+        <div className="ap-painter-icon-grid">
+          {painterOptions.map(name => {
+            const selected = selectedPainters.includes(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`ap-painter-icon-btn${selected ? ' selected' : ''}`}
+                onClick={() => togglePainter(name)}
+                title={name}
+              >
+                <span className="ap-painter-avatar" style={{ background: avatarColor(name) }}>
+                  {name.trim().charAt(0).toUpperCase() || '?'}
+                  {selected && <span className="ap-painter-check">✓</span>}
+                </span>
+                <span className="ap-painter-icon-name">{name}</span>
+              </button>
+            );
+          })}
         </div>
         <div className="ap-quote-item-row">
           <input placeholder="Add a new painter…" value={newPainter} onChange={e => setNewPainter(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewPainter())} />
           <button type="button" className="ap-add-item-btn" onClick={addNewPainter} disabled={!newPainter.trim()}>+ Add</button>
         </div>
+        {selectedPainters.length > 1 && (
+          <div className="ap-primary-painter-list">
+            {selectedPainters.map((name, i) => (
+              <div key={name} className="ap-primary-painter-row">
+                <span className={i === 0 ? 'ap-primary-badge' : 'ap-secondary-badge'}>{i === 0 ? '★ Primary' : 'Secondary'}</span>
+                <span>{name}</span>
+                {i !== 0 && <button type="button" className="ap-link" onClick={() => makePrimary(name)}>Make Primary</button>}
+              </div>
+            ))}
+          </div>
+        )}
         <label className="ap-field"><span>Remarks</span><textarea rows={2} value={form.remarks} onChange={e => field('remarks', e.target.value)} /></label>
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>
@@ -1509,6 +1661,13 @@ function QuotationTool() {
   function updateItem(i, key, value) { setForm(f => ({ ...f, workItems: f.workItems.map((w, idx) => idx === i ? { ...w, [key]: value } : w) })); }
   function addItem() { setForm(f => ({ ...f, workItems: [...f.workItems, { name: '', price: '' }] })); }
   function removeItem(i) { setForm(f => ({ ...f, workItems: f.workItems.filter((_, idx) => idx !== i) })); }
+  const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
+  function togglePaintType(name) {
+    const next = selectedPaintTypes.includes(name)
+      ? selectedPaintTypes.filter(p => p !== name)
+      : [...selectedPaintTypes, name];
+    field('paintType', next.join(', '));
+  }
   const amount = form.workItems.reduce((s, w) => s + (Number(w.price) || 0), 0);
   const canGenerate = form.customerName.trim() && amount > 0;
 
@@ -1525,9 +1684,28 @@ function QuotationTool() {
         <div className="ap-form-grid">
           <label className="ap-field"><span>Customer Name</span><input value={form.customerName} onChange={e => field('customerName', e.target.value)} /></label>
           <label className="ap-field"><span>Mobile Number</span><input value={form.mobile} onChange={e => field('mobile', e.target.value)} /></label>
-          <label className="ap-field"><span>Society</span><input value={form.society} onChange={e => field('society', e.target.value)} /></label>
+          <label className="ap-field">
+            <span>Society</span>
+            <input value={form.society} onChange={e => field('society', e.target.value)} list="ap-quote-society-options" />
+            <datalist id="ap-quote-society-options">
+              {DEFAULT_SOCIETIES.map(s => <option key={s} value={s} />)}
+            </datalist>
+          </label>
           <label className="ap-field"><span>BHK</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. 3 BHK" /></label>
-          <label className="ap-field"><span>Paint Type</span><input value={form.paintType} onChange={e => field('paintType', e.target.value)} placeholder="e.g. Royale Shyne" /></label>
+        </div>
+        <label className="ap-field"><span>Paint Type — tap all that apply</span></label>
+        <div className="ap-paint-type-tiles">
+          {PAINT_TYPES.map(name => (
+            <button
+              key={name}
+              type="button"
+              className={`ap-paint-type-tile${selectedPaintTypes.includes(name) ? ' selected' : ''}`}
+              onClick={() => togglePaintType(name)}
+            >
+              {selectedPaintTypes.includes(name) && <span className="ap-paint-type-check">✓</span>}
+              {name}
+            </button>
+          ))}
         </div>
         <label className="ap-field"><span>Scope of Work &amp; Pricing</span></label>
         {form.workItems.map((w, i) => (

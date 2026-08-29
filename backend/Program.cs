@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddHttpClient();
 
 builder.Services.AddCosmosDb(builder.Configuration);
 builder.Services.AddBlobStorage(builder.Configuration);
@@ -19,6 +20,8 @@ builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<SheetSyncService>();
+builder.Services.AddHostedService<WeeklySheetSyncBackgroundService>();
 
 builder.Services.AddDataProtection();
 

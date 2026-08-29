@@ -304,6 +304,16 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null); // { ok, message } | null
   const [utilitiesOpen, setUtilitiesOpen] = useState(false);
+  const [toast, setToast] = useState(null); // string | null
+  const toastTimerRef = useRef(null);
+  // Every create/update/delete action routes through this so the admin gets
+  // the same clear "it worked" signal regardless of which action they took —
+  // previously most actions just silently closed a modal with no confirmation.
+  function showToast(message) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(message);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3200);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -355,12 +365,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       : await api(`/api/clients/${client.id}`, idToken, { method: 'PUT', body: JSON.stringify(client) });
     setClients(cs => isNew ? [saved, ...cs] : cs.map(c => c.id === saved.id ? saved : c));
     setEditingClient(null);
+    showToast(isNew ? `✓ Client "${saved.contactName}" added` : `✓ Client "${saved.contactName}" updated`);
   }
 
   async function deleteClient(id) {
     if (!confirm('Delete this client and keep their projects orphaned? This cannot be undone.')) return;
     await api(`/api/clients/${id}`, idToken, { method: 'DELETE' });
     setClients(cs => cs.filter(c => c.id !== id));
+    showToast('✓ Client deleted');
   }
 
   async function saveProject(project) {
@@ -371,17 +383,20 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       : await api(`/api/projects/${project.id}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
     setProjects(ps => isNew ? [saved, ...ps] : ps.map(p => p.id === saved.id ? saved : p));
     setEditingProject(null);
+    showToast(isNew ? '✓ Project added' : '✓ Project updated');
   }
 
   async function generateLinkCode(projectId) {
     const saved = await api(`/api/projects/${projectId}/generate-link-code`, idToken, { method: 'POST' });
     setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+    showToast(`✓ Link code generated: ${saved.linkCode}`);
   }
 
   async function deleteProject(id) {
     if (!confirm('Delete this project? This cannot be undone.')) return;
     await api(`/api/projects/${id}`, idToken, { method: 'DELETE' });
     setProjects(ps => ps.filter(p => p.id !== id));
+    showToast('✓ Project deleted');
   }
 
   // Appends a payment to tokenHistory and recalculates received/pending —
@@ -396,6 +411,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     const payload = { ...project, tokenHistory: newHistory, tokenReceived: newReceived, pendingAmount: newPending };
     const saved = await api(`/api/projects/${projectId}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
     setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+    showToast(`✓ Payment of ₹${amount.toLocaleString('en-IN')} recorded`);
   }
 
   // Quick WhatsApp status update — client-side only, no backend involved.
@@ -433,12 +449,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       if (u.linkedClientId === clientId) return { ...u, linkedClientId: null };
       return u;
     }));
+    showToast('✓ Account linked');
   }
 
   async function unlinkUser(clientId) {
     const saved = await api(`/api/clients/${clientId}/unlink-user`, idToken, { method: 'POST' });
     setClients(cs => cs.map(c => c.id === saved.id ? saved : c));
     setUsers(us => us.map(u => u.linkedClientId === clientId ? { ...u, linkedClientId: null } : u));
+    showToast('✓ Account unlinked');
   }
 
   async function generateInvite(clientId) {
@@ -456,22 +474,27 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     form.append('caption', caption || '');
     const saved = await api(`/api/projects/${projectId}/images`, idToken, { method: 'POST', body: form });
     updateProjectInState(saved);
+    showToast('✓ Photo uploaded');
   }
   async function deleteProjectImage(projectId, url) {
     const saved = await api(`/api/projects/${projectId}/images`, idToken, { method: 'DELETE', body: JSON.stringify({ url }) });
     updateProjectInState(saved);
+    showToast('✓ Photo removed');
   }
   async function shareProject(projectId, userId) {
     const saved = await api(`/api/projects/${projectId}/share`, idToken, { method: 'POST', body: JSON.stringify({ userId }) });
     updateProjectInState(saved);
+    showToast('✓ Project shared with customer');
   }
   async function toggleProjectShare(projectId, userId) {
     const saved = await api(`/api/projects/${projectId}/share/${userId}/toggle`, idToken, { method: 'POST' });
     updateProjectInState(saved);
+    showToast('✓ Sharing updated');
   }
   async function unshareProject(projectId, userId) {
     const saved = await api(`/api/projects/${projectId}/share/${userId}`, idToken, { method: 'DELETE' });
     updateProjectInState(saved);
+    showToast('✓ Sharing removed');
   }
 
   // Opens the customer dashboard, signed in as that user, in a new tab —
@@ -606,9 +629,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                         <button className="ap-act ap-act-thankyou" onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
                       {p.isActive === false ? (
-                        <button className="ap-act ap-act-activate" onClick={() => saveProject({ ...p, isActive: true })}>✅ Activate</button>
+                        <button className="ap-act ap-act-activate" title="Bring this project back into the normal lists — it's currently hidden" onClick={() => saveProject({ ...p, isActive: true })}>↩️ Restore</button>
                       ) : (
-                        <button className="ap-act ap-act-deactivate" onClick={() => saveProject({ ...p, isActive: false })}>🚫 Deactivate</button>
+                        <button className="ap-act ap-act-deactivate" title="Hide this project from the normal lists — doesn't delete it, doesn't change its status" onClick={() => saveProject({ ...p, isActive: false })}>🗄️ Archive (Hide)</button>
                       )}
                     </td>
                   </tr>
@@ -680,8 +703,12 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             )}
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
-              <button className={`ap-filter-chip ${showInactive ? 'active' : ''}`} onClick={() => setShowInactive(s => !s)}>
-                {showInactive ? '👁 Showing Inactive' : '⚡ Active Only'}
+              <button
+                className={`ap-filter-chip ${showInactive ? 'active' : ''}`}
+                title="Archived projects are hidden by default — toggle to also show them"
+                onClick={() => setShowInactive(s => !s)}
+              >
+                {showInactive ? '👁 Showing Archived Too' : '🙈 Hiding Archived'}
               </button>
               <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
             </div>
@@ -711,6 +738,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         )}
       </main>
       </div>
+
+      {toast && <div className="ap-toast">{toast}</div>}
 
       <button
         className="ap-fab"
@@ -1021,7 +1050,7 @@ function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
       <div className="ap-card-top">
         <div className="ap-card-name">{client?.contactName || '—'}</div>
         <div className="ap-card-top-right">
-          {project.isActive === false && <span className="ap-progress-chip ap-progress-inactive">Inactive</span>}
+          {project.isActive === false && <span className="ap-progress-chip ap-progress-inactive" title="Hidden from normal lists">🗄️ Archived</span>}
           <span className={`ap-progress-chip ap-progress-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
           <button className="ap-card-wa-btn" onClick={e => { e.stopPropagation(); onShare(); }} title="Share status on WhatsApp">💬</button>
         </div>

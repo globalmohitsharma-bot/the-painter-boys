@@ -402,7 +402,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // Lighter-weight than the Staff Portal's job-link share, since Admin Portal
   // doesn't have a customer-facing job page yet (separate, bigger piece of work).
   function shareProjectUpdate(project, client) {
-    const name = client?.contactName ? `Mr. ${client.contactName}` : 'Customer';
+    const name = client?.contactName || 'Customer';
     const lines = [
       `🎨 *The Painter Boys*`,
       `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -535,7 +535,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <button className={`ap-sidebar-btn ${view === 'dashboard' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('dashboard')}>📊 Dashboard</button>
           <button className={`ap-sidebar-btn ${view === 'grid' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('grid')}>🗂️ Grid View</button>
           <button className={`ap-sidebar-btn ${view === 'clients' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('clients')}>📋 All Clients</button>
-          <button className="ap-sidebar-btn ap-sidebar-btn-accent" onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}>➕ Create Client</button>
           <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
           <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
             ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
@@ -713,6 +712,15 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       </main>
       </div>
 
+      <button
+        className="ap-fab"
+        title="Create Client"
+        aria-label="Create Client"
+        onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}
+      >
+        +
+      </button>
+
       {editingClient && (
         <ClientForm
           client={editingClient}
@@ -771,7 +779,6 @@ function DashboardOverview({ stats, statusCounts, projects, clients, onSelectCli
     { label: 'In Progress', value: statusCounts['In Progress'] || 0, cls: 'ap-tile-green', status: 'In Progress' },
     { label: 'Completed', value: statusCounts['Completed'] || 0, cls: 'ap-tile-blue', status: 'Completed' },
     { label: 'Cancelled', value: statusCounts['Cancelled'] || 0, cls: 'ap-tile-red', status: 'Cancelled' },
-    { label: 'Total Pending ₹', value: `₹${stats.pendingTotal.toLocaleString('en-IN')}`, cls: 'ap-tile-amber' },
   ];
   return (
     <div className="ap-dashboard">
@@ -1469,7 +1476,7 @@ function ThankYouCardModal({ client, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const name = client?.contactName ? `Mr. ${client.contactName}` : 'Customer';
+  const name = client?.contactName || 'Customer';
 
   const waText = [
     `🎨 *The Painter Boys*`,
@@ -1544,6 +1551,7 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
   const [selectedUserId, setSelectedUserId] = useState('');
   const [busy, setBusy] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   if (!client) return null;
 
   const linkedUser = users.find(u => u.id === client.linkedUserId);
@@ -1567,7 +1575,7 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
     try {
       const token = await onGenerateInvite(client.id);
       const link = `https://www.thepainterboys.com/my-projects?invite=${token}`;
-      const name = client.contactName ? `Mr./Ms. ${client.contactName}` : 'there';
+      const name = client.contactName || 'there';
       const lines = [
         `🎨 *The Painter Boys*`,
         `━━━━━━━━━━━━━━━━━━━━━━`,
@@ -1593,33 +1601,38 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
 
   return (
     <div className="ap-calc-box" style={{ marginBottom: 20 }}>
-      <h3>Linked Account</h3>
+      <h3>🔗 Linked Account</h3>
       {linkedUser ? (
         <div className="ap-card-row" style={{ padding: '6px 0' }}>
-          <span>{linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>
+          <span>✅ {linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>
           <button className="ap-danger" disabled={busy} onClick={handleUnlink}>Unlink</button>
         </div>
       ) : (
         <>
-          <p className="ap-calc-hint">
-            No account linked yet — this happens automatically when someone signs in with an email matching
-            {client.email ? ` "${client.email}"` : ' this client\'s email'}, or send them an invite link below.
-          </p>
-          <button className="ap-btn-primary" disabled={sendingInvite || !client.phone} onClick={handleSendInvite} style={{ marginBottom: 14 }}>
-            {sendingInvite ? 'Preparing…' : '💬 Send Invite Link via WhatsApp'}
+          <p className="ap-calc-hint">Not linked yet — the customer won't see this project on their dashboard until it is.</p>
+
+          <button className="ap-btn-primary ap-upload-btn" disabled={sendingInvite || !client.phone} onClick={handleSendInvite}>
+            {sendingInvite ? '⏳ Preparing…' : '💬 Send Sign-In Link via WhatsApp'}
           </button>
-          {!client.phone && <p className="ap-calc-hint">Add a phone number for this client to send an invite.</p>}
-          <p className="ap-calc-hint">Or link a signed-in account manually:</p>
-          <div className="ap-quote-item-row">
-            <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
-              <option value="">Select a signed-in user…</option>
-              {emailMatch && <option value={emailMatch.id}>⭐ {emailMatch.name} ({emailMatch.email}) — email matches</option>}
-              {candidates.filter(u => u !== emailMatch).map(u => (
-                <option key={u.id} value={u.id}>{u.name} ({u.email}){u.linkedClientId ? ' — already linked elsewhere' : ''}</option>
-              ))}
-            </select>
-            <button className="ap-btn-primary" disabled={!selectedUserId || busy} onClick={handleLink}>Link</button>
-          </div>
+          <p className="ap-calc-hint">They tap the link, sign in with Google, and it connects automatically — no code needed.</p>
+          {!client.phone && <p className="ap-calc-hint">Add a phone number for this client to send it.</p>}
+
+          {!showManual ? (
+            <button type="button" className="ap-link" onClick={() => setShowManual(true)} style={{ marginTop: 10, fontSize: '.85rem' }}>
+              Already signed in on their own? Link their account manually
+            </button>
+          ) : (
+            <div className="ap-quote-item-row" style={{ marginTop: 10 }}>
+              <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
+                <option value="">Select a signed-in user…</option>
+                {emailMatch && <option value={emailMatch.id}>⭐ {emailMatch.name} ({emailMatch.email}) — email matches</option>}
+                {candidates.filter(u => u !== emailMatch).map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.email}){u.linkedClientId ? ' — already linked elsewhere' : ''}</option>
+                ))}
+              </select>
+              <button className="ap-btn-primary" disabled={!selectedUserId || busy} onClick={handleLink}>Link</button>
+            </div>
+          )}
         </>
       )}
     </div>

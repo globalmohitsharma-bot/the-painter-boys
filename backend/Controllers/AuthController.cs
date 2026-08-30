@@ -19,8 +19,20 @@ public class AuthController(
     IClientRepository clientRepository,
     IEmailService emailService,
     IOptions<GoogleAuthOptions> googleAuthOptions,
-    IHostEnvironment hostEnvironment) : ControllerBase
+    IHostEnvironment hostEnvironment,
+    IConfiguration configuration) : ControllerBase
 {
+    // Mirrors GoogleTokenAuthenticationHandler's dev-bypass gate — see the
+    // detailed comment there. The token strings are public (ship in the JS
+    // bundle); this private, App-Service-only key is what actually keeps
+    // the bypass closed once deployed.
+    private bool HasValidDevTestKey()
+    {
+        var configuredKey = configuration["DevBypass:ApiKey"];
+        if (string.IsNullOrEmpty(configuredKey)) return false;
+        return Request.Headers.TryGetValue("X-Dev-Test-Key", out var provided) && provided == configuredKey;
+    }
+
     /// <summary>
     /// Verifies a Google ID token and reports the caller's role. Does NOT create a
     /// staff account on sign-in — Admin/Manager/Partner rows in PB_Users are seeded
@@ -31,12 +43,14 @@ public class AuthController(
     [HttpPost("google")]
     public async Task<ActionResult<WhoAmIResponse>> SignInWithGoogle([FromBody] GoogleSignInRequest request, CancellationToken ct)
     {
+        var devBypassAllowed = hostEnvironment.IsDevelopment() || HasValidDevTestKey();
+
         GoogleJsonWebSignature.Payload payload;
-        if (hostEnvironment.IsDevelopment() && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestToken)
+        if (devBypassAllowed && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestToken)
         {
             payload = new GoogleJsonWebSignature.Payload { Email = Auth.GoogleTokenAuthenticationHandler.DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
         }
-        else if (hostEnvironment.IsDevelopment() && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestAdminToken)
+        else if (devBypassAllowed && request.IdToken == Auth.GoogleTokenAuthenticationHandler.DevTestAdminToken)
         {
             payload = new GoogleJsonWebSignature.Payload { Email = Auth.GoogleTokenAuthenticationHandler.DevTestAdminEmail, Name = "Test Admin", Subject = "dev-test-admin-subject" };
         }

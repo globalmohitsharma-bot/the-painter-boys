@@ -26,7 +26,8 @@ public class GoogleTokenAuthenticationHandler(
     IOptions<GoogleAuthOptions> googleAuthOptions,
     IUserRepository userRepository,
     IHostEnvironment hostEnvironment,
-    IDataProtectionProvider dataProtectionProvider)
+    IDataProtectionProvider dataProtectionProvider,
+    IConfiguration configuration)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public const string SchemeName = "GoogleToken";
@@ -34,7 +35,15 @@ public class GoogleTokenAuthenticationHandler(
     /// <summary>Local-only shortcut so the customer dashboard can be exercised end to
     /// end (real project data, real linked-client lookups) without a real Google
     /// account — gated on IsDevelopment() so this sentinel can never authenticate
-    /// anything once deployed. See TestLoginHelper.cs for the frontend trigger.</summary>
+    /// anything once deployed. See TestLoginHelper.cs for the frontend trigger.
+    ///
+    /// Outside Development, these tokens ALSO require a matching X-Dev-Test-Key
+    /// header (set via the DevBypass__ApiKey app setting, private, never in the
+    /// frontend bundle) — the token strings themselves are public (they ship in
+    /// the client JS), so without this second, non-public check, enabling them
+    /// on a deployed environment would hand out admin access to anyone who reads
+    /// the bundle. This exists only so Claude/automated tooling can verify prod
+    /// behavior directly; it is not meant to be used from the app UI.</summary>
     public const string DevTestToken = "DEV_TEST_TOKEN";
     public const string DevTestEmail = "testuser@test.com";
     public const string DevTestAdminToken = "DEV_TEST_ADMIN_TOKEN";
@@ -83,12 +92,14 @@ public class GoogleTokenAuthenticationHandler(
             return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(impersonatedIdentity), SchemeName));
         }
 
+        var devBypassAllowed = hostEnvironment.IsDevelopment() || HasValidDevTestKey();
+
         GoogleJsonWebSignature.Payload payload;
-        if (hostEnvironment.IsDevelopment() && idToken == DevTestToken)
+        if (devBypassAllowed && idToken == DevTestToken)
         {
             payload = new GoogleJsonWebSignature.Payload { Email = DevTestEmail, Name = "Test User", Subject = "dev-test-subject" };
         }
-        else if (hostEnvironment.IsDevelopment() && idToken == DevTestAdminToken)
+        else if (devBypassAllowed && idToken == DevTestAdminToken)
         {
             payload = new GoogleJsonWebSignature.Payload { Email = DevTestAdminEmail, Name = "Test Admin", Subject = "dev-test-admin-subject" };
         }
@@ -129,5 +140,12 @@ public class GoogleTokenAuthenticationHandler(
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);
         return AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName));
+    }
+
+    private bool HasValidDevTestKey()
+    {
+        var configuredKey = configuration["DevBypass:ApiKey"];
+        if (string.IsNullOrEmpty(configuredKey)) return false;
+        return Request.Headers.TryGetValue("X-Dev-Test-Key", out var provided) && provided == configuredKey;
     }
 }

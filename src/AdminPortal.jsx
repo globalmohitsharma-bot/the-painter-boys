@@ -652,7 +652,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <>
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
-              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
             </div>
             {loading ? <p className="ap-loading">Loading…</p> : (
               <table className="ap-table">
@@ -677,12 +676,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           </>
         ) : (
           <>
-            {!loading && (
-              <div className="ap-stats-bar">
-                <span className="ap-stat">👤 {stats.clients} Clients</span>
-                <span className="ap-stat ap-stat-amber">💰 ₹{stats.pendingTotal.toLocaleString('en-IN')} Pending</span>
-              </div>
-            )}
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
               <button
@@ -692,7 +685,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               >
                 {showInactive ? '👁 Showing Archived Too' : '🙈 Hiding Archived'}
               </button>
-              <button className="ap-btn-primary" onClick={() => setEditingClient(EMPTY_CLIENT)}>+ New Client</button>
             </div>
             <div className="ap-filter-row">
               <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>

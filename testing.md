@@ -117,12 +117,17 @@ above) and checking it lands on the right screen:
 | 🗓️ | Pending Visit | Grid View, filtered to Pending Visit |
 | ⏳ | Not Started | Grid View, filtered to Not Started |
 | ✕ | Cancelled | Grid View, filtered to Cancelled |
-| 🔧 | Utility | Users (Utilities menu) |
-| 📨 | Requests | Requests view |
-| ⏳ | Settings | Pending Links view |
-| 🧾 | Tools | Quotation & Calculator |
+| 👤 | All Clients | Clients table |
+| 🔗 | Linked Accounts | Linked Accounts view |
+| 🔧 | Utility | Utility menu (Quotation, Users, Pending Links, Requests, Sync) |
+| 🧾 | Tools | Quotation & Calculator (direct shortcut) |
 
-All 10 confirmed working via Playwright + dev-bypass token on 2026-08-30.
+Sidebar is just Dashboard + Grid View — everything else routes through
+this icon row or the Utility menu it opens. Header logo is a "go home"
+shortcut from any page. All of this confirmed working via Playwright +
+dev-bypass token on 2026-08-30 (updated after the nav consolidation the
+same day — the Utility/Requests/Settings/Tools 4-icon layout from earlier
+that day was replaced by the table above).
 Status colors (icon circle, card left-border, and progress chip) all pull
 from the same `--status-*` variables in `AdminPortal.css` — Completed is
 green, In Progress is amber, Inquiry is red, Pending Visit is purple, Not
@@ -133,6 +138,38 @@ files' identically-named classes silently override each other by source
 order, not by which page is actually showing. Found the hard way once
 already (see git history 2026-08-30) when Admin's colors changed but
 MyProjects' didn't, and the stale purple silently won.
+
+## Prod-side functional testing with the dev-bypass key (added 2026-08-30)
+
+Prod now supports the same `DEV_TEST_TOKEN`/`DEV_TEST_ADMIN_TOKEN` sentinels
+used for local testing (see above) — but **only** when an additional
+private header is also sent. This exists purely so Claude can actually
+click through the real Admin Portal on the live site, not just check that
+pages load; the token strings themselves are public (they ship in the JS
+bundle), so without this second, non-public gate, enabling them on a
+deployed environment would hand out admin access to anyone who reads the
+bundle. See the detailed comment in
+`backend/Auth/GoogleTokenAuthenticationHandler.cs` and `AuthController.cs`.
+
+**The key itself is not written here** (it's a secret) — it lives only in
+the `ThePainterBoys-api` App Service's `DevBypass__ApiKey` setting. Send it
+as `X-Dev-Test-Key: <key>` on every request, alongside the normal
+`DEV_TEST_TOKEN`/`DEV_TEST_ADMIN_TOKEN` sign-in flow:
+
+```js
+// Playwright: enables the dev-bypass tokens against the LIVE prod site
+await context.setExtraHTTPHeaders({ 'X-Dev-Test-Key': '<the key>' });
+await page.goto('https://www.thepainterboys.com/admin');
+await page.evaluate(() => sessionStorage.setItem('pb_admin_id_token', 'DEV_TEST_ADMIN_TOKEN'));
+await page.reload();
+```
+
+**Absolute rule when testing this way: create and update only, never
+delete.** Prod has real customer data — any test client/project created
+this way must be prefixed `TEST ` (see the convention above) and left in
+place afterward, not cleaned up via a DELETE call. This was explicitly set
+by the user on 2026-08-30 and applies to every prod test session using
+this mechanism, not just the one it was introduced in.
 
 ## Live prod smoke testing (do this after every push)
 
@@ -146,9 +183,11 @@ grep the live bundle for a string unique to it (see the "Bundle check"
 snippet further down) — that part needs to be tailored per deploy and isn't
 automated in the script.
 
-Prod has **no auth bypass** (by design — see the security note in project
-memory about why an open "any email" bypass was declined). That caps what
-can be verified live to three things:
+Prod has **no *open* auth bypass** — the private-key-gated one above is
+narrow (needs a secret only Claude/the developer holds) and still
+requires knowing the token+key pair; there's still nothing a normal
+visitor could stumble into. For checks that don't need to click through
+authenticated screens, this caps what's verified to three things:
 
 1. **Pages load and render** — no unexpected console errors, no failed
    navigation. Screenshot the gate pages (`/my-projects`, `/admin` signed

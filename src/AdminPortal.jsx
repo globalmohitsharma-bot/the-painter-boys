@@ -734,7 +734,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             </div>
             <div className="ap-filter-row">
               <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>
-                All <span className="ap-filter-count">{projects.length}</span>
+                All <span className="ap-filter-count">{countedProjects.length}</span>
               </button>
               {PROGRESS_OPTIONS.map(opt => (
                 <button key={opt} className={`ap-filter-chip ap-filter-${opt.toLowerCase().replace(/\s+/g, '-')} ${projectFilter === opt ? 'active' : ''}`} onClick={() => setProjectFilter(opt)}>

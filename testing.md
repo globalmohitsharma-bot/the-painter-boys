@@ -49,6 +49,7 @@ setup below; `TEST ` prefix any record you create.
 | 6 status icons in one row | Completed/In Progress/Inquiry/Pending Visit/Not Started/Cancelled all fit one row at phone widths — `.ap-icon-row-status` uses a narrower per-icon width (15%) than the 4-icon utility row (18.5%), since 6 items don't fit at the wider size | 2026-08-30 |
 | Dashboard counts exclude archived clients | "All Clients" badge, all 6 status badges, and "Newest Inquiries" only count clients with `isActive !== false` (and their projects) — an archived/test client no longer inflates these numbers. Grid View's own project cards also now hide when the *client* is archived, not just when the project itself is, so "Showing Archived Too" toggle behaves consistently between Dashboard and Grid View | 2026-08-30 |
 | Show Archived Clients setting | Moved from a filter chip on Grid View/All Clients to a single toggle under Utility → Settings, "👁 View Archived Clients" / "🙈 Hide Archived Clients". Defaults Off; toggling it On there affects both Grid View and All Clients immediately, and no chip is rendered on either toolbar anymore | 2026-08-30 |
+| Grid View "All" filter chip count | Uses the same archived-excluding count as the status chips next to it (`countedProjects.length`), not the raw unfiltered `projects.length` — was showing the full 96 instead of the real 65 active ones before this fix | 2026-08-30 |
 
 Two separate things: verifying a *feature actually works* (do this locally,
 before every push) vs. verifying a *deploy actually shipped* (do this

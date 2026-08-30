@@ -3,6 +3,38 @@
 **Read this before testing anything on this project, and add to it when a
 new gotcha or pattern is found — same spirit as [deployment.md](deployment.md).**
 
+## Admin Portal functional checklist (run through locally before every push that touches AdminPortal.jsx)
+
+Grew out of a full pass on 2026-08-30 — add a row here whenever a new
+feature ships, rather than trusting memory next time. Use the dev-bypass
+setup below; `TEST ` prefix any record you create.
+
+| Area | What to check | Last verified |
+|---|---|---|
+| Client create | FAB opens New Client; Save disabled until Name+Phone filled; enabled once both present | 2026-08-30 |
+| Client edit | Other Details notes field saves and reloads correctly | 2026-08-30 |
+| Society field | Datalist suggests known societies, still accepts free typing | 2026-08-30 |
+| Project create | Date Contacted defaults to today; editable after | 2026-08-30 |
+| Paint Type | Multi-select tiles toggle correctly; custom "add another" input works | 2026-08-30 |
+| Work Process | Tiles toggle correctly (2 Coat Putty, Primer, etc.) | 2026-08-30 |
+| No Of Days | Field present or (regression risk — it was missing entirely once) | 2026-08-30 |
+| Painters | Tap-to-select avatar tiles; first tap = Primary, "Make Primary" reassigns it | 2026-08-30 |
+| Toasts | Client add/update, project add/update, payment, photo upload/remove, link/unlink, share change all show a "✓ ..." toast | 2026-08-30 |
+| Linked Account | WhatsApp CTA is the single obvious primary action; manual dropdown is behind a reveal link, not shown by default | 2026-08-30 |
+| Payment Receipt | Adding a payment shows inline "✓ Added ₹X" AND updates the toast; totals recalc correctly | 2026-08-30 |
+| Payment Receipt image | Generated share image includes the FULL card (payment history + totals), not cut off — regression-prone, see deployment.md's html2canvas note | 2026-08-30 |
+| Photos & Sharing | Upload shows in grid + toast; delete removes it + toast | 2026-08-30 |
+| Archive/Restore | Button says "Archive (Hide)" / "Restore", not "Deactivate"/"Activate"; hides from default Grid View list | 2026-08-30 |
+| Quotation | Space Type tiles (single-select) + free-text option; Paint Type tiles (multi-select); generated card shows Space Type | 2026-08-30 |
+| Quotation/Receipt/Thank You share | All three open the same preview-then-WhatsApp flow (SharePreviewModal), not an immediate blind share | 2026-08-30 |
+| Google Sheet Sync | Manual "Sync from Google Sheet" button under Utility imports only genuinely new rows (check by sheetRef), reports "already up to date" on a second run | 2026-08-30 |
+| Dashboard icons | All 6 status icons filter Grid View correctly; Utility/Requests/Pending Links/Tools all navigate correctly | 2026-08-30 |
+| Utility menu | Opens with 5 items (Quotation, Users, Pending Links, Requests, Sync); badge = pendingLinkCount + projectRequestCount | 2026-08-30 |
+| Status colors | Consistent everywhere status appears — icon circle, card left-border, progress chip — Completed=green, In Progress=amber, Inquiry=red, Pending Visit=purple, Not Started=grey, Cancelled=dark red. **Check MyProjects.css too** — it has its own identically-named classes that silently override Admin's if they drift (see the CSS-collision note further down) | 2026-08-30 |
+| Sidebar | Exactly 2 items (Dashboard, Grid View) — everything else lives behind Dashboard icons, not duplicated as sidebar links | 2026-08-30 |
+| Logo/Home | Header logo is clickable from any page, returns to Dashboard | 2026-08-30 |
+| Mobile layout | No horizontal overflow on any view at a phone viewport (Pixel 7 in Playwright, or a real phone) | 2026-08-30 |
+
 Two separate things: verifying a *feature actually works* (do this locally,
 before every push) vs. verifying a *deploy actually shipped* (do this
 against the live site, after every push). Don't try to make one do the

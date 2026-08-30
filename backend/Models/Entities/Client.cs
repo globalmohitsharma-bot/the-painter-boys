@@ -35,6 +35,13 @@ public class Client
     [JsonPropertyName("otherDetails")]
     public string OtherDetails { get; set; } = string.Empty;
 
+    /// <summary>Soft hide/archive, same convention as Project.IsActive — an
+    /// archived client is just hidden from the default list, never deleted.
+    /// Missing on older documents deserializes to this default (true), so
+    /// nothing already stored is hidden.</summary>
+    [JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = true;
+
     [JsonPropertyName("linkedUserId")]
     public string? LinkedUserId { get; set; }
 

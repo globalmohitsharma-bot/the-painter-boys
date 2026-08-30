@@ -27,7 +27,7 @@ async function api(path, idToken, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', society: '', otherDetails: '' };
+const EMPTY_CLIENT = { contactName: '', phone: '', email: '', address: '', society: '', otherDetails: '', isActive: true };
 const EMPTY_PROJECT = {
   name: '', progress: 'Inquiry', paintType: '', dateContacted: '', dateStarted: '', dateCompleted: '',
   remarks: '', noOfDays: '', amount: 0, otherDetails: '', painterNames: [], tokenReceived: 0,
@@ -364,7 +364,27 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       : await api(`/api/clients/${client.id}`, idToken, { method: 'PUT', body: JSON.stringify(client) });
     setClients(cs => isNew ? [saved, ...cs] : cs.map(c => c.id === saved.id ? saved : c));
     setEditingClient(null);
-    showToast(isNew ? `✓ Client "${saved.contactName}" added` : `✓ Client "${saved.contactName}" updated`);
+
+    // A client with no project is invisible in Grid View (it only ever
+    // lists projects, never clients directly) — a brand new client would
+    // otherwise sit in All Clients with no way to notice or work on them
+    // day to day. Give every new client a starting Inquiry project so
+    // they show up immediately where an admin actually looks.
+    if (isNew) {
+      const newProject = await api('/api/projects', idToken, {
+        method: 'POST',
+        body: JSON.stringify({ ...EMPTY_PROJECT, clientId: saved.id, dateContacted: new Date().toISOString().slice(0, 10) }),
+      });
+      setProjects(ps => [newProject, ...ps]);
+      // Land the admin right where the new entry is, rather than just
+      // toasting and leaving them wherever they happened to be — Grid
+      // View filtered to Inquiry, new project prepended so it's on top.
+      setProjectFilter('Inquiry');
+      goto('grid');
+      showToast(`✓ Client "${saved.contactName}" added — showing under Inquiry`);
+    } else {
+      showToast(`✓ Client "${saved.contactName}" updated`);
+    }
   }
 
   async function deleteClient(id) {
@@ -574,17 +594,25 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId, dateContacted: new Date().toISOString().slice(0, 10) })}>+ New Project</button>
               </div>
             </div>
-            <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
             <table className="ap-table">
               <thead>
-                <tr><th>Name</th><th>Progress</th><th>Paint Type</th><th>Amount</th><th>Pending</th><th>Painters</th><th>Link Code</th><th></th></tr>
+                <tr><th>Name</th><th>Progress</th><th>Paint Type</th><th>Process</th><th>Amount</th><th>Pending</th><th>Painters</th><th>Link Code</th><th></th></tr>
               </thead>
               <tbody>
                 {clientProjects.map(p => (
                   <tr key={p.id}>
                     <td data-label="Name">{p.name || '—'}</td>
-                    <td data-label="Progress"><span className={`ap-progress-chip ap-progress-${p.progress.toLowerCase().replace(/\s+/g, '-')}`}>{p.progress}</span></td>
+                    <td data-label="Progress">
+                      <select
+                        className={`ap-progress-select ap-progress-${p.progress.toLowerCase().replace(/\s+/g, '-')}`}
+                        value={p.progress}
+                        onChange={e => saveProject({ ...p, progress: e.target.value })}
+                      >
+                        {PROGRESS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </td>
                     <td data-label="Paint Type">{p.paintType || '—'}</td>
+                    <td data-label="Process">{p.workProcess || '—'}</td>
                     <td data-label="Amount">₹{p.amount?.toLocaleString()}</td>
                     <td data-label="Pending">₹{p.pendingAmount?.toLocaleString()}</td>
                     <td data-label="Painters">{formatPainters(p.painterNames) || '—'}</td>
@@ -616,6 +644,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 ))}
               </tbody>
             </table>
+            <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
           </>
         ) : view === 'quotation' ? (
           <QuotationTool />
@@ -652,6 +681,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <>
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
+              <button
+                className={`ap-filter-chip ${showInactive ? 'active' : ''}`}
+                title="Archived clients are hidden by default — toggle to also show them"
+                onClick={() => setShowInactive(s => !s)}
+              >
+                {showInactive ? '👁 Showing Archived Too' : '🙈 Hiding Archived'}
+              </button>
             </div>
             {loading ? <p className="ap-loading">Loading…</p> : (
               <table className="ap-table">
@@ -660,11 +696,14 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 </thead>
                 <tbody>
                   {clients.filter(c => {
+                    if (!showInactive && c.isActive === false) return false;
                     const q = search.toLowerCase();
                     return !q || c.contactName.toLowerCase().includes(q) || c.phone.includes(q) || c.society.toLowerCase().includes(q);
                   }).map(c => (
                     <tr key={c.id}>
-                      <td className="ap-link" data-label="Name" onClick={() => setSelectedClientId(c.id)}>{c.contactName || '—'}</td>
+                      <td className="ap-link" data-label="Name" onClick={() => setSelectedClientId(c.id)}>
+                        {c.contactName || '—'}{c.isActive === false && <span className="ap-progress-chip ap-progress-inactive" style={{ marginLeft: 6 }}>🗄️ Archived</span>}
+                      </td>
                       <td data-label="Phone">{c.phone}</td>
                       <td data-label="Society">{c.society || '—'}</td>
                       <td data-label="Projects">{projects.filter(p => p.clientId === c.id).length}</td>
@@ -719,7 +758,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         className="ap-fab"
         title="Create Client"
         aria-label="Create Client"
-        onClick={() => { goto('grid'); setEditingClient(EMPTY_CLIENT); }}
+        onClick={() => setEditingClient(EMPTY_CLIENT)}
       >
         +
       </button>
@@ -1126,6 +1165,18 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
           <span>Other Details — notes about the customer</span>
           <textarea rows={2} value={form.otherDetails || ''} onChange={e => setForm(f => ({ ...f, otherDetails: e.target.value }))} />
         </label>
+        {form.id && (
+          <label className="ap-field">
+            <span>Status</span>
+            <button
+              type="button"
+              className={form.isActive === false ? 'ap-act ap-act-activate' : 'ap-act ap-act-deactivate'}
+              onClick={() => setForm(f => ({ ...f, isActive: f.isActive === false }))}
+            >
+              {form.isActive === false ? '↩️ Restore this client' : '🗄️ Archive (Hide) this client'}
+            </button>
+          </label>
+        )}
         {!canSave && <p className="ap-warn">Name and Phone are required — everything else can be filled in later.</p>}
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>

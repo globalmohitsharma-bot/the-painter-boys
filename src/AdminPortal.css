@@ -121,6 +121,14 @@
   display: flex; align-items: center; justify-content: center;
 }
 .ap-icon-label { font-size: .72rem; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; }
+/* 5 columns instead of 3-4 wrapping oddly at phone widths — shrink to fit. */
+@media (max-width: 480px) {
+  .ap-icon-row { gap: 6px; justify-content: space-between; }
+  .ap-icon-btn { width: 18.5%; gap: 4px; }
+  .ap-icon-circle { width: 42px; height: 42px; font-size: 1.15rem; }
+  .ap-icon-label { font-size: .62rem; }
+  .ap-icon-badge { min-width: 16px; height: 16px; font-size: .58rem; top: -3px; right: -3px; }
+}
 
 .ap-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
 .ap-tile { background: var(--ivory); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.04); }
@@ -215,6 +223,17 @@
    card borders, dashboard tiles/icons, so "green" always means the same
    thing across the whole Admin Portal. */
 .ap-progress-chip { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700; white-space: nowrap; color: #fff; }
+/* Same colored-pill look as the chip, but an actual <select> — changing a
+   project's status shouldn't require opening the full Edit form. Reuses
+   the .ap-progress-* color classes so the dropdown itself is colored. */
+.ap-progress-select {
+  display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: .72rem; font-weight: 700;
+  white-space: nowrap; color: #fff; border: none; cursor: pointer; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position: right 8px top 55%, right 4px top 55%; background-size: 4px 4px, 4px 4px; background-repeat: no-repeat;
+  padding-right: 20px;
+}
+.ap-progress-select option { color: #111827; background: #fff; }
 .ap-progress-completed { background: var(--status-completed); }
 .ap-progress-cancelled { background: var(--status-cancelled); }
 .ap-progress-not-started { background: var(--status-not-started); }

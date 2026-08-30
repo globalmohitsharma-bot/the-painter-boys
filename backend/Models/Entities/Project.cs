@@ -9,6 +9,12 @@ public class TokenHistoryEntry
 
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }
+
+    /// <summary>Soft-hide a mistaken/incorrect payment entry — pulled out of
+    /// the receipt, WhatsApp text, and tokenReceived/pendingAmount by the
+    /// frontend, but kept here (not deleted) so an admin can restore it.</summary>
+    [JsonPropertyName("archived")]
+    public bool Archived { get; set; }
 }
 
 public class ProjectImage

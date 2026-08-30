@@ -445,6 +445,42 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     showToast(`✓ Payment of ₹${amount.toLocaleString('en-IN')} recorded`);
   }
 
+  // Removes one payment history entry entirely — the amount only comes back
+  // out of the running total if the entry wasn't already archived (an
+  // archived entry is already excluded from tokenReceived/pendingAmount).
+  async function deletePaymentEntry(projectId, index) {
+    const project = projects.find(p => p.id === projectId);
+    const entry = project?.tokenHistory?.[index];
+    if (!entry) return;
+    if (!confirm(`Delete the ₹${(entry.amount || 0).toLocaleString('en-IN')} entry from ${entry.date}? This cannot be undone.`)) return;
+    const newHistory = project.tokenHistory.filter((_, i) => i !== index);
+    const amt = entry.archived ? 0 : (entry.amount || 0);
+    const newReceived = Math.max(0, (project.tokenReceived || 0) - amt);
+    const newPending = project.amount > 0 ? Math.max(0, project.amount - newReceived) : Math.max(0, (project.pendingAmount || 0) + amt);
+    const payload = { ...project, tokenHistory: newHistory, tokenReceived: newReceived, pendingAmount: newPending };
+    const saved = await api(`/api/projects/${projectId}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+    showToast('✓ Payment entry deleted');
+  }
+
+  // Archiving hides an entry from the receipt/WhatsApp text and pulls it out
+  // of tokenReceived/pendingAmount, without permanently deleting it — the
+  // admin can restore it later. Same toggle handles both directions.
+  async function toggleArchivePaymentEntry(projectId, index) {
+    const project = projects.find(p => p.id === projectId);
+    const entry = project?.tokenHistory?.[index];
+    if (!entry) return;
+    const nowArchived = !entry.archived;
+    const newHistory = project.tokenHistory.map((e, i) => i === index ? { ...e, archived: nowArchived } : e);
+    const delta = nowArchived ? -(entry.amount || 0) : (entry.amount || 0);
+    const newReceived = Math.max(0, (project.tokenReceived || 0) + delta);
+    const newPending = project.amount > 0 ? Math.max(0, project.amount - newReceived) : Math.max(0, (project.pendingAmount || 0) - delta);
+    const payload = { ...project, tokenHistory: newHistory, tokenReceived: newReceived, pendingAmount: newPending };
+    const saved = await api(`/api/projects/${projectId}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+    showToast(nowArchived ? '✓ Payment entry archived' : '✓ Payment entry restored');
+  }
+
   // Quick WhatsApp status update — client-side only, no backend involved.
   // Lighter-weight than the Staff Portal's job-link share, since Admin Portal
   // doesn't have a customer-facing job page yet (separate, bigger piece of work).
@@ -804,6 +840,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           client={clients.find(c => c.id === projects.find(p => p.id === receiptProjectId)?.clientId)}
           onClose={() => setReceiptProjectId(null)}
           onAddPayment={addPayment}
+          onDeletePayment={deletePaymentEntry}
+          onToggleArchivePayment={toggleArchivePaymentEntry}
         />
       )}
       {thankYouProjectId && (
@@ -1475,7 +1513,7 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
 // Mirrors the Staff Portal's (Sheet-based) receipt feature — same idea, but
 // reading from this project's own tokenHistory/tokenReceived/pendingAmount
 // fields instead of parsing multiple sheet columns.
-function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
+function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeletePayment, onToggleArchivePayment }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
@@ -1505,7 +1543,11 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
     }
   }
 
-  const history = project.tokenHistory || [];
+  const allHistory = project.tokenHistory || [];
+  // Archived entries are pulled out of every customer-visible surface —
+  // the shareable card, the WhatsApp text, and the totals above — while
+  // still existing in allHistory so the admin can find and restore them.
+  const history = allHistory.filter(e => !e.archived);
   const totalAmount = project.amount || 0;
   const receivedTotal = project.tokenReceived || 0;
   const pendingTotal = project.pendingAmount || (totalAmount > receivedTotal ? totalAmount - receivedTotal : 0);
@@ -1602,6 +1644,31 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment }) {
             <p className={addStatus.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'} style={{ marginTop: 8 }}>{addStatus.text}</p>
           )}
         </div>
+
+        {allHistory.length > 0 && (
+          <div className="ap-calc-box" style={{ padding: 16 }}>
+            <div className="ap-calc-hint" style={{ marginBottom: 8 }}>
+              Manage entries — archived ones drop out of the receipt, WhatsApp text, and totals above, but stay here to undo. Delete removes an entry for good.
+            </div>
+            {allHistory.map((e, i) => (
+              <div key={i} className="ap-card-row" style={{ padding: '6px 0' }}>
+                <span>
+                  📅 {e.date} — ₹{(e.amount || 0).toLocaleString('en-IN')}
+                  {e.archived && <span className="ap-progress-chip ap-progress-inactive" style={{ marginLeft: 8 }}>🗄️ Archived</span>}
+                </span>
+                <span style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    className={e.archived ? 'ap-act ap-act-activate' : 'ap-act ap-act-deactivate'}
+                    onClick={() => onToggleArchivePayment(project.id, i)}
+                  >
+                    {e.archived ? '↩️ Restore' : '🗄️ Archive'}
+                  </button>
+                  <button className="ap-danger" onClick={() => onDeletePayment(project.id, i)}>🗑️ Delete</button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>

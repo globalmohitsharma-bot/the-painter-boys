@@ -669,7 +669,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'quotation' ? (
           <QuotationTool />
         ) : view === 'utilities-menu' ? (
-          <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount} />
+          <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
+            showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} />
         ) : view === 'sync' ? (
           <>
             <div className="ap-sync-box">
@@ -701,13 +702,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <>
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
-              <button
-                className={`ap-filter-chip ${showInactive ? 'active' : ''}`}
-                title="Archived clients are hidden by default — toggle to also show them"
-                onClick={() => setShowInactive(s => !s)}
-              >
-                {showInactive ? '👁 Showing Archived Too' : '🙈 Hiding Archived'}
-              </button>
             </div>
             {loading ? <p className="ap-loading">Loading…</p> : (
               <table className="ap-table">
@@ -737,13 +731,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <>
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
-              <button
-                className={`ap-filter-chip ${showInactive ? 'active' : ''}`}
-                title="Archived projects are hidden by default — toggle to also show them"
-                onClick={() => setShowInactive(s => !s)}
-              >
-                {showInactive ? '👁 Showing Archived Too' : '🙈 Hiding Archived'}
-              </button>
             </div>
             <div className="ap-filter-row">
               <button className={`ap-filter-chip ${projectFilter === 'All' ? 'active' : ''}`} onClick={() => setProjectFilter('All')}>
@@ -845,7 +832,7 @@ const STATUS_ICONS = [
 // Everything that isn't a day-to-day client/project action lives behind
 // this one menu — reached via the Dashboard's "Utility" icon — so the
 // sidebar itself can stay down to just Dashboard + Grid View.
-function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount }) {
+function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, showInactive, onToggleShowInactive }) {
   const items = [
     { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
     { key: 'users', icon: '👥', label: 'Users' },
@@ -866,6 +853,23 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount }) {
             <span className="ap-icon-label">{u.label}</span>
           </button>
         ))}
+      </div>
+      <h3 className="ap-dashboard-subhead">⚙️ Settings</h3>
+      <div className="ap-calc-box">
+        <div className="ap-card-row" style={{ padding: '6px 0' }}>
+          <span>
+            Show Archived Clients
+            <span className="ap-calc-hint" style={{ display: 'block', marginTop: 2 }}>
+              Off by default — archived clients and their projects stay hidden from Grid View and All Clients until turned on here.
+            </span>
+          </span>
+          <button
+            className={showInactive ? 'ap-act ap-act-activate' : 'ap-act ap-act-deactivate'}
+            onClick={onToggleShowInactive}
+          >
+            {showInactive ? '🙈 Hide Archived Clients' : '👁 View Archived Clients'}
+          </button>
+        </div>
       </div>
     </div>
   );

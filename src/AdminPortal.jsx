@@ -656,7 +656,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           </>
         ) : view === 'dashboard' ? (
           <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
-            onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }} />
+            onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }}
+            pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
+            onNavigate={(v) => { if (v === 'utilities') { setUtilitiesOpen(true); goto('users'); } else { goto(v); } }} />
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
@@ -796,31 +798,59 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   );
 }
 
+// Icon meanings, all pulled from the same --status-* variables the project
+// cards themselves use — so "green" always means Completed everywhere in
+// the Admin Portal, never a different status depending on which screen.
+const STATUS_ICONS = [
+  { status: 'Completed', icon: '✅', color: 'var(--status-completed)' },
+  { status: 'In Progress', icon: '🔄', color: 'var(--status-in-progress)' },
+  { status: 'Inquiry', icon: '❓', color: 'var(--status-inquiry)' },
+  { status: 'Pending Visit', icon: '🗓️', color: 'var(--status-pending-visit)' },
+  { status: 'Not Started', icon: '⏳', color: 'var(--status-not-started)' },
+  { status: 'Cancelled', icon: '✕', color: 'var(--status-cancelled)' },
+];
+
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
-function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus }) {
+function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
   const recentInquiries = projects.filter(p => p.progress === 'Inquiry').slice(0, 5);
-  const tiles = [
-    { label: 'Total Clients', value: stats.clients, cls: '' },
-    { label: 'Inquiry', value: statusCounts['Inquiry'] || 0, cls: 'ap-tile-purple', status: 'Inquiry' },
-    { label: 'Pending Visit', value: statusCounts['Pending Visit'] || 0, cls: 'ap-tile-purple', status: 'Pending Visit' },
-    { label: 'Not Started', value: statusCounts['Not Started'] || 0, cls: 'ap-tile-amber', status: 'Not Started' },
-    { label: 'In Progress', value: statusCounts['In Progress'] || 0, cls: 'ap-tile-green', status: 'In Progress' },
-    { label: 'Completed', value: statusCounts['Completed'] || 0, cls: 'ap-tile-blue', status: 'Completed' },
-    { label: 'Cancelled', value: statusCounts['Cancelled'] || 0, cls: 'ap-tile-red', status: 'Cancelled' },
+  const utilityIcons = [
+    { key: 'utilities', icon: '🔧', label: 'Utility', title: 'Users & sheet sync' },
+    { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount, title: 'Customers asking to be linked to a project' },
+    { key: 'pending-links', icon: '⏳', label: 'Settings', badge: pendingLinkCount, title: 'Pending link-code approvals' },
+    { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator' },
   ];
   return (
     <div className="ap-dashboard">
-      <div className="ap-tiles-grid">
-        {tiles.map(t => (
-          <div key={t.label} className={`ap-tile ${t.cls} ${t.status ? 'ap-tile-clickable' : ''}`}
-            onClick={t.status ? () => onFilterStatus(t.status) : undefined}
-            title={t.status ? `See all ${t.status} projects` : undefined}>
-            <div className="ap-tile-value">{t.value}</div>
-            <div className="ap-tile-label">{t.label}</div>
-          </div>
+      <div className="ap-quick-pills">
+        <button className="ap-quick-pill" onClick={() => onNavigate('clients')}>👤 All Clients ({stats.clients})</button>
+        <button className="ap-quick-pill ap-quick-pill-accent" onClick={() => onNavigate('grid')}>📁 Grid View</button>
+      </div>
+
+      <div className="ap-icon-row">
+        {STATUS_ICONS.map(s => (
+          <button key={s.status} className="ap-icon-btn" onClick={() => onFilterStatus(s.status)} title={`See all ${s.status} projects`}>
+            <span className="ap-icon-circle" style={{ background: s.color }}>
+              {s.icon}
+              {(statusCounts[s.status] || 0) > 0 && <span className="ap-icon-badge">{statusCounts[s.status]}</span>}
+            </span>
+            <span className="ap-icon-label">{s.status}</span>
+          </button>
         ))}
       </div>
+
+      <div className="ap-icon-row">
+        {utilityIcons.map(u => (
+          <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)} title={u.title}>
+            <span className="ap-icon-circle ap-icon-circle-utility">
+              {u.icon}
+              {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
+            </span>
+            <span className="ap-icon-label">{u.label}</span>
+          </button>
+        ))}
+      </div>
+
       <h3 className="ap-dashboard-subhead">Newest Inquiries</h3>
       {recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
         <div className="ap-cards-grid">

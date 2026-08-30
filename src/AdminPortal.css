@@ -1,4 +1,8 @@
-.ap-root { min-height: 100vh; overflow-x: hidden; background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%); font-family: var(--font-body); }
+.ap-root {
+  min-height: 100vh; overflow-x: hidden; background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%); font-family: var(--font-body);
+  --status-inquiry: #ef4444; --status-pending-visit: #a855f7; --status-not-started: #64748b;
+  --status-in-progress: #f59e0b; --status-completed: #16a34a; --status-cancelled: #b91c1c;
+}
 
 .ap-gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--obsidian); padding: 24px; }
 .ap-gate-card { background: var(--ivory); border-radius: 16px; padding: 40px 36px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
@@ -94,6 +98,29 @@
 
 .ap-main { flex: 1; min-width: 0; padding: 28px 24px 80px; }
 
+.ap-quick-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.ap-quick-pill {
+  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 30px;
+  padding: 10px 18px; font-size: .86rem; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.ap-quick-pill-accent { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; color: var(--obsidian); }
+
+.ap-icon-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+.ap-icon-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 74px; background: none; border: none; cursor: pointer; }
+.ap-icon-circle {
+  position: relative; width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15); transition: transform .15s;
+}
+.ap-icon-btn:hover .ap-icon-circle { transform: translateY(-2px) scale(1.05); }
+.ap-icon-circle-utility { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
+.ap-icon-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
+  background: #fff; color: #111827; font-size: .68rem; font-weight: 900; border: 2px solid var(--obsidian);
+  display: flex; align-items: center; justify-content: center;
+}
+.ap-icon-label { font-size: .72rem; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; }
+
 .ap-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
 .ap-tile { background: var(--ivory); border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.04); }
 .ap-tile-clickable { cursor: pointer; transition: transform .15s, box-shadow .15s; }
@@ -183,12 +210,16 @@
 .ap-client-detail h2 { font-family: var(--font-display); color: #fff; margin-bottom: 4px; }
 .ap-client-detail p { color: rgba(255,255,255,.7); font-size: .88rem; }
 
+/* One color per status, used consistently everywhere it appears — chips,
+   card borders, dashboard tiles/icons, so "green" always means the same
+   thing across the whole Admin Portal. */
 .ap-progress-chip { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700; white-space: nowrap; color: #fff; }
-.ap-progress-completed { background: #2563eb; }
-.ap-progress-cancelled { background: #ef4444; }
-.ap-progress-not-started { background: #f59e0b; }
-.ap-progress-in-progress { background: #16a34a; }
-.ap-progress-inquiry, .ap-progress-pending-visit { background: #9333ea; }
+.ap-progress-completed { background: var(--status-completed); }
+.ap-progress-cancelled { background: var(--status-cancelled); }
+.ap-progress-not-started { background: var(--status-not-started); }
+.ap-progress-in-progress { background: var(--status-in-progress); }
+.ap-progress-inquiry { background: var(--status-inquiry); }
+.ap-progress-pending-visit { background: var(--status-pending-visit); }
 .ap-progress-inactive { background: #6b7280; }
 .ap-card-inactive { opacity: .6; }
 
@@ -216,11 +247,12 @@
 }
 .ap-card:active { transform: scale(0.99); }
 .ap-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.16); }
-.ap-card-inquiry, .ap-card-pending-visit { background: #faf5ff; border-left-color: #a855f7; }
-.ap-card-not-started { background: #fffbeb; border-left-color: #f59e0b; }
-.ap-card-in-progress { background: #f0fdf4; border-left-color: #16a34a; }
-.ap-card-completed { background: #eff6ff; border-left-color: #3b82f6; }
-.ap-card-cancelled { background: #fff1f2; border-left-color: #ef4444; }
+.ap-card-inquiry { background: #fef2f2; border-left-color: var(--status-inquiry); }
+.ap-card-pending-visit { background: #faf5ff; border-left-color: var(--status-pending-visit); }
+.ap-card-not-started { background: #f8fafc; border-left-color: var(--status-not-started); }
+.ap-card-in-progress { background: #fffbeb; border-left-color: var(--status-in-progress); }
+.ap-card-completed { background: #f0fdf4; border-left-color: var(--status-completed); }
+.ap-card-cancelled { background: #fef2f2; border-left-color: var(--status-cancelled); }
 .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
 .ap-card-top-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .ap-card-name { font-size: 1rem; font-weight: 700; color: #111827; line-height: 1.3; }

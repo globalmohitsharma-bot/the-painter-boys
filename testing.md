@@ -70,6 +70,38 @@ won't show up in a pure API check.
 done (find PIDs via `tasklist`), and delete any `_test_*.mjs` /
 `_scratch_*.png` files you created — none of this belongs in git history.
 
+## Admin Portal dashboard icon nav (added 2026-08-30)
+
+The Dashboard's icon row is a click-through shortcut layer over existing
+views — every icon just calls the same navigation the sidebar always did,
+so verifying it means clicking each one locally (see dev-bypass setup
+above) and checking it lands on the right screen:
+
+| Icon | Label | Goes to |
+|---|---|---|
+| ✅ | Completed | Grid View, filtered to Completed |
+| 🔄 | In Progress | Grid View, filtered to In Progress |
+| ❓ | Inquiry | Grid View, filtered to Inquiry |
+| 🗓️ | Pending Visit | Grid View, filtered to Pending Visit |
+| ⏳ | Not Started | Grid View, filtered to Not Started |
+| ✕ | Cancelled | Grid View, filtered to Cancelled |
+| 🔧 | Utility | Users (Utilities menu) |
+| 📨 | Requests | Requests view |
+| ⏳ | Settings | Pending Links view |
+| 🧾 | Tools | Quotation & Calculator |
+
+All 10 confirmed working via Playwright + dev-bypass token on 2026-08-30.
+Status colors (icon circle, card left-border, and progress chip) all pull
+from the same `--status-*` variables in `AdminPortal.css` — Completed is
+green, In Progress is amber, Inquiry is red, Pending Visit is purple, Not
+Started is grey, Cancelled is dark red. **`MyProjects.css` has its own
+`.ap-progress-*` chip rules that must be kept in the same color family** —
+Vite bundles all page CSS together regardless of route, so these two
+files' identically-named classes silently override each other by source
+order, not by which page is actually showing. Found the hard way once
+already (see git history 2026-08-30) when Admin's colors changed but
+MyProjects' didn't, and the stale purple silently won.
+
 ## Live prod smoke testing (do this after every push)
 
 **Run `npm run smoke:prod`** — checked-in reusable script

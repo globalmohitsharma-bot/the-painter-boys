@@ -12,6 +12,49 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 const TOKEN_KEY = 'pb_mine_id_token';
 
+// Linear happy-path order — Cancelled is a terminal state outside this flow,
+// shown as its own banner instead of a step. Same colors as the Admin
+// Portal's status icons/card borders (AdminPortal.css's --status-* values),
+// repeated here as plain hex since this page has no .ap-root to scope those
+// custom properties to.
+const TIMELINE_STEPS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progress', 'Completed'];
+const TIMELINE_COLORS = {
+  Inquiry: '#ef4444', 'Pending Visit': '#a855f7', 'Not Started': '#64748b',
+  'In Progress': '#f59e0b', Completed: '#16a34a',
+};
+
+function ProgressTimeline({ progress }) {
+  if (progress === 'Cancelled') {
+    return <div className="mp-timeline-cancelled">✕ This project was cancelled</div>;
+  }
+  const currentIndex = TIMELINE_STEPS.indexOf(progress);
+  return (
+    <div className="mp-timeline">
+      {TIMELINE_STEPS.map((step, i) => {
+        const done = currentIndex >= 0 && i < currentIndex;
+        const current = i === currentIndex;
+        const color = TIMELINE_COLORS[step];
+        return (
+          <div key={step} className="mp-timeline-step">
+            <div className="mp-timeline-node">
+              <span
+                className={`mp-timeline-dot${current ? ' mp-timeline-dot-current' : ''}`}
+                style={(done || current) ? { background: color, borderColor: color } : undefined}
+              >
+                {done ? '✓' : ''}
+              </span>
+              {i < TIMELINE_STEPS.length - 1 && (
+                <span className="mp-timeline-line" style={done ? { background: color } : undefined} />
+              )}
+            </div>
+            <span className={`mp-timeline-label${current ? ' mp-timeline-label-current' : ''}`}>{step}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 async function api(path, idToken) {
   const res = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${idToken}` } });
   if (!res.ok) {
@@ -439,6 +482,7 @@ function ProjectCard({ project }) {
           <h3>{project.name || project.paintType || 'Painting Project'}</h3>
           <span className={`ap-progress-chip ap-progress-${project.progress.toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
         </div>
+        <ProgressTimeline progress={project.progress} />
         {(project.clientSociety || project.clientAddress) && (
           <p className="mp-card-address">{[project.clientSociety, project.clientAddress].filter(Boolean).join(', ')}</p>
         )}

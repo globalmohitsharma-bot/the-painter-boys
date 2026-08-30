@@ -139,4 +139,20 @@ public class AuthController(
         var isStaff = role is UserRole.Admin or UserRole.Manager or UserRole.Partner;
         return Ok(new WhoAmIResponse(email, name, role, isStaff));
     }
+
+    /// <summary>Sends a one-line test email to the calling admin's own address —
+    /// a quick way to confirm SMTP is actually configured and working, without
+    /// needing to trigger a real customer-facing email (welcome, receipt, etc.)
+    /// just to check.</summary>
+    [HttpPost("test-email")]
+    [Authorize(Roles = UserRole.Admin)]
+    public async Task<IActionResult> SendTestEmail(CancellationToken ct)
+    {
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        var name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Admin";
+        if (string.IsNullOrEmpty(email)) return BadRequest("No email on this account.");
+
+        await emailService.SendAsync(email, name, "The Painter Boys — SMTP Test", "<p>Hi</p>", ct);
+        return Ok(new { sentTo = email });
+    }
 }

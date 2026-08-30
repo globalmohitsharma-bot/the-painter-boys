@@ -423,6 +423,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     showToast('✓ Export downloaded');
   }
 
+  async function sendTestEmail() {
+    return api('/api/auth/test-email', idToken, { method: 'POST' });
+  }
+
   async function saveClient(client) {
     const isNew = !client.id;
     const saved = isNew
@@ -772,7 +776,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <QuotationTool />
         ) : view === 'utilities-menu' ? (
           <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
-            showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} />
+            showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} onSendTestEmail={sendTestEmail} />
         ) : view === 'sync' ? (
           <>
             <div className="ap-sync-box">
@@ -986,9 +990,11 @@ const STATUS_ICONS = [
 // Everything that isn't a day-to-day client/project action lives behind
 // this one menu — reached via the Dashboard's "Utility" icon — so the
 // sidebar itself can stay down to just Dashboard + Grid View.
-function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, showInactive, onToggleShowInactive, onExportCsv }) {
+function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, showInactive, onToggleShowInactive, onExportCsv, onSendTestEmail }) {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState(null); // { ok, message } | null
   const items = [
     { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
     { key: 'users', icon: '👥', label: 'Users' },
@@ -1005,6 +1011,18 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
       setExportError(e.message);
     } finally {
       setExporting(false);
+    }
+  }
+  async function handleTestEmail() {
+    setTestingEmail(true);
+    setTestEmailResult(null);
+    try {
+      const result = await onSendTestEmail();
+      setTestEmailResult({ ok: true, message: `✓ Sent to ${result.sentTo} — check your inbox.` });
+    } catch (e) {
+      setTestEmailResult({ ok: false, message: e.message });
+    } finally {
+      setTestingEmail(false);
     }
   }
   return (
@@ -1037,6 +1055,18 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
             {showInactive ? '🙈 Hide Archived Clients' : '👁 View Archived Clients'}
           </button>
         </div>
+        <div className="ap-card-row" style={{ padding: '6px 0' }}>
+          <span>
+            SMTP Health Check
+            <span className="ap-calc-hint" style={{ display: 'block', marginTop: 2 }}>
+              Sends a one-line test email to your own signed-in address — confirms email is actually working without triggering a real customer email.
+            </span>
+          </span>
+          <button className="ap-btn-primary" onClick={handleTestEmail} disabled={testingEmail}>
+            {testingEmail ? '⏳ Sending…' : '📧 Send Test Email'}
+          </button>
+        </div>
+        {testEmailResult && <p className={testEmailResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{testEmailResult.message}</p>}
       </div>
       <h3 className="ap-dashboard-subhead">📤 Export</h3>
       <div className="ap-calc-box">

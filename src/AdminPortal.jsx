@@ -40,7 +40,7 @@ const PAINT_TYPES = ['Distemper', 'Emulsion', 'Tractor Emulsion', 'Royale', 'Roy
 // The step-by-step scope committed to the customer — kept separate from
 // PaintType so "what product" and "what process" can both be tracked.
 const WORK_PROCESS_STEPS = [
-  '1 Coat Putty', '2 Coat Putty', 'Primer', 'Wall Repair', 'Crack Filling',
+  '1 Coat Putty', '2 Coat Putty', 'Primer', 'Chalk Mitti', 'Wall Repair', 'Crack Filling',
   'Texture', '1 Coat Paint', '2 Coat Paint', 'Waterproofing', 'Polish',
 ];
 const NO_OF_DAYS_OPTIONS = ['2', '3', '5', '7', '10', '12', '15', '20', '30'];
@@ -75,12 +75,11 @@ const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
 const SPACE_TYPES = ['Wall', 'Room', 'Full Home', 'Commercial', 'Shop'];
 const EMPTY_QUOTATION = {
   society: '', customerName: '', mobile: '', bhk: '', paintType: '', spaceType: '',
-  workItems: [
-    { name: 'Putty (2 Coat)', price: '' },
-    { name: 'Primer', price: '' },
-    { name: 'Chalk Mitti', price: '' },
-    { name: 'Paint (2 Coat)', price: '' },
-  ],
+  // Process is a tile-picker (same convention as ProjectForm's Process
+  // section) — no per-item price, just what's included. One manually-entered
+  // totalAmount covers the whole job, since customers are quoted a single
+  // project price, not itemized line costs.
+  workProcess: '', totalAmount: '',
 };
 // Rule-of-thumb multiplier painting contractors commonly use to go from
 // built-up area to total paintable (wall + ceiling) area — real ratio varies
@@ -1836,9 +1835,6 @@ function QuotationTool() {
   const [form, setForm] = useState(EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
-  function updateItem(i, key, value) { setForm(f => ({ ...f, workItems: f.workItems.map((w, idx) => idx === i ? { ...w, [key]: value } : w) })); }
-  function addItem() { setForm(f => ({ ...f, workItems: [...f.workItems, { name: '', price: '' }] })); }
-  function removeItem(i) { setForm(f => ({ ...f, workItems: f.workItems.filter((_, idx) => idx !== i) })); }
   const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
   function togglePaintType(name) {
     const next = selectedPaintTypes.includes(name)
@@ -1846,7 +1842,13 @@ function QuotationTool() {
       : [...selectedPaintTypes, name];
     field('paintType', next.join(', '));
   }
-  const amount = form.workItems.reduce((s, w) => s + (Number(w.price) || 0), 0);
+  const selectedSteps = (form.workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
+  function toggleStep(name) {
+    field('workProcess', (selectedSteps.includes(name)
+      ? selectedSteps.filter(s => s !== name)
+      : [...selectedSteps, name]).join(', '));
+  }
+  const amount = Number(form.totalAmount) || 0;
   const canGenerate = form.customerName.trim() && amount > 0;
 
   const builtUp = Number(area.builtUpArea) || 0;
@@ -1903,20 +1905,29 @@ function QuotationTool() {
             </button>
           ))}
         </div>
-        <label className="ap-field"><span>Scope of Work &amp; Pricing</span></label>
-        {form.workItems.map((w, i) => (
-          <div key={i} className="ap-quote-item-row">
-            <input value={w.name} onChange={e => updateItem(i, 'name', e.target.value)} placeholder="e.g. Putty" />
-            <input type="number" className="ap-quote-item-price" value={w.price} onChange={e => updateItem(i, 'price', e.target.value)} placeholder="₹" />
-            <button type="button" className="ap-danger" onClick={() => removeItem(i)}>✕</button>
-          </div>
-        ))}
-        <button type="button" className="ap-add-item-btn" onClick={addItem}>+ Add Item</button>
+        <label className="ap-field"><span>Scope of Work — tap all that apply</span></label>
+        <div className="ap-paint-type-tiles">
+          {WORK_PROCESS_STEPS.map(name => (
+            <button
+              key={name}
+              type="button"
+              className={`ap-paint-type-tile${selectedSteps.includes(name) ? ' selected' : ''}`}
+              onClick={() => toggleStep(name)}
+            >
+              {selectedSteps.includes(name) && <span className="ap-paint-type-check">✓</span>}
+              {name}
+            </button>
+          ))}
+        </div>
+        <label className="ap-field">
+          <span>Total Project Amount (₹)</span>
+          <input type="number" value={form.totalAmount} onFocus={e => e.target.select()} onChange={e => field('totalAmount', e.target.value)} />
+        </label>
         {amount > 0 && <div className="ap-calc-result">Total Quotation: <strong>₹{amount.toLocaleString('en-IN')}</strong></div>}
         <div className="ap-modal-actions">
           <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
         </div>
-        {!canGenerate && <p className="ap-calc-hint">Customer name and at least one priced item are required.</p>}
+        {!canGenerate && <p className="ap-calc-hint">Customer name and a total project amount are required.</p>}
       </div>
 
       {showPreview && (
@@ -1930,11 +1941,11 @@ function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const { society, customerName, mobile, bhk, paintType, spaceType, workItems, amount, areaSqFt, ratePerSqFt } = quotation;
-  const items = workItems.filter(w => w.name.trim() && Number(w.price) > 0);
+  const { society, customerName, mobile, bhk, paintType, spaceType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
+  const steps = (workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
   const quoteDate = new Date();
   const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  const validUntil = new Date(quoteDate.getTime() + 15 * 24 * 60 * 60 * 1000)
+  const validUntil = new Date(quoteDate.getTime() + 3 * 24 * 60 * 60 * 1000)
     .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const waText = [
@@ -1952,7 +1963,7 @@ function QuotationCard({ quotation, onClose }) {
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🛠️ *SCOPE OF WORK*`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
-    ...items.map(i => `✔️ ${i.name} — ₹${Number(i.price).toLocaleString('en-IN')}`),
+    ...steps.map(s => `✔️ ${s}`),
     ``,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `💰 *Total Quotation = ₹${amount.toLocaleString('en-IN')}*`,
@@ -2002,10 +2013,9 @@ function QuotationCard({ quotation, onClose }) {
           <div className="aq-card-section">
             <div className="aq-card-section-title">Scope of Work</div>
             <div className="aq-card-item-table">
-              {items.map((it, i) => (
+              {steps.map((s, i) => (
                 <div key={i} className="aq-card-item-row">
-                  <span>✔️ {it.name}</span>
-                  <span>₹{Number(it.price).toLocaleString('en-IN')}</span>
+                  <span>✔️ {s}</span>
                 </div>
               ))}
             </div>
@@ -2015,7 +2025,7 @@ function QuotationCard({ quotation, onClose }) {
             <span>₹{amount.toLocaleString('en-IN')}</span>
           </div>
           <div className="aq-card-terms">
-            <div>📌 Valid until <strong>{validUntil}</strong> (15 days from issue)</div>
+            <div>📌 Valid until <strong>{validUntil}</strong> (3 days from issue)</div>
             <div>🛡️ 1-year workmanship warranty included</div>
           </div>
           <div className="aq-card-footer">

@@ -218,6 +218,19 @@ if you know to expect them:
     `find publish-out -maxdepth 1 -type d` (should show only `publish-out`
     itself plus `runtimes` if present, nothing named `publish`) before
     zipping — delete the subfolder if it's there.
+15. **Pushing `develop` and immediately fast-forwarding+pushing `master`
+    right after races the `develop` build itself.** `deploy-prod` looks for
+    an already-*successful* `Build and Promote` run on `develop` for
+    master's exact commit SHA — if `master` is pushed before `develop`'s own
+    CI run for that commit has finished, the promote job fails immediately
+    with *"No successful 'Build and Promote' run found for commit ..."*,
+    even though the commit is perfectly fine and develop's build goes green
+    moments later (confirmed 2026-08-30). Fix: **wait for `develop`'s CI run
+    to complete (`gh run list --branch develop --limit 1`) before pushing
+    `master`** — or, if the race already happened, just
+    `gh run rerun <failed-run-id>` once develop's build shows `success`; no
+    code change or re-push needed, since master's commit was never actually
+    the problem.
 
 ## Current deployment configuration — everything set up so far (2026-08-19)
 

@@ -34,6 +34,14 @@ setup below; `TEST ` prefix any record you create.
 | Sidebar | Exactly 2 items (Dashboard, Grid View) — everything else lives behind Dashboard icons, not duplicated as sidebar links | 2026-08-30 |
 | Logo/Home | Header logo is clickable from any page, returns to Dashboard | 2026-08-30 |
 | Mobile layout | No horizontal overflow on any view at a phone viewport (Pixel 7 in Playwright, or a real phone) | 2026-08-30 |
+| New client → Inquiry project | Creating a client auto-creates a starting Inquiry-status project (a client with no project is otherwise invisible in Grid View); admin lands on Grid View filtered to Inquiry with the new entry on top | 2026-08-30 |
+| Quick status change | Progress dropdown directly on each project row in the client-detail table changes status without opening the full Edit form | 2026-08-30 |
+| Process column | Client-detail project table shows the Process (Work Process tiles) value as its own column | 2026-08-30 |
+| Client Archive/Restore | Edit-form toggle button hides/restores a client; "Archived" filter chip (shared state) on both Grid View and All Clients; archived clients show a badge in All Clients | 2026-08-30 |
+| Linked Account position | `LinkedAccountBox` renders below the project table, not above it | 2026-08-30 |
+| Dashboard icons on phone | 5 icons per row at phone widths, not 3-4 wrapping oddly | 2026-08-30 |
+| Re-edit a project after saving | Edit a project, save, then click Edit again immediately — must reopen the same project's form with the just-saved values, not kick back to Grid View. **Regression-prone**: the FAB's "New Client" click used to call `goto('grid')` synchronously on click (before the modal even opened); combined with `saveClient`'s own delayed `goto('grid')` (fired after its two awaited API calls), a fast follow-up action elsewhere could get its navigation silently overwritten a moment later. Fixed 2026-08-30 by removing the premature call — the modal is a full-screen overlay and doesn't need to navigate anywhere first. If this regresses, check for any `goto(...)` call sitting in an onClick *before* an async save chain that also calls `goto(...)` later | 2026-08-30 |
+| Full mandatory flow (create → edit → re-edit → receipt) | Create client → lands on top of Inquiry → Edit → select painter + paint type + amount → Save → still on client-detail page → Edit again → same data persisted → change Token Received → Save → open Payment Receipt → Total/Received/Pending math correct → add a payment via the receipt form → totals update correctly | 2026-08-30 |
 
 Two separate things: verifying a *feature actually works* (do this locally,
 before every push) vs. verifying a *deploy actually shipped* (do this

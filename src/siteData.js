@@ -49,7 +49,7 @@ export const TEAM = [
   { slug: 'rajeev-kumar', name: 'Rajeev Kumar', role: 'Director — Delivery & Operations', img: null, initials: 'RK', color: '#163457',
     bio: 'With 10+ years leading painting and quality work, Rajeev heads customer relationships and operations. A passionate artist whose craftsmanship has made lasting impressions across Delhi NCR.' },
   { slug: 'sonia-gupta', name: 'Sonia Gupta', role: 'Marketing & Digital Growth', img: '/images/sonia.webp', initials: 'SG', color: '#2563c4',
-    bio: 'With 12+ years of marketing leadership, Sonia drives The Painter Boys\' digital transformation. Former consultant for Fortune 500 companies, now helping homeowners achieve their dream spaces.' },
+    bio: 'With 20+ years of experience leading teams and managing large projects, Sonia drives The Painter Boys\' digital transformation. Former consultant for Fortune 500 companies, now helping homeowners achieve their dream spaces.' },
   { slug: 'susheel-rai', name: 'Dr. Susheel Rai', role: 'Head of Operations', img: '/images/susheel.jpg', initials: 'SR', color: '#0ea5a8',
     bio: 'Overseeing operations with decades of leadership experience. His philosophy — caring for people and putting their needs first — defines The Painter Boys\' service culture throughout.' },
 ];

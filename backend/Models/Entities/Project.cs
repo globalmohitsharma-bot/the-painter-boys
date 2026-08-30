@@ -131,6 +131,15 @@ public class Project
     [JsonPropertyName("sheetRef")]
     public string SheetRef { get; set; } = string.Empty;
 
+    /// <summary>Set once this project (created directly in the Admin Portal, no
+    /// SheetRef) has been appended to the Google Sheet by SheetPushSyncService —
+    /// guards against appending the same project twice on repeated sync runs.
+    /// The Apps Script's append action doesn't return a row number, so a
+    /// portal-created project can't be safely targeted for further row updates
+    /// after its first push; this flag only prevents duplicate rows.</summary>
+    [JsonPropertyName("pushedToSheet")]
+    public bool PushedToSheet { get; set; }
+
     [JsonPropertyName("createdAt")]
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

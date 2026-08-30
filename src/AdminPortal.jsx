@@ -302,6 +302,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [showInactive, setShowInactive] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null); // { ok, message } | null
+  const [pushing, setPushing] = useState(false);
+  const [pushResult, setPushResult] = useState(null); // { ok, message } | null
+  const [previewing, setPreviewing] = useState(false);
+  const [pushPreview, setPushPreview] = useState(null); // { toAppend, toUpdate, skipped } | null
   const [toast, setToast] = useState(null); // string | null
   const toastTimerRef = useRef(null);
   // Every create/update/delete action routes through this so the admin gets
@@ -353,6 +357,46 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       setSyncResult({ ok: false, message: e.message });
     } finally {
       setSyncing(false);
+    }
+  }
+
+  // The other direction — pushes Admin Portal clients/projects into the same
+  // sheet. See SheetPushSyncService for the known limitation: a portal-created
+  // entry only gets pushed once (appended), since the Apps Script doesn't hand
+  // back a row number to target for later updates.
+  //
+  // Always preview before pushing — a live push once wrote unwanted rows into
+  // the real sheet with no review step first (2026-08-30), so nothing here
+  // writes anything until an admin has actually seen the plan and confirmed it.
+  async function loadPushPreview() {
+    setPreviewing(true);
+    setPushResult(null);
+    try {
+      const result = await api('/api/admin/sheet-sync/push/preview', idToken);
+      setPushPreview(result);
+    } catch (e) {
+      setPushResult({ ok: false, message: e.message });
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  async function confirmPushSheet() {
+    setPushing(true);
+    setPushResult(null);
+    try {
+      const result = await api('/api/admin/sheet-sync/push', idToken, { method: 'POST' });
+      setPushResult({
+        ok: true,
+        message: (result.appended === 0 && result.updated === 0)
+          ? 'Already up to date — nothing new to push.'
+          : `Pushed to the sheet: ${result.appended} new row${result.appended === 1 ? '' : 's'} added, ${result.updated} existing row${result.updated === 1 ? '' : 's'} updated.`,
+      });
+      setPushPreview(null);
+    } catch (e) {
+      setPushResult({ ok: false, message: e.message });
+    } finally {
+      setPushing(false);
     }
   }
 
@@ -710,14 +754,64 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <>
             <div className="ap-sync-box">
               <div>
-                <strong>Google Sheet sync</strong>
-                <p>One-way pull — checks the Staff Portal's sheet for new entries and imports them. Never writes back to the sheet. Also runs automatically once a week in the background.</p>
+                <strong>Pull from Google Sheet</strong>
+                <p>Checks the Staff Portal's sheet for new entries and imports them into the Admin Portal. Also runs automatically once a week in the background.</p>
               </div>
               <button className="ap-btn-primary" onClick={syncSheet} disabled={syncing}>
                 {syncing ? '⏳ Checking sheet…' : '🔄 Sync from Google Sheet'}
               </button>
             </div>
             {syncResult && <p className={syncResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{syncResult.message}</p>}
+
+            <div className="ap-sync-box" style={{ marginTop: 16 }}>
+              <div>
+                <strong>Push to Google Sheet</strong>
+                <p>
+                  Writes Admin Portal clients/projects into the same sheet — new ones get added as a row,
+                  entries that originally came from the sheet get their row updated. Archived clients/projects
+                  are never pushed. Always shows exactly what will change first — nothing is written until you
+                  confirm. A project created directly in the Admin Portal is only ever added to the sheet once;
+                  later edits to it won't re-sync back, since the sheet has no way to tell us which row it landed on.
+                </p>
+              </div>
+              <button className="ap-btn-primary" onClick={loadPushPreview} disabled={previewing || pushing}>
+                {previewing ? '⏳ Checking what would change…' : '👁 Preview Push to Google Sheet'}
+              </button>
+            </div>
+            {pushPreview && (
+              <div className="ap-calc-box" style={{ marginTop: 12 }}>
+                <div className="ap-calc-hint" style={{ marginBottom: 8 }}>
+                  {pushPreview.toAppend.length === 0 && pushPreview.toUpdate.length === 0
+                    ? 'Nothing to push — already up to date.'
+                    : `This will add ${pushPreview.toAppend.length} new row${pushPreview.toAppend.length === 1 ? '' : 's'} and update ${pushPreview.toUpdate.length} existing row${pushPreview.toUpdate.length === 1 ? '' : 's'}.`}
+                </div>
+                {pushPreview.toAppend.length > 0 && (
+                  <>
+                    <strong style={{ fontSize: '.85rem' }}>New rows to add:</strong>
+                    <ul style={{ margin: '6px 0 12px', paddingLeft: 20, fontSize: '.85rem' }}>
+                      {pushPreview.toAppend.map(e => <li key={e.projectId}>{e.clientName}</li>)}
+                    </ul>
+                  </>
+                )}
+                {pushPreview.toUpdate.length > 0 && (
+                  <>
+                    <strong style={{ fontSize: '.85rem' }}>Existing rows to update:</strong>
+                    <ul style={{ margin: '6px 0 12px', paddingLeft: 20, fontSize: '.85rem' }}>
+                      {pushPreview.toUpdate.map(e => <li key={e.projectId}>{e.clientName}</li>)}
+                    </ul>
+                  </>
+                )}
+                <div className="ap-modal-actions">
+                  <button onClick={() => setPushPreview(null)}>Cancel</button>
+                  {(pushPreview.toAppend.length > 0 || pushPreview.toUpdate.length > 0) && (
+                    <button className="ap-btn-primary" onClick={confirmPushSheet} disabled={pushing}>
+                      {pushing ? '⏳ Pushing…' : '🔼 Confirm & Push to Google Sheet'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {pushResult && <p className={pushResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{pushResult.message}</p>}
           </>
         ) : view === 'dashboard' ? (
           <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}

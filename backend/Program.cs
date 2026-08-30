@@ -22,6 +22,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<SheetSyncService>();
 builder.Services.AddHostedService<WeeklySheetSyncBackgroundService>();
+builder.Services.AddScoped<SheetPushSyncService>();
+// WeeklySheetPushSyncBackgroundService is NOT registered yet, deliberately —
+// an unsupervised weekly push has no one to catch a bad write the way the
+// manual preview-then-confirm flow does. Register it once the manual flow
+// has been used and trusted for a while (see SheetSyncController.PushPreview
+// and .Push, and the Admin Portal's Push to Google Sheet button).
 
 builder.Services.AddDataProtection();
 

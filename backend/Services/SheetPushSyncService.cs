@@ -66,7 +66,7 @@ public class SheetPushSyncService(
         foreach (var entry in plan)
         {
             var (client, project, rowIndex) = byProjectId[entry.ProjectId];
-            var values = BuildValues(headers, client, project);
+            var values = SheetRowFormatter.BuildRow(headers, client, project);
 
             if (entry.Action == "update")
             {
@@ -147,41 +147,6 @@ public class SheetPushSyncService(
         await http.PostAsync(ScriptUrl, content, ct);
     }
 
-    // Maps each header name to the matching Client/Project field — falls back
-    // to blank for any header with no corresponding field (e.g. the sheet's
-    // one unnamed column), same tolerance ParseCsv's Get() already has for
-    // reading. Trims header names since "Additional Work " has a trailing
-    // space in the live sheet.
-    private static List<string> BuildValues(List<string> headers, Client client, Project project)
-    {
-        return headers.Select(h => h.Trim() switch
-        {
-            "#" => project.SheetRef,
-            "Contact Name" => client.ContactName,
-            "Phone" => client.Phone,
-            "Address" => client.Address,
-            "Society" => client.Society,
-            "Progress" => project.Progress,
-            "Type of Paint" => project.PaintType,
-            "Date Contacted" => project.DateContacted,
-            "Date Started" => project.DateStarted,
-            "Date Completed" => project.DateCompleted,
-            "Remarks" => project.Remarks,
-            "No Of Days" => project.NoOfDays,
-            "Amount" => project.Amount == 0 ? "" : project.Amount.ToString(),
-            "Other Details" => project.OtherDetails,
-            "PainterName" => string.Join(", ", project.PainterNames),
-            "Token Received" => project.TokenReceived == 0 ? "" : project.TokenReceived.ToString(),
-            "Pending Amount" => project.PendingAmount == 0 ? "" : project.PendingAmount.ToString(),
-            // Archived entries are excluded here the same way they're excluded
-            // from the receipt/WhatsApp text and the totals — the sheet should
-            // never show a payment the admin has hidden as a mistaken entry.
-            "TokenHistory" => string.Join("|", project.TokenHistory.Where(e => !e.Archived).Select(e => $"{e.Date}:{e.Amount}")),
-            "Additional Work" => project.AdditionalWork,
-            "Customer URL" => client.CustomerUrl,
-            _ => "",
-        }).ToList();
-    }
 
     private static string Get(Dictionary<string, string> row, string key)
         => row.TryGetValue(key, out var v) ? v : "";

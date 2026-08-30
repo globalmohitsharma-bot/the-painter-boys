@@ -400,6 +400,29 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     }
   }
 
+  // Plain fetch (not the api() helper) — the response here is a file blob,
+  // not JSON, and needs the Authorization header a plain <a href> download
+  // link couldn't send. Triggers a save via a throwaway <a download> element.
+  async function exportCsv() {
+    const res = await fetch(`${API_BASE}/api/admin/export/csv`, {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const fileName = match ? match[1] : `painterboys-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('✓ Export downloaded');
+  }
+
   async function saveClient(client) {
     const isNew = !client.id;
     const saved = isNew
@@ -749,7 +772,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <QuotationTool />
         ) : view === 'utilities-menu' ? (
           <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
-            showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} />
+            showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} />
         ) : view === 'sync' ? (
           <>
             <div className="ap-sync-box">
@@ -963,7 +986,9 @@ const STATUS_ICONS = [
 // Everything that isn't a day-to-day client/project action lives behind
 // this one menu — reached via the Dashboard's "Utility" icon — so the
 // sidebar itself can stay down to just Dashboard + Grid View.
-function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, showInactive, onToggleShowInactive }) {
+function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, showInactive, onToggleShowInactive, onExportCsv }) {
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
   const items = [
     { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
     { key: 'users', icon: '👥', label: 'Users' },
@@ -971,6 +996,17 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
     { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount },
     { key: 'sync', icon: '🔄', label: 'Google Sheet Sync' },
   ];
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await onExportCsv();
+    } catch (e) {
+      setExportError(e.message);
+    } finally {
+      setExporting(false);
+    }
+  }
   return (
     <div className="ap-dashboard">
       <h3 className="ap-dashboard-subhead">🔧 Utility</h3>
@@ -1001,6 +1037,21 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
             {showInactive ? '🙈 Hide Archived Clients' : '👁 View Archived Clients'}
           </button>
         </div>
+      </div>
+      <h3 className="ap-dashboard-subhead">📤 Export</h3>
+      <div className="ap-calc-box">
+        <div className="ap-card-row" style={{ padding: '6px 0' }}>
+          <span>
+            Export All Clients &amp; Projects
+            <span className="ap-calc-hint" style={{ display: 'block', marginTop: 2 }}>
+              Downloads a CSV of every client and project — same columns as the Google Sheet. Includes archived records too, unlike Sheet Sync.
+            </span>
+          </span>
+          <button className="ap-btn-primary" onClick={handleExport} disabled={exporting}>
+            {exporting ? '⏳ Preparing…' : '⬇️ Export CSV'}
+          </button>
+        </div>
+        {exportError && <p className="ap-warn ap-warn-error">Could not export — {exportError}</p>}
       </div>
     </div>
   );

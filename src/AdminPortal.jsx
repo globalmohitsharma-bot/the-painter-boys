@@ -303,7 +303,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [showInactive, setShowInactive] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null); // { ok, message } | null
-  const [utilitiesOpen, setUtilitiesOpen] = useState(false);
   const [toast, setToast] = useState(null); // string | null
   const toastTimerRef = useRef(null);
   // Every create/update/delete action routes through this so the admin gets
@@ -543,10 +542,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   return (
     <div className="ap-root">
       <header className="ap-header">
-        <div className="ap-header-brand">
+        <button className="ap-header-brand ap-header-brand-btn" onClick={() => goto('dashboard')} title="Go to Dashboard">
           <img src="/logo-header.png" alt="" className="ap-header-logo" />
           <span>Admin Portal</span>
-        </div>
+        </button>
         <div className="ap-header-user">
           <span>{whoami.name}</span>
           <button className="ap-signout-icon" onClick={onSignOut} title="Sign out" aria-label="Sign out">!</button>
@@ -557,27 +556,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         <nav className="ap-sidebar">
           <button className={`ap-sidebar-btn ${view === 'dashboard' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('dashboard')}>📊 Dashboard</button>
           <button className={`ap-sidebar-btn ${view === 'grid' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('grid')}>🗂️ Grid View</button>
-          <button className={`ap-sidebar-btn ${view === 'clients' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('clients')}>📋 All Clients</button>
-          <button className={`ap-sidebar-btn ${view === 'linked' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('linked')}>🔗 Linked Accounts</button>
-          <button className={`ap-sidebar-btn ${view === 'pending-links' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('pending-links')}>
-            ⏳ Pending Links{pendingLinkCount > 0 ? ` (${pendingLinkCount})` : ''}
-          </button>
-          <button className={`ap-sidebar-btn ${view === 'requests' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('requests')}>
-            📨 Requests{projectRequestCount > 0 ? ` (${projectRequestCount})` : ''}
-          </button>
-          <button
-            className={`ap-sidebar-btn ${['quotation', 'users', 'sync'].includes(view) && !selectedClientId ? 'active' : ''}`}
-            onClick={() => setUtilitiesOpen(o => !o)}
-          >
-            🔧 Utilities {utilitiesOpen ? '▾' : '▸'}
-          </button>
-          {utilitiesOpen && (
-            <div className="ap-sidebar-subgroup">
-              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'quotation' ? 'active' : ''}`} onClick={() => goto('quotation')}>🧾 Quotation & Calculator</button>
-              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'users' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('users')}>👥 Users</button>
-              <button className={`ap-sidebar-btn ap-sidebar-subbtn ${view === 'sync' && !selectedClientId ? 'active' : ''}`} onClick={() => goto('sync')}>🔄 Google Sheet Sync</button>
-            </div>
-          )}
         </nav>
 
       <main className="ap-main">
@@ -641,6 +619,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           </>
         ) : view === 'quotation' ? (
           <QuotationTool />
+        ) : view === 'utilities-menu' ? (
+          <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount} />
         ) : view === 'sync' ? (
           <>
             <div className="ap-sync-box">
@@ -658,7 +638,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
             onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }}
             pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
-            onNavigate={(v) => { if (v === 'utilities') { setUtilitiesOpen(true); goto('users'); } else { goto(v); } }} />
+            onNavigate={goto} />
         ) : view === 'linked' ? (
           <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
@@ -810,23 +790,47 @@ const STATUS_ICONS = [
   { status: 'Cancelled', icon: '✕', color: 'var(--status-cancelled)' },
 ];
 
+// Everything that isn't a day-to-day client/project action lives behind
+// this one menu — reached via the Dashboard's "Utility" icon — so the
+// sidebar itself can stay down to just Dashboard + Grid View.
+function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount }) {
+  const items = [
+    { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
+    { key: 'users', icon: '👥', label: 'Users' },
+    { key: 'pending-links', icon: '⏳', label: 'Pending Links', badge: pendingLinkCount },
+    { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount },
+    { key: 'sync', icon: '🔄', label: 'Google Sheet Sync' },
+  ];
+  return (
+    <div className="ap-dashboard">
+      <h3 className="ap-dashboard-subhead">🔧 Utility</h3>
+      <div className="ap-icon-row">
+        {items.map(u => (
+          <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)}>
+            <span className="ap-icon-circle ap-icon-circle-utility">
+              {u.icon}
+              {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
+            </span>
+            <span className="ap-icon-label">{u.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
 function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
   const recentInquiries = projects.filter(p => p.progress === 'Inquiry').slice(0, 5);
   const utilityIcons = [
-    { key: 'utilities', icon: '🔧', label: 'Utility', title: 'Users & sheet sync' },
-    { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount, title: 'Customers asking to be linked to a project' },
-    { key: 'pending-links', icon: '⏳', label: 'Settings', badge: pendingLinkCount, title: 'Pending link-code approvals' },
+    { key: 'clients', icon: '👤', label: 'All Clients', badge: stats.clients, title: 'Every client on file' },
+    { key: 'linked', icon: '🔗', label: 'Linked Accounts', title: 'Who has a connected customer-dashboard account' },
+    { key: 'utilities-menu', icon: '🔧', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests' },
     { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator' },
   ];
   return (
     <div className="ap-dashboard">
-      <div className="ap-quick-pills">
-        <button className="ap-quick-pill" onClick={() => onNavigate('clients')}>👤 All Clients ({stats.clients})</button>
-        <button className="ap-quick-pill ap-quick-pill-accent" onClick={() => onNavigate('grid')}>📁 Grid View</button>
-      </div>
-
       <div className="ap-icon-row">
         {STATUS_ICONS.map(s => (
           <button key={s.status} className="ap-icon-btn" onClick={() => onFilterStatus(s.status)} title={`See all ${s.status} projects`}>

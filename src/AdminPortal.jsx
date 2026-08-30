@@ -394,7 +394,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     showToast('✓ Client deleted');
   }
 
-  async function saveProject(project) {
+  async function saveProject(project, clientUpdates) {
     const isNew = !project.id;
     const payload = { ...project, clientId: project.clientId || selectedClientId };
     const saved = isNew
@@ -402,6 +402,19 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       : await api(`/api/projects/${project.id}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
     setProjects(ps => isNew ? [saved, ...ps] : ps.map(p => p.id === saved.id ? saved : p));
     setEditingProject(null);
+
+    // ProjectForm also surfaces the client's Name/Phone (editing a project
+    // is where an admin most often notices a client detail needs fixing) —
+    // only fire a second request when something actually changed.
+    if (clientUpdates) {
+      const client = clients.find(c => c.id === payload.clientId);
+      if (client && (client.contactName !== clientUpdates.contactName || client.phone !== clientUpdates.phone)) {
+        const savedClient = await api(`/api/clients/${client.id}`, idToken, {
+          method: 'PUT', body: JSON.stringify({ ...client, ...clientUpdates }),
+        });
+        setClients(cs => cs.map(c => c.id === savedClient.id ? savedClient : c));
+      }
+    }
     showToast(isNew ? '✓ Project added' : '✓ Project updated');
   }
 
@@ -536,7 +549,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // each paired with its client for name/phone/society display and search.
   const projectCards = projects.map(p => ({ ...p, client: clients.find(c => c.id === p.clientId) }));
   const filteredProjectCards = projectCards.filter(pc => {
-    if (!showInactive && pc.isActive === false) return false;
+    if (!showInactive && (pc.isActive === false || pc.client?.isActive === false)) return false;
     const q = search.toLowerCase();
     const matchesSearch = !q || (pc.client?.contactName || '').toLowerCase().includes(q)
       || (pc.client?.phone || '').includes(q) || (pc.client?.society || '').toLowerCase().includes(q);
@@ -544,14 +557,21 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     return matchesSearch && matchesFilter;
   });
 
+  // Dashboard counts (stats, statusCounts, the "Newest Inquiries" list) are
+  // meant to reflect real, live work — an archived client (test data or a
+  // genuinely inactive one) and its projects shouldn't inflate them just
+  // because the records still exist. Grid View's own "Showing Archived Too"
+  // toggle is a separate, deliberate opt-in and stays unaffected by this.
+  const activeClientIds = new Set(clients.filter(c => c.isActive !== false).map(c => c.id));
+  const countedProjects = projects.filter(p => p.isActive !== false && activeClientIds.has(p.clientId));
   const stats = {
-    clients: clients.length,
-    inProgress: projects.filter(p => p.progress === 'In Progress').length,
-    inquiries: projects.filter(p => p.progress === 'Inquiry').length,
-    pendingTotal: projects.reduce((s, p) => s + (p.pendingAmount || 0), 0),
+    clients: clients.filter(c => c.isActive !== false).length,
+    inProgress: countedProjects.filter(p => p.progress === 'In Progress').length,
+    inquiries: countedProjects.filter(p => p.progress === 'Inquiry').length,
+    pendingTotal: countedProjects.reduce((s, p) => s + (p.pendingAmount || 0), 0),
   };
   const statusCounts = PROGRESS_OPTIONS.reduce((acc, opt) => {
-    acc[opt] = projects.filter(p => p.progress === opt).length;
+    acc[opt] = countedProjects.filter(p => p.progress === opt).length;
     return acc;
   }, {});
   const pendingLinkCount = projects.reduce((n, p) => n + (p.sharedWith || []).filter(s => !s.visible).length, 0);
@@ -774,6 +794,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       {editingProject && (
         <ProjectForm
           project={editingProject}
+          client={clients.find(c => c.id === editingProject.clientId)}
           onCancel={() => setEditingProject(null)}
           onSave={saveProject}
           knownPainters={[...new Set(projects.flatMap(p => p.painterNames || []))].sort()}
@@ -853,16 +874,21 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount }) {
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
 function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
-  const recentInquiries = projects.filter(p => p.progress === 'Inquiry').slice(0, 5);
+  // Same "archived clients don't count" rule as the stats/statusCounts above
+  // — an archived client's inquiry shouldn't show up in the triage list either.
+  const activeClientIds = new Set(clients.filter(c => c.isActive !== false).map(c => c.id));
+  const recentInquiries = projects
+    .filter(p => p.progress === 'Inquiry' && p.isActive !== false && activeClientIds.has(p.clientId))
+    .slice(0, 5);
   const utilityIcons = [
     { key: 'clients', icon: '👤', label: 'All Clients', badge: stats.clients, title: 'Every client on file' },
-    { key: 'linked', icon: '🔗', label: 'Linked Accounts', title: 'Who has a connected customer-dashboard account' },
+    { key: 'linked', icon: '🔗', label: "Client Email Links", title: "Which clients have their email ID associated with a customer-dashboard account" },
     { key: 'utilities-menu', icon: '🔧', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests' },
     { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator' },
   ];
   return (
     <div className="ap-dashboard">
-      <div className="ap-icon-row">
+      <div className="ap-icon-row ap-icon-row-status">
         {STATUS_ICONS.map(s => (
           <button key={s.status} className="ap-icon-btn" onClick={() => onFilterStatus(s.status)} title={`See all ${s.status} projects`}>
             <span className="ap-icon-circle" style={{ background: s.color }}>
@@ -915,18 +941,18 @@ function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
   const linked = clients.filter(c => c.linkedUserId).map(c => ({
     client: c, user: users.find(u => u.id === c.linkedUserId),
   }));
-  if (linked.length === 0) return <p className="ap-loading">No clients have a linked account yet.</p>;
+  if (linked.length === 0) return <p className="ap-loading">No clients have their email ID associated with a dashboard account yet.</p>;
   return (
     <table className="ap-table">
       <thead>
-        <tr><th>Client</th><th>Phone</th><th>Linked Account</th><th></th></tr>
+        <tr><th>Client</th><th>Phone</th><th>Client's Email ID</th><th></th></tr>
       </thead>
       <tbody>
         {linked.map(({ client, user }) => (
           <tr key={client.id}>
             <td className="ap-link" data-label="Client" onClick={() => onSelectClient(client.id)}>{client.contactName || '—'}</td>
             <td data-label="Phone">{client.phone}</td>
-            <td data-label="Linked Account">{user ? `${user.name} (${user.email})` : '—'}</td>
+            <td data-label="Client's Email ID">{user ? `${user.name} (${user.email})` : '—'}</td>
             <td className="ap-row-actions" data-label="Actions">
               <button className="ap-danger" onClick={() => onUnlink(client.id)}>Unlink</button>
             </td>
@@ -1187,12 +1213,25 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
   );
 }
 
-function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
+function ProjectForm({ project, client, onCancel, onSave, knownPainters = [] }) {
   const [form, setForm] = useState({ ...project });
+  const [clientName, setClientName] = useState(client?.contactName || '');
+  const [clientPhone, setClientPhone] = useState(client?.phone || '');
   const [newPainter, setNewPainter] = useState('');
   const [newPaintType, setNewPaintType] = useState('');
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
-  function submit() { onSave(form); }
+  // Total Amount and Token Received drive Pending Amount automatically —
+  // still a plain number field underneath, so a manual override still works
+  // if the auto-calculated figure isn't what's actually owed.
+  function setAmount(value) {
+    const amount = Number(value);
+    setForm(f => ({ ...f, amount, pendingAmount: Math.max(0, amount - (f.tokenReceived || 0)) }));
+  }
+  function setTokenReceived(value) {
+    const tokenReceived = Number(value);
+    setForm(f => ({ ...f, tokenReceived, pendingAmount: Math.max(0, (f.amount || 0) - tokenReceived) }));
+  }
+  function submit() { onSave(form, { contactName: clientName, phone: clientPhone }); }
   const painterOptions = [...new Set([...DEFAULT_PAINTERS, ...knownPainters])].sort();
   const selectedPainters = form.painterNames || [];
   // paintType stays a plain string on the backend (no schema change) — tiles
@@ -1237,7 +1276,9 @@ function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
       <div className="ap-modal ap-modal-wide" onClick={e => e.stopPropagation()}>
         <h3>{form.id ? 'Edit Project' : 'New Project'}</h3>
         <div className="ap-form-grid">
-          <label className="ap-field"><span>Name</span><input value={form.name} onChange={e => field('name', e.target.value)} placeholder="e.g. 3BHK Interior Repaint" /></label>
+          <label className="ap-field"><span>Client Name</span><input value={clientName} onChange={e => setClientName(e.target.value)} /></label>
+          <label className="ap-field"><span>Client Mobile</span><input value={clientPhone} onChange={e => setClientPhone(e.target.value)} /></label>
+          <label className="ap-field"><span>Project Name</span><input value={form.name} onChange={e => field('name', e.target.value)} placeholder="e.g. 3BHK Interior Repaint" /></label>
           <label className="ap-field">
             <span>Progress</span>
             <select value={form.progress} onChange={e => field('progress', e.target.value)}>
@@ -1254,9 +1295,9 @@ function ProjectForm({ project, onCancel, onSave, knownPainters = [] }) {
               {NO_OF_DAYS_OPTIONS.map(n => <option key={n} value={n} />)}
             </datalist>
           </label>
-          <label className="ap-field"><span>Amount (₹)</span><input type="number" value={form.amount} onChange={e => field('amount', Number(e.target.value))} /></label>
-          <label className="ap-field"><span>Token Received (₹)</span><input type="number" value={form.tokenReceived} onChange={e => field('tokenReceived', Number(e.target.value))} /></label>
-          <label className="ap-field"><span>Pending Amount (₹)</span><input type="number" value={form.pendingAmount} onChange={e => field('pendingAmount', Number(e.target.value))} /></label>
+          <label className="ap-field"><span>Total Amount (₹)</span><input type="number" value={form.amount} onFocus={e => e.target.select()} onChange={e => setAmount(e.target.value)} /></label>
+          <label className="ap-field"><span>Token Received (₹)</span><input type="number" value={form.tokenReceived} onFocus={e => e.target.select()} onChange={e => setTokenReceived(e.target.value)} /></label>
+          <label className="ap-field"><span>Pending Amount (₹) — auto-filled, editable if it needs an override</span><input type="number" value={form.pendingAmount} onFocus={e => e.target.select()} onChange={e => field('pendingAmount', Number(e.target.value))} /></label>
         </div>
         <label className="ap-field"><span>Paint Type — tap all used on this job</span></label>
         <div className="ap-paint-type-tiles">
@@ -1707,7 +1748,7 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
 
   return (
     <div className="ap-calc-box" style={{ marginBottom: 20 }}>
-      <h3>🔗 Linked Account</h3>
+      <h3>🔗 Associate Project with Client's Email ID</h3>
       {linkedUser ? (
         <div className="ap-card-row" style={{ padding: '6px 0' }}>
           <span>✅ {linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>

@@ -128,6 +128,13 @@
   .ap-icon-circle { width: 42px; height: 42px; font-size: 1.15rem; }
   .ap-icon-label { font-size: .62rem; }
   .ap-icon-badge { min-width: 16px; height: 16px; font-size: .58rem; top: -3px; right: -3px; }
+  /* 6 status icons (Completed/In Progress/Inquiry/Pending Visit/Not Started/
+     Cancelled) need to fit one row too — the 18.5% width above only fits 5,
+     leaving Cancelled stranded alone on its own row. Narrower just for this row. */
+  .ap-icon-row-status { gap: 4px; }
+  .ap-icon-row-status .ap-icon-btn { width: 15%; gap: 3px; }
+  .ap-icon-row-status .ap-icon-circle { width: 36px; height: 36px; font-size: 1rem; }
+  .ap-icon-row-status .ap-icon-label { font-size: .56rem; }
 }
 
 .ap-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }

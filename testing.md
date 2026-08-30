@@ -147,6 +147,43 @@ order, not by which page is actually showing. Found the hard way once
 already (see git history 2026-08-30) when Admin's colors changed but
 MyProjects' didn't, and the stale purple silently won.
 
+## Always test both sides — Admin Portal AND the customer-facing end-user view (added 2026-08-30)
+
+**Standing rule from the user: whenever a change is tested, test both the
+Admin Portal and the customer-facing `/my-projects` side — never just one.**
+A change verified only from the admin's view can still be invisible or
+wrong from the customer's own dashboard, and that's the side real customers
+actually use day to day.
+
+The Admin Portal's `DEV_TEST_ADMIN_TOKEN` sentinel has a customer-side
+counterpart, `DEV_TEST_TOKEN` (see `useGoogleAccount.js`) — it decodes to a
+fixed test identity (`testuser@test.com`) locally, no real Google account
+needed. Two ways to link a test client to that identity, in order of
+preference:
+
+1. **Invite-link flow (preferred — mirrors the real feature, and re-links
+   cleanly even if the test account is already linked to something else
+   from an earlier test)**: call `POST /api/clients/{id}/generate-invite`
+   as admin to get an `inviteToken`, then sign the customer in with that
+   token: `POST /api/auth/google` with `{ idToken: 'DEV_TEST_TOKEN',
+   inviteToken }`. This is what `/my-projects?invite=<token>` does in the
+   real UI.
+2. **Email-match auto-link — only fires for a genuinely new User record.**
+   `AuthController.cs`'s `targetClient ??= isNewUser ? GetByEmailAsync(...)
+   : null` means this does *nothing* if `testuser@test.com` has already
+   signed in before in this environment (which it almost certainly has,
+   after repeated test runs) — don't rely on this path for a repeatable
+   test, use the invite-link flow instead.
+
+Minimal end-to-end check: create a client as admin (or use an existing
+`TEST `-prefixed one), generate its invite, sign the customer in via that
+invite, confirm the project and its current status render on
+`/my-projects`, then change the status as admin (e.g. via the quick
+status-select dropdown) and reload the customer's page to confirm the
+update actually reaches their view. Verified working 2026-08-30 for the
+new-client-Inquiry-status fix: customer saw "Inquiry" immediately, then
+"In Progress" after the admin's dropdown change, on reload.
+
 ## Prod-side functional testing with the dev-bypass key (added 2026-08-30)
 
 Prod now supports the same `DEV_TEST_TOKEN`/`DEV_TEST_ADMIN_TOKEN` sentinels

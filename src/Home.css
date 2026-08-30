@@ -534,6 +534,12 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .paint-fact-label { font-size: .68rem; font-weight: 800; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .08em; }
 .paint-fact-val { font-size: .9rem; font-weight: 700; color: var(--ink); }
 
+/* ── Paint detail long-read (in-depth educational sections) ── */
+.paint-longread { max-width: 820px; margin: 36px auto 0; }
+.paint-longread-section { margin-bottom: 34px; }
+.paint-longread-section:last-child { margin-bottom: 0; }
+.paint-longread-heading { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; color: var(--ink); margin-bottom: 14px; }
+
 /* ── Featured Paints (homepage) ── */
 .fp-sec { padding: 12px 24px 80px; }
 .fp-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; }

@@ -70,6 +70,16 @@ export default function PaintDetail() {
                   <div className="paint-fact"><span className="paint-fact-label">Best for</span><span className="paint-fact-val">{paint.bestFor}</span></div>
                 </div>
               </article>
+              {paint.longRead && (
+                <article className="paint-longread">
+                  {paint.longRead.map((section, i) => (
+                    <section key={i} className="paint-longread-section">
+                      <h2 className="paint-longread-heading">{section.heading}</h2>
+                      {section.paragraphs.map((para, j) => <p key={j} className="svc-detail-text">{para}</p>)}
+                    </section>
+                  ))}
+                </article>
+              )}
               <div className="sec-cta">
                 <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
                   <Icon name="whatsapp" size={17} />Ask About {paint.name}

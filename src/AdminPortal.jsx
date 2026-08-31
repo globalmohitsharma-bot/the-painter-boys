@@ -148,15 +148,41 @@ function SharePreviewModal({ blob, filename, shareTitle, onClose }) {
 }
 
 export default function AdminPortal() {
-  const [idToken, setIdToken] = useState(() => sessionStorage.getItem(TOKEN_KEY));
+  const [idToken, setIdToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [whoami, setWhoami] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(WHOAMI_KEY) || 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(WHOAMI_KEY) || 'null'); } catch { return null; }
   });
   const [checking, setChecking] = useState(!!idToken);
   const [authError, setAuthError] = useState('');
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
+
+  // The site's one shared manifest points its home-screen shortcut at "/" —
+  // right for a customer, but for an admin it meant every launch from the
+  // installed icon opened the marketing homepage, then still needed a click
+  // through to get here. Swap in a variant manifest (distinct id, so it
+  // installs as its own shortcut rather than colliding with an already-
+  // installed customer one) whose start_url is /admin, so "Install App" run
+  // from this page lands directly on the portal on every future launch.
+  useEffect(() => {
+    if (isNativeApp()) return;
+    const link = document.querySelector('link[rel="manifest"]');
+    if (!link) return;
+    const originalHref = link.href;
+    let objectUrl = null;
+    fetch(originalHref).then(r => r.json()).then(manifest => {
+      objectUrl = URL.createObjectURL(new Blob(
+        [JSON.stringify({ ...manifest, id: '/admin', start_url: '/admin', short_name: 'PB Admin' })],
+        { type: 'application/manifest+json' }
+      ));
+      link.href = objectUrl;
+    }).catch(() => {});
+    return () => {
+      link.href = originalHref;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, []);
 
   const handleCredential = useCallback(async (response) => {
     setChecking(true);
@@ -169,8 +195,8 @@ export default function AdminPortal() {
       });
       if (!res.ok) throw new Error(`Sign-in failed (${res.status})`);
       const data = await res.json();
-      sessionStorage.setItem(TOKEN_KEY, response.credential);
-      sessionStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
+      localStorage.setItem(TOKEN_KEY, response.credential);
+      localStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
       setIdToken(response.credential);
       setWhoami(data);
     } catch (err) {
@@ -185,14 +211,16 @@ export default function AdminPortal() {
     }
   }, []);
 
-  // Re-verify a stored token on load rather than trusting sessionStorage forever.
+  // Re-verify a stored token on load rather than trusting localStorage forever —
+  // a saved token that has since expired (Google ID tokens are short-lived,
+  // ~1hr) fails this check and drops back to the sign-in screen cleanly.
   useEffect(() => {
     if (!idToken || whoami) { setChecking(false); return; }
     api('/api/auth/whoami', idToken).then(data => {
-      sessionStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
+      localStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
       setWhoami(data);
     }).catch(() => {
-      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
       setIdToken(null);
     }).finally(() => setChecking(false));
   }, [idToken, whoami]);
@@ -232,8 +260,8 @@ export default function AdminPortal() {
   }
 
   function signOut() {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(WHOAMI_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(WHOAMI_KEY);
     setIdToken(null);
     setWhoami(null);
     nativeGoogleSignOut();
@@ -2355,7 +2383,7 @@ function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const { society, customerName, mobile, bhk, paintType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
+  const { society, address, customerName, mobile, bhk, paintType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
   const steps = (workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
   const quoteDate = new Date();
   const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2369,6 +2397,7 @@ function QuotationCard({ quotation, onClose }) {
     ``,
     `👤 *Customer:* ${customerName}`,
     society ? `🏘️ *Society:* ${society}` : '',
+    address ? `📍 *Address:* ${address}` : '',
     bhk ? `🏠 *Property Type:* ${bhk}` : '',
     mobile ? `📞 *Phone:* ${mobile}` : '',
     paintType ? `🎨 *Paint Type:* ${paintType}` : '',
@@ -2407,7 +2436,7 @@ function QuotationCard({ quotation, onClose }) {
   return (
     <div className="aq-overlay" onClick={onClose}>
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
-        <div className="aq-card" ref={cardRef}>
+        <div className="aq-card aq-card-quote" ref={cardRef}>
           <div className="aq-card-header">
             <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
@@ -2418,6 +2447,7 @@ function QuotationCard({ quotation, onClose }) {
             <div className="aq-card-section-title">Customer Details</div>
             <div className="aq-card-row"><span>Name</span><span>{customerName}</span></div>
             {society && <div className="aq-card-row"><span>Society</span><span>{society}</span></div>}
+            {address && <div className="aq-card-row"><span>Address</span><span>{address}</span></div>}
             {bhk && <div className="aq-card-row"><span>Property Type</span><span>{bhk}</span></div>}
             {mobile && <div className="aq-card-row"><span>Phone</span><span>{mobile}</span></div>}
             {paintType && <div className="aq-card-row"><span>Paint Type</span><span>{paintType}</span></div>}

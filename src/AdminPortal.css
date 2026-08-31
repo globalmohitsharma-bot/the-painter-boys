@@ -423,6 +423,11 @@
   border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6);
   padding-bottom: 18px;
 }
+/* Receipt keeps the base navy above; Quote and Thank You get their own tint
+   so an admin flicking between saved cards can tell which is which at a
+   glance, without hunting for the badge text. */
+.aq-card-quote { background: linear-gradient(180deg, #0f2e2b 0%, #0a1f1d 100%); }
+.ap-ty-card { background: linear-gradient(180deg, #3a1220 0%, #230c14 100%); }
 .aq-card-header { padding: 32px 24px 22px; text-align: center; }
 .aq-card-logo-img { height: 96px; width: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
 .aq-card-company { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--gold-soft); letter-spacing: .02em; }

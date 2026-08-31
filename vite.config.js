@@ -42,6 +42,15 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,webp,ico}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        // A newly-installed service worker used to sit "waiting" until every
+        // open tab/PWA instance was fully closed and relaunched before it took
+        // over — on a phone that keeps the app backgrounded for days, that
+        // looked like "changes don't show up until I clear cache and storage."
+        // These two force the new worker to activate and take control of any
+        // already-open page immediately after install.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
       },
     }),
   ],

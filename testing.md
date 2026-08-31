@@ -206,6 +206,64 @@ update actually reaches their view. Verified working 2026-08-30 for the
 new-client-Inquiry-status fix: customer saw "Inquiry" immediately, then
 "In Progress" after the admin's dropdown change, on reload.
 
+## Quotation address, card colors, PWA update reliability, admin session (added 2026-08-31)
+
+Admin-Portal-only changes — no customer-facing `/my-projects` surface touched
+this round, so no customer-side check was needed for these four.
+
+- **Quotation Address bug**: `address` typed into the Quotation form was
+  captured in state but never rendered — missing from `QuotationCard`'s
+  WhatsApp text array and its visual card's Customer Details section (a
+  destructure/JSX oversight from when the field was first added). Fixed by
+  adding it to both. Verified via Playwright: filled Address on a fresh
+  quote, generated it, confirmed the address appears in both the visual
+  card (`.aq-card` innerText) and the WhatsApp text, and — with "Also
+  create a client from this quote" checked — confirmed via a direct
+  `GET /api/clients` call that the created Client record's `address` field
+  was actually populated (`createClientFromQuotation` was already wiring
+  it correctly; only the quote-preview side was broken, which is likely
+  why it looked like neither side worked).
+- **Card background differentiation**: Quote, Payment Receipt, and Thank
+  You cards all shared the same `.aq-card` navy gradient — impossible to
+  tell apart at a glance. Added `.aq-card-quote` (deep teal/emerald) on
+  `QuotationCard` and gave the pre-existing-but-unstyled `.ap-ty-card`
+  class a deep maroon gradient; Receipt keeps the original navy as the
+  base `.aq-card` look. Verified via screenshots — all three now visually
+  distinct, text contrast still fine on all three.
+- **PWA update reliability**: `vite.config.js`'s `workbox` config had no
+  `skipWaiting`/`clientsClaim`, so a newly-activated service worker sat
+  waiting until every open tab/PWA instance was fully closed — on a phone
+  that keeps the app backgrounded for days, that's what looked like "have
+  to clear cache and storage for changes to take effect." Added
+  `skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true`.
+  Verified `self.skipWaiting(), e.clientsClaim()` and `cleanupOutdatedCaches()`
+  present in the built `dist/sw.js`.
+- **Admin session persistence**: `pb_admin_id_token`/`pb_admin_whoami` were
+  in `sessionStorage`, cleared whenever the tab/app was fully closed — on
+  mobile, the OS killing a backgrounded PWA has the same effect, so this
+  was very likely the dominant cause of "why do I have to relogin so
+  often." Switched both to `localStorage`. Verified via Playwright:
+  signed in on one page, closed it, opened a new page in the same browser
+  context, landed straight on the portal with no re-login. **Caveat not
+  yet fully solved**: the underlying Google ID token still expires after
+  ~1hr regardless of storage — an admin who keeps the portal open and
+  active for longer than that will still hit a 401 on the next API call,
+  since there's no global 401-catch that redirects to sign-in mid-session
+  yet. `localStorage` fixes "closed the app and came back," not "stayed
+  in the app past an hour."
+- **Admin lands directly on Admin Portal from the installed icon**: the
+  site's one shared manifest had `start_url: '/'`, so "Install App" run
+  from inside the Admin Portal still opened the marketing homepage on
+  every future launch. Added a runtime manifest swap in `AdminPortal.jsx`
+  — while on `/admin`, the `<link rel="manifest">` tag is swapped to a
+  Blob URL cloning the real manifest with `start_url`/`id` set to
+  `/admin` (distinct `id` so it installs as its own shortcut instead of
+  colliding with an already-installed customer one), restored on
+  unmount. Verified via `vite preview` against the production build (the
+  Vite dev server doesn't inject a manifest tag at all, so this can't be
+  tested against `localhost:5173`) — manifest on `/admin` came back as a
+  `blob:` URL with `start_url: "/admin"`, manifest on `/` was untouched.
+
 ## Prod-side functional testing with the dev-bypass key (added 2026-08-30)
 
 Prod now supports the same `DEV_TEST_TOKEN`/`DEV_TEST_ADMIN_TOKEN` sentinels

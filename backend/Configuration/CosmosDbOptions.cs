@@ -17,4 +17,5 @@ public class CosmosDbOptions
     public string ClientsContainer { get; set; } = "PB_ClientsDetails";
     public string ProjectsContainer { get; set; } = "PB_ProjectDetails";
     public string UsersContainer { get; set; } = "PB_Users";
+    public string QuotationsContainer { get; set; } = "PB_Quotations";
 }

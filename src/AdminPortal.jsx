@@ -293,6 +293,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
+  const [quotations, setQuotations] = useState([]);
+  const [editingQuotation, setEditingQuotation] = useState(null); // quotation being loaded into the form for edit, or null for a fresh one
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedClientId, setSelectedClientId] = useState(null);
@@ -325,14 +327,16 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     setLoading(true);
     setError('');
     try {
-      const [c, p, u] = await Promise.all([
+      const [c, p, u, q] = await Promise.all([
         api('/api/clients', idToken),
         api('/api/projects', idToken),
         api('/api/users', idToken),
+        api('/api/quotations', idToken),
       ]);
       setClients(c);
       setProjects(p);
       setUsers(u);
+      setQuotations(q);
     } catch (e) {
       setError('Could not load data — ' + e.message);
     } finally {
@@ -500,6 +504,27 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     setProjectFilter('Inquiry');
     goto('grid');
     showToast(`✓ Client "${savedClient.contactName}" created from quotation — showing under Inquiry`);
+  }
+
+  // Same isNew-vs-id pattern as saveClient/saveProject — quotation field
+  // names already match the backend's Quotation entity 1:1, so the form
+  // state can be sent through with just a numeric coercion on the amount.
+  async function saveQuotation(quotation) {
+    const isNew = !quotation.id;
+    const payload = { ...quotation, totalAmount: Number(quotation.totalAmount) || 0 };
+    const saved = isNew
+      ? await api('/api/quotations', idToken, { method: 'POST', body: JSON.stringify(payload) })
+      : await api(`/api/quotations/${quotation.id}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setQuotations(qs => isNew ? [saved, ...qs] : qs.map(q => q.id === saved.id ? saved : q));
+    showToast(isNew ? '✓ Quotation saved' : '✓ Quotation updated');
+    return saved;
+  }
+
+  async function deleteQuotation(id) {
+    if (!confirm('Delete this saved quotation? This cannot be undone.')) return;
+    await api(`/api/quotations/${id}`, idToken, { method: 'DELETE' });
+    setQuotations(qs => qs.filter(q => q.id !== id));
+    showToast('✓ Quotation deleted');
   }
 
   async function deleteClient(id) {
@@ -821,9 +846,19 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <QuotationTool
             societies={[...new Set([...DEFAULT_SOCIETIES, ...clients.map(c => c.society).filter(Boolean)])].sort()}
             onCreateClient={createClientFromQuotation}
+            initialQuotation={editingQuotation}
+            onSave={saveQuotation}
+          />
+        ) : view === 'saved-quotes' ? (
+          <SavedQuotesView
+            quotations={quotations}
+            onEdit={qt => { setEditingQuotation(qt); goto('quotation'); }}
+            onDelete={deleteQuotation}
           />
         ) : view === 'utilities-menu' ? (
-          <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
+          <UtilitiesMenu
+            onNavigate={key => { if (key === 'quotation') setEditingQuotation(null); goto(key); }}
+            pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
             showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} onSendTestEmail={sendTestEmail} />
         ) : view === 'sync' ? (
           <>
@@ -1046,6 +1081,7 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
   const { canInstall: canInstallApp } = useInstallPrompt();
   const items = [
     { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
+    { key: 'saved-quotes', icon: '📋', label: 'Saved Quotes' },
     { key: 'users', icon: '👥', label: 'Users' },
     { key: 'pending-links', icon: '⏳', label: 'Pending Links', badge: pendingLinkCount },
     { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount },
@@ -2132,13 +2168,68 @@ function AreaCalculator({ area, onChange, ratePerSqFt }) {
 }
 
 // ── Quotation generator ───────────────────────────────────────────
-function QuotationTool({ societies = [], onCreateClient }) {
+function SavedQuotesView({ quotations, onEdit, onDelete }) {
+  const [search, setSearch] = useState('');
+  const q = search.trim().toLowerCase();
+  const filtered = quotations.filter(qt =>
+    !q || (qt.customerName || '').toLowerCase().includes(q) || (qt.mobile || '').includes(q));
+
+  return (
+    <>
+      <div className="ap-toolbar">
+        <input className="ap-search" placeholder="Search saved quotes by name or mobile…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {quotations.length === 0 ? (
+        <p className="ap-loading">No saved quotations yet — save one from the Quotation tool.</p>
+      ) : filtered.length === 0 ? (
+        <p className="ap-loading">No saved quotes match "{search}".</p>
+      ) : (
+        <table className="ap-table">
+          <thead>
+            <tr><th>Customer</th><th>Mobile</th><th>Society</th><th>Amount</th><th>Last Updated</th><th></th></tr>
+          </thead>
+          <tbody>
+            {filtered.map(qt => (
+              <tr key={qt.id}>
+                <td className="ap-link" data-label="Customer" onClick={() => onEdit(qt)}>{qt.customerName || '—'}</td>
+                <td data-label="Mobile">{qt.mobile || '—'}</td>
+                <td data-label="Society">{qt.society || '—'}</td>
+                <td data-label="Amount">₹{(qt.totalAmount || 0).toLocaleString('en-IN')}</td>
+                <td data-label="Last Updated">{new Date(qt.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                <td className="ap-row-actions" data-label="Actions">
+                  <button className="ap-btn-primary" onClick={() => onEdit(qt)}>✏️ Edit / Re-share</button>
+                  <button className="ap-danger" onClick={() => onDelete(qt.id)}>🗑️ Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </>
+  );
+}
+
+function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSave }) {
   const [area, setArea] = useState({ builtUpArea: '', bhk: '', multiplier: DEFAULT_AREA_MULTIPLIER });
-  const [form, setForm] = useState(EMPTY_QUOTATION);
+  const [form, setForm] = useState(initialQuotation || EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
   const [newStep, setNewStep] = useState('');
   const [creatingClient, setCreatingClient] = useState(false);
+  const [saving, setSaving] = useState(false);
+  // Re-initialize whenever a different saved quote is opened from the Saved
+  // Quotes list — id alone is enough to detect "a different quote", since a
+  // fresh "+ New Quotation" always passes initialQuotation=null.
+  useEffect(() => { setForm(initialQuotation || EMPTY_QUOTATION); }, [initialQuotation?.id]);
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
+  async function handleSaveQuotation() {
+    setSaving(true);
+    try {
+      const saved = await onSave(form);
+      setForm(saved);
+    } finally {
+      setSaving(false);
+    }
+  }
   const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
   function togglePaintType(name) {
     const next = selectedPaintTypes.includes(name)
@@ -2223,6 +2314,9 @@ function QuotationTool({ societies = [], onCreateClient }) {
         {amount > 0 && <div className="ap-calc-result">Total Quotation: <strong>₹{amount.toLocaleString('en-IN')}</strong></div>}
         <div className="ap-modal-actions">
           <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
+          <button className="ap-btn-primary" disabled={!canGenerate || saving} onClick={handleSaveQuotation}>
+            {saving ? '⏳ Saving…' : form.id ? '💾 Update Saved Quotation' : '💾 Save Quotation'}
+          </button>
           <button
             className="ap-btn-primary"
             disabled={!canGenerate || creatingClient}
@@ -2234,6 +2328,9 @@ function QuotationTool({ societies = [], onCreateClient }) {
           >
             {creatingClient ? '⏳ Creating…' : '✅ Create Client from This Quotation'}
           </button>
+          {form.id && (
+            <button type="button" onClick={() => setForm(EMPTY_QUOTATION)}>+ New Quotation</button>
+          )}
         </div>
         {!canGenerate && <p className="ap-calc-hint">Customer name and a total project amount are required.</p>}
       </div>

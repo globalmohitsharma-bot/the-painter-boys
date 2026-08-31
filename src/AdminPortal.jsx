@@ -423,8 +423,17 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     showToast('✓ Export downloaded');
   }
 
+  // Not routed through the api() helper — its generic "POST path -> 502"
+  // error message would hide the actual reason (unconfigured SMTP vs. a real
+  // send failure), which is the whole point of this health check.
   async function sendTestEmail() {
-    return api('/api/auth/test-email', idToken, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/api/auth/test-email`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    const text = await res.text();
+    if (!res.ok) throw new Error(text || `Failed (${res.status})`);
+    return JSON.parse(text);
   }
 
   async function saveClient(client) {

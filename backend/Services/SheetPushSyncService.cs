@@ -97,14 +97,17 @@ public class SheetPushSyncService(
         var csv = await http.GetStringAsync(CsvUrl, ct);
         var (headers, rows) = ParseCsv(csv);
 
-        // "#" value -> 1-based sheet row (row 1 is the header, so the first
-        // data row is row 2) — mirrors PBDashboard.jsx's `__row = i + 2`.
-        var refToRow = new Dictionary<string, int>();
+        // "#" value -> (1-based sheet row, that row's current values) — row
+        // number mirrors PBDashboard.jsx's `__row = i + 2` (row 1 is the
+        // header). Keeping the current row alongside it lets an "update" only
+        // get planned when something has actually changed, instead of every
+        // synced project showing up as "to update" on every single run.
+        var refToRow = new Dictionary<string, (int RowIndex, Dictionary<string, string> Row)>();
         for (var i = 0; i < rows.Count; i++)
         {
             var sheetRef = Get(rows[i], "#");
             if (!string.IsNullOrEmpty(sheetRef) && !refToRow.ContainsKey(sheetRef))
-                refToRow[sheetRef] = i + 2;
+                refToRow[sheetRef] = (i + 2, rows[i]);
         }
 
         var clients = (await clientRepository.GetAllAsync(ct)).ToDictionary(c => c.Id);
@@ -122,10 +125,18 @@ public class SheetPushSyncService(
                 continue;
             }
 
-            if (!string.IsNullOrEmpty(project.SheetRef) && refToRow.TryGetValue(project.SheetRef, out var rowIndex))
+            if (!string.IsNullOrEmpty(project.SheetRef) && refToRow.TryGetValue(project.SheetRef, out var match))
             {
-                plan.Add(new PushPlanEntry(project.Id, client.ContactName, "update"));
-                byProjectId[project.Id] = (client, project, rowIndex);
+                var newValues = SheetRowFormatter.BuildRow(headers, client, project);
+                if (RowChanged(headers, match.Row, newValues))
+                {
+                    plan.Add(new PushPlanEntry(project.Id, client.ContactName, "update"));
+                    byProjectId[project.Id] = (client, project, match.RowIndex);
+                }
+                else
+                {
+                    skipped++;
+                }
             }
             else if (string.IsNullOrEmpty(project.SheetRef) && !project.PushedToSheet)
             {
@@ -139,6 +150,22 @@ public class SheetPushSyncService(
         }
 
         return (plan, headers, byProjectId, skipped);
+    }
+
+    // Compares the row Cosmos would write against what's already in the sheet
+    // — trimmed, so incidental whitespace in the sheet doesn't register as a
+    // difference. currentRow only has entries for non-empty cells (ParseCsv's
+    // Get() returns "" for a missing key), which lines up with how blank
+    // BuildRow values are represented, so a straight compare is enough.
+    private static bool RowChanged(List<string> headers, Dictionary<string, string> currentRow, List<string> newValues)
+    {
+        for (var i = 0; i < headers.Count; i++)
+        {
+            var current = (Get(currentRow, headers[i]) ?? "").Trim();
+            var updated = (newValues[i] ?? "").Trim();
+            if (current != updated) return true;
+        }
+        return false;
     }
 
     private static async Task PostAsync(HttpClient http, object payload, CancellationToken ct)

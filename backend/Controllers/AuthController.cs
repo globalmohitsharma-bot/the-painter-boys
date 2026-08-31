@@ -152,7 +152,11 @@ public class AuthController(
         var name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Admin";
         if (string.IsNullOrEmpty(email)) return BadRequest("No email on this account.");
 
-        await emailService.SendAsync(email, name, "The Painter Boys — SMTP Test", "<p>Hi</p>", ct);
+        var sent = await emailService.SendAsync(email, name, "The Painter Boys — SMTP Test", "<p>Hi</p>", ct);
+        if (!sent)
+        {
+            return StatusCode(502, "SMTP isn't configured (or the send failed) — no email was actually sent. Check the Email__SmtpHost/Username/Password/FromAddress app settings, and the App Service log stream for the exact error.");
+        }
         return Ok(new { sentTo = email });
     }
 }

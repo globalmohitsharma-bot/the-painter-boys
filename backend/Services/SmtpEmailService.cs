@@ -8,13 +8,13 @@ namespace ThePainterBoys.Api.Services;
 
 public class SmtpEmailService(IOptions<EmailOptions> options, ILogger<SmtpEmailService> logger) : IEmailService
 {
-    public async Task SendAsync(string toAddress, string toName, string subject, string htmlBody, CancellationToken ct)
+    public async Task<bool> SendAsync(string toAddress, string toName, string subject, string htmlBody, CancellationToken ct)
     {
         var o = options.Value;
         if (!o.IsConfigured)
         {
             logger.LogInformation("Email not configured (no SMTP host/username/password set) — skipped sending \"{Subject}\" to {To}.", subject, toAddress);
-            return;
+            return false;
         }
 
         var message = new MimeMessage();
@@ -30,12 +30,14 @@ public class SmtpEmailService(IOptions<EmailOptions> options, ILogger<SmtpEmailS
             await client.AuthenticateAsync(o.Username, o.Password, ct);
             await client.SendAsync(message, ct);
             await client.DisconnectAsync(true, ct);
+            return true;
         }
         catch (Exception ex)
         {
             // Email failures should never break the flow that triggered them
             // (e.g. sign-in) — log and move on rather than propagating.
             logger.LogError(ex, "Failed to send email \"{Subject}\" to {To}.", subject, toAddress);
+            return false;
         }
     }
 }

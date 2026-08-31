@@ -2220,21 +2220,11 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
   const [newStep, setNewStep] = useState('');
   const [alsoCreateClient, setAlsoCreateClient] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
   // Re-initialize whenever a different saved quote is opened from the Saved
   // Quotes list — id alone is enough to detect "a different quote", since a
   // fresh "+ New Quotation" always passes initialQuotation=null.
   useEffect(() => { setForm(initialQuotation || EMPTY_QUOTATION); }, [initialQuotation?.id]);
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
-  async function handleSaveQuotation() {
-    setSaving(true);
-    try {
-      const saved = await onSave(form);
-      setForm(saved);
-    } finally {
-      setSaving(false);
-    }
-  }
   const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
   function togglePaintType(name) {
     const next = selectedPaintTypes.includes(name)
@@ -2328,22 +2318,24 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
             onClick={async () => {
               setGenerating(true);
               try {
+                // Every generated quote saves (or updates, if it already has
+                // an id) automatically — no separate "Save" click needed to
+                // make it findable later in Saved Quotes.
+                const saved = await onSave(form);
+                setForm(saved);
                 // Creating the client happens quietly in the background —
                 // no navigation, so the admin stays right here and can still
                 // share the quote they were in the middle of. Previously a
                 // separate "Create Client" button jumped straight to Grid
                 // View, cutting the quote flow short.
-                if (alsoCreateClient) await onCreateClient(form);
+                if (alsoCreateClient) await onCreateClient(saved);
                 setShowPreview(true);
               } finally {
                 setGenerating(false);
               }
             }}
           >
-            {generating ? '⏳ Generating…' : 'Generate Quotation'}
-          </button>
-          <button className="ap-btn-primary" disabled={!canGenerate || saving} onClick={handleSaveQuotation}>
-            {saving ? '⏳ Saving…' : form.id ? '💾 Update Saved Quotation' : '💾 Save Quotation'}
+            {generating ? '⏳ Generating…' : '🧾 Generate & Save Quotation'}
           </button>
           {form.id && (
             <button type="button" onClick={() => setForm(EMPTY_QUOTATION)}>+ New Quotation</button>

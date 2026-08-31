@@ -47,8 +47,8 @@ export const PAGE_META = {
   },
   'paint-types': {
     path: '/paint-types',
-    title: 'Paint Types & Brands Guide — Asian Paints Royale, Tractor, Apex | The Painter Boys',
-    description: 'A guide to popular paint types we work with — Asian Paints Royale, Tractor Emulsion, Apex exterior, Royale Shyne, distemper and premium textures — and which suits your home.',
+    title: 'Education Center — Paint Types, Benefits & Drawbacks | The Painter Boys',
+    description: 'Our Education Center — in-depth guides to every paint type we work with (Asian Paints Royale, Tractor Emulsion, Apex exterior, Royale Shyne, distemper, textures, enamel), covering real benefits, honest drawbacks, and which suits your home.',
   },
   blog: {
     path: '/blog',
@@ -62,7 +62,12 @@ export const PAGE_META = {
   },
 };
 
+// "Blog" was replaced with "Education Center" pointing at /paint-types — that's
+// where the real, in-depth benefits/drawbacks content actually lives, so the
+// primary nav sends people there instead of to blog posts. /blog itself is
+// untouched and still reachable (existing indexed URLs keep working), it's
+// just no longer a top-level nav link.
 export const NAV_PAGES = [
   ['services','Services'],['about','About Us'],['how','How It Works'],
-  ['team','Our Team'],['paint-types','Paint Types'],['blog','Blog'],['contact','Contact'],
+  ['team','Our Team'],['paint-types','Education Center'],['contact','Contact'],
 ];

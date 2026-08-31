@@ -315,6 +315,39 @@ feature is ever wanted later.
   tested against `localhost:5173`) — manifest on `/admin` came back as a
   `blob:` URL with `start_url: "/admin"`, manifest on `/` was untouched.
 
+## Education Center rename + expanded paint content + quote learn-links (added 2026-09-01)
+
+- **Nav rename**: `siteConfig.js`'s `NAV_PAGES` no longer has a separate
+  `blog` entry — the `paint-types` entry's label changed from "Paint Types"
+  to "Education Center" (still points at `/paint-types`). `/blog` and its
+  pages are untouched and still reachable by direct URL (existing indexed
+  links keep working), just no longer a top-level nav/footer link.
+  **Gotcha discovered while testing**: `SiteFooter.jsx` renders its links
+  from the same `NAV_PAGES` array as `SiteHeader.jsx` — one edit updates
+  both automatically, but it also means a Playwright selector like
+  `getByRole('link', { name: 'Education Center' })` matches twice (nav +
+  footer) and needs scoping to `.nav-inner` specifically.
+- **Expanded paint content**: every entry in `siteData.js`'s `PAINT_TYPES`
+  got three new `longRead` sections — "Honest Drawbacks", "Cost-Per-Year"
+  value breakdown, and "Common Myths/Mistakes" — roughly doubling each
+  page's length and directly covering the "drawbacks" half of
+  benefits/drawbacks that the earlier content (from the 2026-08-2x session)
+  was thinner on. Verified via Playwright that all three new sections
+  render on a live page (used royale-shyne-luxury-emulsion as the sample).
+- **Quote → paint education page links**: new `PAINT_TYPE_LEARN_SLUGS` map
+  in `AdminPortal.jsx` (near the `PAINT_TYPES` tile list) maps a quotation
+  tile name (e.g. "Royale Shyne") to its `siteData.js` slug. `QuotationCard`
+  now builds a `learnLinks` array from the quote's (comma-joined)
+  `paintType` field, and where a mapping exists: adds a
+  `📚 Learn about {name}: {url}` line to the WhatsApp text, a matching line
+  under the card's terms section, and an "Open {name} Education Page"
+  button. The generic "Emulsion" tile has no dedicated education page and
+  is deliberately left unmapped — verified it produces no broken/guessed
+  link rather than linking somewhere wrong. Verified end to end: selected
+  Royale Shyne + Emulsion on a test quote, confirmed the Royale Shyne link
+  appeared (card text, WhatsApp text, and button href all correct) and no
+  link was generated for Emulsion.
+
 ## Prod-side functional testing with the dev-bypass key (added 2026-08-30)
 
 Prod now supports the same `DEV_TEST_TOKEN`/`DEV_TEST_ADMIN_TOKEN` sentinels

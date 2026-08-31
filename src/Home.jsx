@@ -569,9 +569,9 @@ export default function Home() {
           <div className="inner-page">
             <div className="page-hero page-hero-blue">
               <div className="ph-content">
-                <span className="sec-tag light">Paint Guide</span>
-                <h1 className="ph-title">Paint Types & Brands We Work With</h1>
-                <p className="ph-sub">Asian Paints Royale, Tractor Emulsion, Apex, Royale Shyne and more — which finish suits your home?</p>
+                <span className="sec-tag light">Education Center</span>
+                <h1 className="ph-title">Learn About Every Paint Type We Use</h1>
+                <p className="ph-sub">Asian Paints Royale, Tractor Emulsion, Apex, Royale Shyne and more — real benefits, honest drawbacks, and which finish actually suits your home.</p>
               </div>
             </div>
             <div className="page-content-white">

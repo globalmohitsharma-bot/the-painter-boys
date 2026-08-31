@@ -39,6 +39,20 @@ const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progres
 // A short, real product list — not restrictive: this is a datalist (like Society),
 // so typing anything else (the "Others" case) still works, just without a suggestion.
 const PAINT_TYPES = ['Distemper', 'Emulsion', 'Tractor Emulsion', 'Royale', 'Royale Shyne', 'Apex', 'Deco Paint', 'PU Paint'];
+// Maps a quotation's Paint Type tile name to its Education Center page slug
+// (src/siteData.js PAINT_TYPES) — lets the quote link straight to the real
+// benefits/drawbacks page for whichever paint the customer is being quoted,
+// instead of just naming it. 'Emulsion' is deliberately left unmapped — it's
+// a generic tile with no single dedicated education page to point to.
+const PAINT_TYPE_LEARN_SLUGS = {
+  'Distemper': 'distemper',
+  'Tractor Emulsion': 'tractor-emulsion',
+  'Royale': 'asian-paints-royale',
+  'Royale Shyne': 'royale-shyne-luxury-emulsion',
+  'Apex': 'apex-exterior-emulsion',
+  'Deco Paint': 'texture-designer-finishes',
+  'PU Paint': 'apcolite-premium-enamel',
+};
 // The step-by-step scope committed to the customer — kept separate from
 // PaintType so "what product" and "what process" can both be tracked.
 // Ordered to match the actual sequence work happens on site — repair first,
@@ -2390,6 +2404,9 @@ function QuotationCard({ quotation, onClose }) {
   const [previewBlob, setPreviewBlob] = useState(null);
   const { society, address, customerName, mobile, bhk, paintType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
   const steps = (workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
+  const learnLinks = (paintType || '').split(',').map(s => s.trim()).filter(Boolean)
+    .filter(name => PAINT_TYPE_LEARN_SLUGS[name])
+    .map(name => ({ name, url: `https://www.thepainterboys.com/paint-types/${PAINT_TYPE_LEARN_SLUGS[name]}` }));
   const quoteDate = new Date();
   const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const validUntil = new Date(quoteDate.getTime() + 3 * 24 * 60 * 60 * 1000)
@@ -2419,6 +2436,7 @@ function QuotationCard({ quotation, onClose }) {
     `━━━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `📌 Valid until ${validUntil}`,
+    ...(learnLinks.length ? ['', '📚 *Learn more about your paint:*', ...learnLinks.map(l => `${l.name}: ${l.url}`)] : []),
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
   ].filter(Boolean).join('\n');
@@ -2474,6 +2492,7 @@ function QuotationCard({ quotation, onClose }) {
           </div>
           <div className="aq-card-terms">
             <div>📌 Valid until <strong>{validUntil}</strong> (3 days from issue)</div>
+            {learnLinks.map(l => <div key={l.name}>📚 Learn about {l.name}: thepainterboys.com/paint-types/{PAINT_TYPE_LEARN_SLUGS[l.name]}</div>)}
           </div>
           <div className="aq-card-footer">
             <div>🌐 www.thepainterboys.com</div>
@@ -2486,6 +2505,12 @@ function QuotationCard({ quotation, onClose }) {
           </button>
           {mobile && (
             <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
+          )}
+          {learnLinks.length > 0 && (
+            <a className="aq-share-btn aq-share-learn" href={learnLinks[0].url} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'block', textAlign: 'center', textDecoration: 'none', background: 'linear-gradient(135deg,#0d4547,#0ea5a8)' }}>
+              📚 Open {learnLinks[0].name} Education Page
+            </a>
           )}
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>

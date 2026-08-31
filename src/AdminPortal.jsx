@@ -39,9 +39,12 @@ const PROGRESS_OPTIONS = ['Inquiry', 'Pending Visit', 'Not Started', 'In Progres
 const PAINT_TYPES = ['Distemper', 'Emulsion', 'Tractor Emulsion', 'Royale', 'Royale Shyne', 'Apex', 'Deco Paint', 'PU Paint'];
 // The step-by-step scope committed to the customer — kept separate from
 // PaintType so "what product" and "what process" can both be tracked.
+// Ordered to match the actual sequence work happens on site — repair first,
+// then putty, then primer, then paint — so both the Quotation tool and the
+// Project edit form's Process tiles read top-to-bottom the way the job runs.
 const WORK_PROCESS_STEPS = [
-  '1 Coat Putty', '2 Coat Putty', 'Primer', 'Chalk Mitti', 'Wall Repair', 'Crack Filling',
-  'Texture', '1 Coat Paint', '2 Coat Paint', 'Waterproofing', 'Polish',
+  'Wall Repair', 'Crack Filling', 'Chalk Mitti', '1 Coat Putty', '2 Coat Putty',
+  'Primer', '1 Coat Paint', '2 Coat Paint', 'Texture', 'Waterproofing', 'Polish',
 ];
 const NO_OF_DAYS_OPTIONS = ['2', '3', '5', '7', '10', '12', '15', '20', '30'];
 const PAINTER_AVATAR_COLORS = ['#c96a0f', '#7c3aed', '#16a34a', '#2563eb', '#dc2626', '#0891b2', '#be185d', '#65a30d'];
@@ -72,9 +75,8 @@ const DEFAULT_SOCIETIES = [
   'VVIP Addresses', 'VVIP Homes', 'Windsor Majesty', 'Windsor Paradise 2',
 ].sort();
 const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
-const SPACE_TYPES = ['Wall', 'Room', 'Full Home', 'Commercial', 'Shop'];
 const EMPTY_QUOTATION = {
-  society: '', customerName: '', mobile: '', bhk: '', paintType: '', spaceType: '',
+  society: '', customerName: '', mobile: '', bhk: '', paintType: '',
   // Process is a tile-picker (same convention as ProjectForm's Process
   // section) — no per-item price, just what's included. One manually-entered
   // totalAmount covers the whole job, since customers are quoted a single
@@ -2085,6 +2087,7 @@ function QuotationTool() {
   const [area, setArea] = useState({ builtUpArea: '', bhk: '', multiplier: DEFAULT_AREA_MULTIPLIER });
   const [form, setForm] = useState(EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
+  const [newStep, setNewStep] = useState('');
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
   const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
   function togglePaintType(name) {
@@ -2098,6 +2101,12 @@ function QuotationTool() {
     field('workProcess', (selectedSteps.includes(name)
       ? selectedSteps.filter(s => s !== name)
       : [...selectedSteps, name]).join(', '));
+  }
+  function addCustomStep() {
+    const name = newStep.trim();
+    if (!name || selectedSteps.includes(name)) return;
+    field('workProcess', [...selectedSteps, name].join(', '));
+    setNewStep('');
   }
   const amount = Number(form.totalAmount) || 0;
   const canGenerate = form.customerName.trim() && amount > 0;
@@ -2122,26 +2131,8 @@ function QuotationTool() {
               {DEFAULT_SOCIETIES.map(s => <option key={s} value={s} />)}
             </datalist>
           </label>
-          <label className="ap-field"><span>BHK</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. 3 BHK" /></label>
+          <label className="ap-field"><span>Property Type</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. Shop, Home, 3 BHK Flat" /></label>
         </div>
-        <label className="ap-field"><span>Space Type</span></label>
-        <div className="ap-paint-type-tiles">
-          {SPACE_TYPES.map(name => (
-            <button
-              key={name}
-              type="button"
-              className={`ap-paint-type-tile${form.spaceType === name ? ' selected' : ''}`}
-              onClick={() => field('spaceType', form.spaceType === name ? '' : name)}
-            >
-              {form.spaceType === name && <span className="ap-paint-type-check">✓</span>}
-              {name}
-            </button>
-          ))}
-        </div>
-        <label className="ap-field">
-          <span>Or describe it yourself</span>
-          <input value={SPACE_TYPES.includes(form.spaceType) ? '' : form.spaceType} onChange={e => field('spaceType', e.target.value)} placeholder="e.g. Basement, Terrace, Office lobby" />
-        </label>
         <label className="ap-field"><span>Paint Type — tap all that apply</span></label>
         <div className="ap-paint-type-tiles">
           {PAINT_TYPES.map(name => (
@@ -2170,6 +2161,10 @@ function QuotationTool() {
             </button>
           ))}
         </div>
+        <div className="ap-quote-item-row">
+          <input placeholder="Add another step…" value={newStep} onChange={e => setNewStep(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomStep())} />
+          <button type="button" className="ap-add-item-btn" onClick={addCustomStep} disabled={!newStep.trim()}>+ Add</button>
+        </div>
         <label className="ap-field">
           <span>Total Project Amount (₹)</span>
           <input type="number" value={form.totalAmount} onFocus={e => e.target.select()} onChange={e => field('totalAmount', e.target.value)} />
@@ -2192,7 +2187,7 @@ function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const { society, customerName, mobile, bhk, paintType, spaceType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
+  const { society, customerName, mobile, bhk, paintType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
   const steps = (workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
   const quoteDate = new Date();
   const quoteDateStr = quoteDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2206,7 +2201,7 @@ function QuotationCard({ quotation, onClose }) {
     ``,
     `👤 *Customer:* ${customerName}`,
     society ? `🏘️ *Society:* ${society}` : '',
-    bhk ? `🛏️ *Configuration:* ${bhk}` : '',
+    bhk ? `🏠 *Property Type:* ${bhk}` : '',
     mobile ? `📞 *Phone:* ${mobile}` : '',
     paintType ? `🎨 *Paint Type:* ${paintType}` : '',
     areaSqFt ? `📐 *Est. Painting Area:* ${areaSqFt.toLocaleString('en-IN')} sq ft` : '',
@@ -2221,7 +2216,7 @@ function QuotationCard({ quotation, onClose }) {
     ratePerSqFt ? `📊 *Rate = ₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft*` : '',
     `━━━━━━━━━━━━━━━━━━━━━━`,
     ``,
-    `📌 Valid until ${validUntil} · 1-year workmanship warranty`,
+    `📌 Valid until ${validUntil}`,
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
   ].filter(Boolean).join('\n');
@@ -2255,9 +2250,8 @@ function QuotationCard({ quotation, onClose }) {
             <div className="aq-card-section-title">Customer Details</div>
             <div className="aq-card-row"><span>Name</span><span>{customerName}</span></div>
             {society && <div className="aq-card-row"><span>Society</span><span>{society}</span></div>}
-            {bhk && <div className="aq-card-row"><span>Configuration</span><span>{bhk}</span></div>}
+            {bhk && <div className="aq-card-row"><span>Property Type</span><span>{bhk}</span></div>}
             {mobile && <div className="aq-card-row"><span>Phone</span><span>{mobile}</span></div>}
-            {spaceType && <div className="aq-card-row"><span>Space Type</span><span>{spaceType}</span></div>}
             {paintType && <div className="aq-card-row"><span>Paint Type</span><span>{paintType}</span></div>}
             {areaSqFt && <div className="aq-card-row"><span>Est. Painting Area</span><span>{areaSqFt.toLocaleString('en-IN')} sq ft</span></div>}
           </div>
@@ -2277,7 +2271,6 @@ function QuotationCard({ quotation, onClose }) {
           </div>
           <div className="aq-card-terms">
             <div>📌 Valid until <strong>{validUntil}</strong> (3 days from issue)</div>
-            <div>🛡️ 1-year workmanship warranty included</div>
           </div>
           <div className="aq-card-footer">
             <div>🌐 www.thepainterboys.com</div>

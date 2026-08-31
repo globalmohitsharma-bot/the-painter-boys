@@ -78,7 +78,7 @@ const DEFAULT_SOCIETIES = [
 ].sort();
 const DEFAULT_PAINTERS = ['Fariyad', 'Jabbar', 'Rajeev', 'Raju', 'Sushant'];
 const EMPTY_QUOTATION = {
-  society: '', customerName: '', mobile: '', bhk: '', paintType: '',
+  society: '', address: '', customerName: '', mobile: '', bhk: '', paintType: '',
   // Process is a tile-picker (same convention as ProjectForm's Process
   // section) — no per-item price, just what's included. One manually-entered
   // totalAmount covers the whole job, since customers are quoted a single
@@ -470,6 +470,38 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     }
   }
 
+  // Turns a filled-in quotation directly into a real client — unlike a plain
+  // "+ New Client", the starting project comes pre-filled with whatever paint
+  // type/process/amount the admin already worked out while quoting, instead
+  // of a blank EMPTY_PROJECT.
+  async function createClientFromQuotation(quotation) {
+    const client = {
+      ...EMPTY_CLIENT,
+      contactName: quotation.customerName,
+      phone: quotation.mobile,
+      society: quotation.society,
+      address: quotation.address,
+      otherDetails: quotation.bhk ? `Property Type: ${quotation.bhk}` : '',
+    };
+    const savedClient = await api('/api/clients', idToken, { method: 'POST', body: JSON.stringify(client) });
+    setClients(cs => [savedClient, ...cs]);
+
+    const project = {
+      ...EMPTY_PROJECT,
+      clientId: savedClient.id,
+      paintType: quotation.paintType,
+      workProcess: quotation.workProcess,
+      amount: Number(quotation.totalAmount) || 0,
+      dateContacted: new Date().toISOString().slice(0, 10),
+    };
+    const savedProject = await api('/api/projects', idToken, { method: 'POST', body: JSON.stringify(project) });
+    setProjects(ps => [savedProject, ...ps]);
+
+    setProjectFilter('Inquiry');
+    goto('grid');
+    showToast(`✓ Client "${savedClient.contactName}" created from quotation — showing under Inquiry`);
+  }
+
   async function deleteClient(id) {
     if (!confirm('Delete this client and keep their projects orphaned? This cannot be undone.')) return;
     await api(`/api/clients/${id}`, idToken, { method: 'DELETE' });
@@ -786,7 +818,10 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
           </>
         ) : view === 'quotation' ? (
-          <QuotationTool />
+          <QuotationTool
+            societies={[...new Set([...DEFAULT_SOCIETIES, ...clients.map(c => c.society).filter(Boolean)])].sort()}
+            onCreateClient={createClientFromQuotation}
+          />
         ) : view === 'utilities-menu' ? (
           <UtilitiesMenu onNavigate={goto} pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
             showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} onSendTestEmail={sendTestEmail} />
@@ -2097,11 +2132,12 @@ function AreaCalculator({ area, onChange, ratePerSqFt }) {
 }
 
 // ── Quotation generator ───────────────────────────────────────────
-function QuotationTool() {
+function QuotationTool({ societies = [], onCreateClient }) {
   const [area, setArea] = useState({ builtUpArea: '', bhk: '', multiplier: DEFAULT_AREA_MULTIPLIER });
   const [form, setForm] = useState(EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
   const [newStep, setNewStep] = useState('');
+  const [creatingClient, setCreatingClient] = useState(false);
   function field(key, value) { setForm(f => ({ ...f, [key]: value })); }
   const selectedPaintTypes = (form.paintType || '').split(',').map(s => s.trim()).filter(Boolean);
   function togglePaintType(name) {
@@ -2139,12 +2175,13 @@ function QuotationTool() {
           <label className="ap-field"><span>Customer Name</span><input value={form.customerName} onChange={e => field('customerName', e.target.value)} /></label>
           <label className="ap-field"><span>Mobile Number</span><input value={form.mobile} onChange={e => field('mobile', e.target.value)} /></label>
           <label className="ap-field">
-            <span>Society</span>
+            <span>Society — pick an existing one or type a new one</span>
             <input value={form.society} onChange={e => field('society', e.target.value)} list="ap-quote-society-options" />
             <datalist id="ap-quote-society-options">
-              {DEFAULT_SOCIETIES.map(s => <option key={s} value={s} />)}
+              {societies.map(s => <option key={s} value={s} />)}
             </datalist>
           </label>
+          <label className="ap-field"><span>Address</span><input value={form.address} onChange={e => field('address', e.target.value)} placeholder="e.g. Tower 4, Flat 1203" /></label>
           <label className="ap-field"><span>Property Type</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. Shop, Home, 3 BHK Flat" /></label>
         </div>
         <label className="ap-field"><span>Paint Type — tap all that apply</span></label>
@@ -2186,6 +2223,17 @@ function QuotationTool() {
         {amount > 0 && <div className="ap-calc-result">Total Quotation: <strong>₹{amount.toLocaleString('en-IN')}</strong></div>}
         <div className="ap-modal-actions">
           <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
+          <button
+            className="ap-btn-primary"
+            disabled={!canGenerate || creatingClient}
+            onClick={async () => {
+              setCreatingClient(true);
+              try { await onCreateClient(form); }
+              finally { setCreatingClient(false); }
+            }}
+          >
+            {creatingClient ? '⏳ Creating…' : '✅ Create Client from This Quotation'}
+          </button>
         </div>
         {!canGenerate && <p className="ap-calc-hint">Customer name and a total project amount are required.</p>}
       </div>

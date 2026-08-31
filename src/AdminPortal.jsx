@@ -195,9 +195,14 @@ export default function AdminPortal() {
       });
       if (!res.ok) throw new Error(`Sign-in failed (${res.status})`);
       const data = await res.json();
-      localStorage.setItem(TOKEN_KEY, response.credential);
+      // The backend hands back a long-lived session token alongside the raw
+      // Google credential (which itself expires in ~1hr) — store and use
+      // that instead, so the admin stays signed in until they actually sign
+      // out, not until Google's short-lived token quietly stops working.
+      const sessionToken = data.sessionToken || response.credential;
+      localStorage.setItem(TOKEN_KEY, sessionToken);
       localStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
-      setIdToken(response.credential);
+      setIdToken(sessionToken);
       setWhoami(data);
     } catch (err) {
       // Surfaced instead of silently resetting to a blank sign-in screen —

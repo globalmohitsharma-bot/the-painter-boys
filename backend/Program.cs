@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using ThePainterBoys.Api.Auth;
 using ThePainterBoys.Api.Configuration;
 using ThePainterBoys.Api.Repositories;
@@ -30,7 +31,20 @@ builder.Services.AddScoped<SheetPushSyncService>();
 // has been used and trusted for a while (see SheetSyncController.PushPreview
 // and .Push, and the Admin Portal's Push to Google Sheet button).
 
-builder.Services.AddDataProtection();
+// Without an explicit persisted key ring, Data Protection keys live wherever
+// the framework defaults to on this host — on Azure App Service that default
+// isn't guaranteed to survive a redeploy/restart the way /home does, which
+// would silently invalidate every issued session token (and impersonation
+// link) and 401 everyone back to a fresh sign-in on the next release. /home
+// is Azure App Service's durable, Azure-Files-backed directory — untouched
+// by a code deploy (only wwwroot gets replaced) and shared across scaled-out
+// instances, so keys placed there outlive both.
+var dataProtectionKeysPath = Environment.GetEnvironmentVariable("HOME") is { Length: > 0 } homeDir
+    ? Path.Combine(homeDir, "data-protection-keys")
+    : Path.Combine(builder.Environment.ContentRootPath, "data-protection-keys");
+builder.Services.AddDataProtection()
+    .SetApplicationName("ThePainterBoysApi")
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 
 builder.Services
     .AddAuthentication(GoogleTokenAuthenticationHandler.SchemeName)

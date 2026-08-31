@@ -244,13 +244,64 @@ this round, so no customer-side check was needed for these four.
   was very likely the dominant cause of "why do I have to relogin so
   often." Switched both to `localStorage`. Verified via Playwright:
   signed in on one page, closed it, opened a new page in the same browser
-  context, landed straight on the portal with no re-login. **Caveat not
-  yet fully solved**: the underlying Google ID token still expires after
-  ~1hr regardless of storage — an admin who keeps the portal open and
-  active for longer than that will still hit a 401 on the next API call,
-  since there's no global 401-catch that redirects to sign-in mid-session
-  yet. `localStorage` fixes "closed the app and came back," not "stayed
-  in the app past an hour."
+  context, landed straight on the portal with no re-login.
+
+## Long-lived admin session token — no expiry until sign-out (added 2026-08-31)
+
+`localStorage` alone only fixed "closed the app and came back" — the Bearer
+token being stored was still the raw Google ID token, which Google itself
+expires after ~1hr regardless of where it's stored, so an admin who kept the
+portal open and active past that point still hit a 401 on the next API call.
+
+Fixed properly by having the backend issue its **own** session token instead
+of asking the frontend to hold onto Google's:
+
+- `POST /api/auth/google` (`AuthController.SignInWithGoogle`) now also
+  returns a `sessionToken` — a `SESSION_`-prefixed value produced by ASP.NET
+  Core Data Protection's plain (non-time-limited) protector, encrypting the
+  signed-in user's id. No expiry is encoded in it at all.
+- `GoogleTokenAuthenticationHandler` recognizes the `SESSION_` prefix on any
+  Bearer token, unprotects it, re-looks-up the user (so a role change or a
+  deleted account takes effect immediately), and authenticates — without
+  ever touching Google's validation, so Google's own ~1hr expiry no longer
+  applies to it.
+- `AdminPortal.jsx`'s `handleCredential` now stores `data.sessionToken`
+  (falling back to the raw Google credential if it's ever missing) instead
+  of `response.credential` — this is what actually goes into `localStorage`
+  and gets sent as the Bearer on every subsequent call.
+- **Critical companion fix**: `Program.cs` previously called
+  `AddDataProtection()` with no persisted key ring, which meant every app
+  restart/redeploy could silently regenerate the encryption keys and
+  invalidate every outstanding session token (and the pre-existing
+  impersonation feature, which uses the same mechanism) — a 401 wave on
+  every release, the opposite of the goal. Fixed by explicitly persisting
+  keys to Azure App Service's durable `/home` directory (`HOME` env var),
+  which survives a code deploy (only `wwwroot` gets replaced) and is shared
+  across scaled-out instances; falls back to the app's content root when
+  `HOME` isn't set (local dev).
+
+Verified end to end:
+1. Signed in via `/api/auth/google` with `DEV_TEST_ADMIN_TOKEN` — response
+   included a `sessionToken` starting with `SESSION_`.
+2. Called `GET /api/auth/whoami` with that session token → 200, and with a
+   tampered/garbage `SESSION_` value → 401 (fails closed, doesn't crash).
+3. **Restart survival** (the actual point of the fix): captured a session
+   token, `taskkill`'d the local backend process, started a fresh instance,
+   and called `whoami` with the pre-restart token again → still 200. Also
+   confirmed the local key file landed in `$HOME/data-protection-keys`
+   (outside the repo/content root), matching what `/home` on Azure App
+   Service resolves to — not something that would get wiped by a redeploy.
+4. Through the actual `AdminPortal.jsx` UI flow (not just direct API
+   calls): signed in, confirmed the token written to
+   `localStorage['pb_admin_id_token']` starts with `SESSION_`, reloaded,
+   portal loaded with no re-login prompt.
+
+**What this does not do**: there's no server-side revocation list, so
+"sign out" is still purely client-side (`localStorage.removeItem`) — a
+session token isn't individually invalidatable from the backend if a
+device were ever lost. Not needed for the current ask ("don't log out
+until I click log out"), but worth knowing if a revoke-all-sessions
+feature is ever wanted later.
 - **Admin lands directly on Admin Portal from the installed icon**: the
   site's one shared manifest had `start_url: '/'`, so "Install App" run
   from inside the Admin Portal still opened the marketing homepage on

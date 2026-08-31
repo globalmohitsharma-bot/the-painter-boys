@@ -55,6 +55,15 @@ public class GoogleTokenAuthenticationHandler(
     public const string ImpersonationPrefix = "IMPERSONATE_";
     public const string ImpersonationPurpose = "ThePainterBoys.UserImpersonation.v1";
 
+    /// <summary>Marks a Bearer value as our own long-lived session token rather than
+    /// a raw Google ID token — issued once at sign-in (see AuthController.SignInWithGoogle)
+    /// so the frontend never has to hold onto Google's own ~1hr-lived credential.
+    /// Deliberately protected with no expiry (plain, not time-limited) — it stays
+    /// valid until the user signs out client-side or the server's Data Protection
+    /// key ring is reset, whichever comes first.</summary>
+    public const string SessionPrefix = "SESSION_";
+    public const string SessionPurpose = "ThePainterBoys.UserSession.v1";
+
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue("Authorization", out var authHeader) ||
@@ -90,6 +99,33 @@ public class GoogleTokenAuthenticationHandler(
             };
             var impersonatedIdentity = new ClaimsIdentity(impersonatedClaims, SchemeName);
             return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(impersonatedIdentity), SchemeName));
+        }
+
+        if (idToken.StartsWith(SessionPrefix, StringComparison.Ordinal))
+        {
+            string userId;
+            try
+            {
+                var protector = dataProtectionProvider.CreateProtector(SessionPurpose);
+                userId = protector.Unprotect(idToken[SessionPrefix.Length..]);
+            }
+            catch
+            {
+                return AuthenticateResult.Fail("Session is no longer valid — please sign in again.");
+            }
+
+            var sessionUser = await userRepository.GetByIdAsync(userId, Context.RequestAborted);
+            if (sessionUser is null) return AuthenticateResult.Fail("That account no longer exists.");
+
+            var sessionClaims = new List<Claim>
+            {
+                new(ClaimTypes.Email, sessionUser.Email),
+                new(ClaimTypes.Name, sessionUser.Name ?? sessionUser.Email),
+                new(ClaimTypes.Role, sessionUser.Role),
+                new("user_id", sessionUser.Id),
+            };
+            var sessionIdentity = new ClaimsIdentity(sessionClaims, SchemeName);
+            return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(sessionIdentity), SchemeName));
         }
 
         var devBypassAllowed = hostEnvironment.IsDevelopment() || HasValidDevTestKey();

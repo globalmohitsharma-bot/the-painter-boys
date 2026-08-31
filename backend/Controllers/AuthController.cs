@@ -1,5 +1,6 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using ThePainterBoys.Api.Configuration;
@@ -10,7 +11,7 @@ using ThePainterBoys.Api.Services;
 namespace ThePainterBoys.Api.Controllers;
 
 public record GoogleSignInRequest(string IdToken, string? InviteToken = null);
-public record WhoAmIResponse(string Email, string Name, string Role, bool IsStaff, string? Picture = null);
+public record WhoAmIResponse(string Email, string Name, string Role, bool IsStaff, string? Picture = null, string? SessionToken = null);
 
 [ApiController]
 [Route("api/auth")]
@@ -20,7 +21,8 @@ public class AuthController(
     IEmailService emailService,
     IOptions<GoogleAuthOptions> googleAuthOptions,
     IHostEnvironment hostEnvironment,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    IDataProtectionProvider dataProtectionProvider) : ControllerBase
 {
     // Mirrors GoogleTokenAuthenticationHandler's dev-bypass gate — see the
     // detailed comment there. The token strings are public (ship in the JS
@@ -125,7 +127,9 @@ public class AuthController(
         }
 
         var isStaff = saved.Role is UserRole.Admin or UserRole.Manager or UserRole.Partner;
-        return Ok(new WhoAmIResponse(saved.Email, saved.Name, saved.Role, isStaff, payload.Picture));
+        var sessionToken = Auth.GoogleTokenAuthenticationHandler.SessionPrefix +
+            dataProtectionProvider.CreateProtector(Auth.GoogleTokenAuthenticationHandler.SessionPurpose).Protect(saved.Id);
+        return Ok(new WhoAmIResponse(saved.Email, saved.Name, saved.Role, isStaff, payload.Picture, sessionToken));
     }
 
     /// <summary>Re-checks the caller's current role without re-registering anything (page-load check).</summary>

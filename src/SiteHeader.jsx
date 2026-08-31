@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import AccountModal from './AccountModal.jsx';
+import InstallAppButton from './InstallAppButton.jsx';
 import useGoogleAccount from './useGoogleAccount.js';
 import { PHONE, WA_LINK_DEFAULT, PAGE_META, NAV_PAGES } from './siteConfig.js';
 import './BottomNav.css';
@@ -79,6 +80,9 @@ export default function SiteHeader() {
       </nav>
 
       <div className={`mobile-overlay${menuOpen ? ' open' : ''}`}>
+        <InstallAppButton className="mo-link mo-install">
+          <Icon name="download" size={17} style={{ marginRight: 8, verticalAlign: '-3px' }} />Install App
+        </InstallAppButton>
         <Link to="/" className="mo-link mo-home" onClick={() => setMenuOpen(false)}><Icon name="home" size={17} style={{ marginRight: 8, verticalAlign: '-3px' }} />Home</Link>
         {NAV_PAGES.map(([id, label]) => (
           <Link key={id} to={PAGE_META[id].path} className={`mo-link${currentPage === id ? ' mo-active' : ''}`}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import Icon from './Icon.jsx';
+import InstallAppButton from './InstallAppButton.jsx';
+import useInstallPrompt from './useInstallPrompt.js';
 import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 import { DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
 import './AdminPortal.css';
@@ -1006,6 +1008,7 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
   const [exportError, setExportError] = useState(null);
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState(null); // { ok, message } | null
+  const { canInstall: canInstallApp } = useInstallPrompt();
   const items = [
     { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
     { key: 'users', icon: '👥', label: 'Users' },
@@ -1078,6 +1081,17 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
           </button>
         </div>
         {testEmailResult && <p className={testEmailResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{testEmailResult.message}</p>}
+        {canInstallApp && (
+          <div className="ap-card-row" style={{ padding: '6px 0' }}>
+            <span>
+              Add to Home Screen
+              <span className="ap-calc-hint" style={{ display: 'block', marginTop: 2 }}>
+                Puts the logo on your phone's home screen — tap it to open the Admin Portal directly, no browser address bar needed.
+              </span>
+            </span>
+            <InstallAppButton className="ap-btn-primary">📲 Install App</InstallAppButton>
+          </div>
+        )}
       </div>
       <h3 className="ap-dashboard-subhead">📤 Export</h3>
       <div className="ap-calc-box">

@@ -135,6 +135,10 @@ const ICONS = {
     body: <path d="M4 5.5h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H9.5L5 21v-4H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z" />,
   },
   send: { vb: '0 0 24 24', mode: 'stroke', body: <path d="M21.5 2.5 11 13M21.5 2.5 14.8 21.5l-3.8-8.5-8.5-3.8 19-6.7Z" /> },
+  download: {
+    vb: '0 0 24 24', mode: 'stroke',
+    body: (<><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></>),
+  },
 };
 
 export default function Icon({ name, size = 24, className, style }) {

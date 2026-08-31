@@ -501,9 +501,13 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     const savedProject = await api('/api/projects', idToken, { method: 'POST', body: JSON.stringify(project) });
     setProjects(ps => [savedProject, ...ps]);
 
-    setProjectFilter('Inquiry');
-    goto('grid');
-    showToast(`✓ Client "${savedClient.contactName}" created from quotation — showing under Inquiry`);
+    // Deliberately no navigation here — this fires as a side effect of
+    // ticking "Also create a client" and clicking Generate Quotation, and
+    // jumping to Grid View used to yank the admin away mid-quote, right
+    // when they still needed to share it. The new client is reachable via
+    // Grid View's Inquiry filter whenever they're ready to look.
+    showToast(`✓ Client "${savedClient.contactName}" created — visible under Grid View → Inquiry`);
+    return savedClient;
   }
 
   // Same isNew-vs-id pattern as saveClient/saveProject — quotation field
@@ -2214,7 +2218,8 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
   const [form, setForm] = useState(initialQuotation || EMPTY_QUOTATION);
   const [showPreview, setShowPreview] = useState(false);
   const [newStep, setNewStep] = useState('');
-  const [creatingClient, setCreatingClient] = useState(false);
+  const [alsoCreateClient, setAlsoCreateClient] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   // Re-initialize whenever a different saved quote is opened from the Saved
   // Quotes list — id alone is enough to detect "a different quote", since a
@@ -2312,21 +2317,33 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
           <input type="number" value={form.totalAmount} onFocus={e => e.target.select()} onChange={e => field('totalAmount', e.target.value)} />
         </label>
         {amount > 0 && <div className="ap-calc-result">Total Quotation: <strong>₹{amount.toLocaleString('en-IN')}</strong></div>}
+        <label className="ap-field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <input type="checkbox" checked={alsoCreateClient} onChange={e => setAlsoCreateClient(e.target.checked)} style={{ width: 'auto' }} />
+          <span>Also create a client from this quote</span>
+        </label>
         <div className="ap-modal-actions">
-          <button className="ap-btn-primary" disabled={!canGenerate} onClick={() => setShowPreview(true)}>Generate Quotation</button>
-          <button className="ap-btn-primary" disabled={!canGenerate || saving} onClick={handleSaveQuotation}>
-            {saving ? '⏳ Saving…' : form.id ? '💾 Update Saved Quotation' : '💾 Save Quotation'}
-          </button>
           <button
             className="ap-btn-primary"
-            disabled={!canGenerate || creatingClient}
+            disabled={!canGenerate || generating}
             onClick={async () => {
-              setCreatingClient(true);
-              try { await onCreateClient(form); }
-              finally { setCreatingClient(false); }
+              setGenerating(true);
+              try {
+                // Creating the client happens quietly in the background —
+                // no navigation, so the admin stays right here and can still
+                // share the quote they were in the middle of. Previously a
+                // separate "Create Client" button jumped straight to Grid
+                // View, cutting the quote flow short.
+                if (alsoCreateClient) await onCreateClient(form);
+                setShowPreview(true);
+              } finally {
+                setGenerating(false);
+              }
             }}
           >
-            {creatingClient ? '⏳ Creating…' : '✅ Create Client from This Quotation'}
+            {generating ? '⏳ Generating…' : 'Generate Quotation'}
+          </button>
+          <button className="ap-btn-primary" disabled={!canGenerate || saving} onClick={handleSaveQuotation}>
+            {saving ? '⏳ Saving…' : form.id ? '💾 Update Saved Quotation' : '💾 Save Quotation'}
           </button>
           {form.id && (
             <button type="button" onClick={() => setForm(EMPTY_QUOTATION)}>+ New Quotation</button>

@@ -58,6 +58,7 @@ export default function SiteFooter() {
             <Link className="footer-link" to="/privacy">Privacy Policy</Link>
             <Link className="footer-link" to="/terms">Terms of Service</Link>
             <Link className="footer-link" to="/data-deletion">Data Deletion</Link>
+            <a className="footer-link" href="/best-painters-ghaziabad-delhi-ncr.html">About Us Summary</a>
             <a className="footer-link" href="/pb">Staff Portal</a>
           </div>
         </div>

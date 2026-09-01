@@ -195,6 +195,12 @@ function Testimonials() {
           <span className="sec-tag">Customer Feedback</span>
           <h2 className="sec-title">What Homeowners Say</h2>
           <p className="sec-sub">A few notes from recent projects across Ghaziabad, Noida and Delhi NCR.</p>
+          <a className="btn-secondary" style={{ marginTop: 14 }}
+            href="https://www.google.com/maps/search/?api=1&query=The+Painter+Boys+Raj+Nagar+Extension+Ghaziabad"
+            target="_blank" rel="noopener noreferrer">
+            <Icon name="star" size={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+            See Our Rating &amp; Reviews on Google
+          </a>
         </div>
         <div className="tm-grid">
           {shown.map(t => (

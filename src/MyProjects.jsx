@@ -224,6 +224,17 @@ export default function MyProjects() {
     }
   }, []);
 
+  // An Admin account landing here directly (bookmark, stale link, the
+  // sign-in flow's own redirect not having fired yet) gets sent straight to
+  // the Admin Portal — no click-through needed. Deliberately scoped to the
+  // Admin role only, not the broader isStaff group (Manager/Partner aren't
+  // wired up to the Admin Portal and should stay on their own dashboard).
+  // Never redirect while actively impersonating a customer, since that's a
+  // deliberate "view as them" state.
+  useEffect(() => {
+    if (whoami?.role === 'Admin' && !isImpersonating) window.location.href = '/admin';
+  }, [whoami, isImpersonating]);
+
   useEffect(() => {
     if (idToken || isNativeApp()) return;
     let cancelled = false;
@@ -350,15 +361,6 @@ export default function MyProjects() {
               <span>👁️ Viewing as {profile?.name || profile?.email || 'this customer'} — admin impersonation.</span>
               <div className="mp-staff-banner-links">
                 <button className="mp-impersonate-end" onClick={signOut}>End Session</button>
-              </div>
-            </div>
-          )}
-          {isStaff && !isImpersonating && (
-            <div className="mp-staff-banner">
-              <span>You're signed in with staff access.</span>
-              <div className="mp-staff-banner-links">
-                <a href="/admin">Admin Portal</a>
-                <a href="/pb">Staff Portal</a>
               </div>
             </div>
           )}

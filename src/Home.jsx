@@ -539,9 +539,9 @@ export default function Home() {
           <div className="inner-page">
             <div className="page-hero page-hero-dark">
               <div className="ph-content">
-                <span className="sec-tag light">Our Team</span>
-                <h1 className="ph-title">Meet the Visionaries</h1>
-                <p className="ph-sub">The people who make every job exceptional.</p>
+                <span className="sec-tag light">Founding Team</span>
+                <h1 className="ph-title">Meet the Founders</h1>
+                <p className="ph-sub">The leadership team who built The Painter Boys from the ground up — backed by a full crew of painters, supervisors, and project coordinators who execute every job on the ground.</p>
               </div>
             </div>
             <div className="page-content-white">
@@ -559,6 +559,14 @@ export default function Home() {
                     </Link>
                   ))}
                 </div>
+                <div className="pbg-sec">
+                  <div className="sec-head">
+                    <h2>Backed by a Full Operational Team</h2>
+                  </div>
+                  <p className="svc-detail-text" style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+                    The three of us above lead the company and set the standard every job is held to — but we're not the ones alone on a ladder. Every project runs through a dedicated crew of trained painters, on-site supervisors, and project coordinators who handle the day-to-day execution under our direct oversight, so the quality and accountability you see in this team carries through to every job, on every site, whether or not we're personally there that day.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -572,6 +580,15 @@ export default function Home() {
                 <span className="sec-tag light">Education Center</span>
                 <h1 className="ph-title">Learn About Every Paint Type We Use</h1>
                 <p className="ph-sub">Asian Paints Royale, Tractor Emulsion, Apex, Royale Shyne and more — real benefits, honest drawbacks, and which finish actually suits your home.</p>
+                <a
+                  className="btn-wa"
+                  style={{ marginTop: 16 }}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Have a look at The Painter Boys' Education Center — real benefits and drawbacks for every paint type: ${SITE_URL}/paint-types`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                >
+                  <Icon name="whatsapp" size={16} style={{ marginRight: 6, verticalAlign: '-3px' }} />
+                  Share This Page on WhatsApp
+                </a>
               </div>
             </div>
             <div className="page-content-white">
@@ -703,8 +720,6 @@ export default function Home() {
       </main>{/* end page-fade */}
 
       <SiteFooter />
-
-      <a className="wa-fab" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp"><Icon name="whatsapp" size={26} /></a>
     </div>
   );
 }

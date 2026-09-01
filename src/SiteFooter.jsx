@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
-import LeadBot from './LeadBot.jsx';
+// import LeadBot from './LeadBot.jsx'; // hidden for now, see render site below
 import BottomNav from './BottomNav.jsx';
 import { PHONE, WA_LINK_DEFAULT, PAGE_META, NAV_PAGES } from './siteConfig.js';
 
@@ -65,7 +65,13 @@ export default function SiteFooter() {
     </footer>
 
     <BottomNav />
-    <LeadBot />
+    {/* LeadBot hidden for now, per explicit request, in favor of a simple
+        floating WhatsApp icon instead — component left intact so
+        re-enabling it later is a one-line change, not a rebuild. */}
+    {/* <LeadBot /> */}
+    <a className="wa-fab" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+      <Icon name="whatsapp" size={26} />
+    </a>
     </>
   );
 }

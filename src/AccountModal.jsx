@@ -49,10 +49,11 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
   // Reopening the modal while already signed in (e.g. a later visit, or the
   // 2nd AccountModal instance) never re-runs handleCredential, so its own
   // post-sign-in redirect never fires — this covers that case directly,
-  // once role verification has actually resolved ('isStaff' present).
+  // once role verification has actually resolved ('isStaff' present). Only
+  // the Admin role goes straight to the Admin Portal, no click-through choice.
   useEffect(() => {
-    if (open && user && 'isStaff' in user && !user.isStaff) {
-      window.location.href = '/my-projects';
+    if (open && user && 'isStaff' in user) {
+      window.location.href = user.role === 'Admin' ? '/admin' : '/my-projects';
     }
   }, [open, user]);
 
@@ -101,11 +102,9 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
               : <div className="bn-modal-avatar bn-modal-avatar-fallback"><Icon name="user" size={28} /></div>}
             <h3 className="bn-modal-title">Welcome, {user.name?.split(' ')[0]}</h3>
             <p className="bn-modal-sub">{user.email}</p>
-            {user.isStaff ? (
+            {user.role === 'Admin' ? (
               <div className="bn-staff-links">
-                <p className="bn-modal-note">You have staff access on this account.</p>
-                <a className="bn-staff-link" href="/admin">Admin Portal</a>
-                <a className="bn-staff-link" href="/pb">Staff Portal</a>
+                <p className="bn-modal-note">Taking you to the Admin Portal…</p>
               </div>
             ) : (
               <div className="bn-staff-links">

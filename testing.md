@@ -315,6 +315,47 @@ feature is ever wanted later.
   tested against `localhost:5173`) — manifest on `/admin` came back as a
   `blob:` URL with `start_url: "/admin"`, manifest on `/` was untouched.
 
+## Quotation calculator hide, Admin-only auto-redirect, LeadBot swap, Team/Royale content (added 2026-09-01)
+
+- **Painting Area Calculator hidden from Quotation**: `<AreaCalculator>` no
+  longer renders inside `QuotationTool` (component and its `area`/
+  `ratePerSqFt` state left intact for a future standalone tool) — it's one
+  shared responsive component, so "hide it" only ever needed one change,
+  verified on both a desktop viewport and a Pixel 7 emulation.
+- **Admin-only auto-redirect, not all `isStaff`**: initial pass redirected
+  any `isStaff` account (Admin/Manager/Partner) straight to `/admin`;
+  narrowed on explicit correction to `role === 'Admin'` specifically in all
+  three places it's checked — `useGoogleAccount.js`'s post-sign-in
+  redirect, `AccountModal.jsx`'s reopened-while-signed-in effect, and a new
+  effect in `MyProjects.jsx` that catches an Admin landing there directly
+  (bookmark/stale link) and sends them to `/admin` with no visible banner
+  or click-through link — never fires while `isImpersonating` is true.
+  Verified via the dev-bypass admin sentinel landing on `/my-projects` and
+  ending up at `/admin` with no user action.
+- **LeadBot hidden, floating WhatsApp icon moved into SiteFooter**: `<LeadBot
+  />` commented out (not deleted) in `SiteFooter.jsx`. The existing `.wa-fab`
+  small floating WhatsApp icon was previously only wired into `Home.jsx`
+  directly — moved it into `SiteFooter.jsx` instead so it's site-wide.
+  **Bug caught before shipping**: Blog pages use `SiteFooter` but never had
+  their own local `.wa-fab`, so simply hiding LeadBot would have left Blog
+  pages with zero floating contact affordance. Verified both Home and Blog
+  routes show the WhatsApp fab and neither shows the old LeadBot fab.
+- **Team page reframed**: hero copy changed from "Meet the Visionaries" to
+  "Meet the Founders" with a subtitle clarifying they're leadership backed
+  by a full crew, plus a new "Backed by a Full Operational Team" section
+  after the 3-person grid — addresses the "looks like a 3-person company"
+  concern without needing to list every individual crew member.
+- **Royale content**: added an "All the Benefits, Pulled Together — and Why
+  a Royale Wall Lasts as Long as It Does" section and rewrote the
+  Royale-vs-Royale-Shyne section into an explicit decision guide ("Choose
+  Royale if... / Royale Shyne if... / our practical recommendation..."),
+  per explicit request that a reader should be able to decide between the
+  two after reading the page.
+- **Education Center WhatsApp share button**: `wa.me/?text=...` (no fixed
+  recipient — opens WhatsApp's own contact picker) added to the
+  `/paint-types` hub hero, verified the button renders and the href decodes
+  to the correct pre-filled message + URL.
+
 ## Education Center rename + expanded paint content + quote learn-links (added 2026-09-01)
 
 - **Nav rename**: `siteConfig.js`'s `NAV_PAGES` no longer has a separate

@@ -81,10 +81,11 @@ export default function useGoogleAccount() {
       };
       setUser(verifiedUser);
       localStorage.setItem(USER_KEY, JSON.stringify(verifiedUser));
-      // Everyone lands on the dashboard now, staff included — it shows its
-      // own Admin/Staff Portal banner for staff accounts (see MyProjects.jsx),
-      // so the modal no longer needs to be the place that choice happens.
-      window.location.href = '/my-projects';
+      // Only the Admin role goes straight to the Admin Portal — no
+      // click-through banner, no choice between Admin/Staff Portal to make
+      // first. Manager/Partner aren't wired up to it yet, so they (and every
+      // customer) land on the regular dashboard as before.
+      window.location.href = verifiedUser.role === 'Admin' ? '/admin' : '/my-projects';
     } catch {
       // Backend unreachable — the customer sign-in above already succeeded
       // (its raw token is already stored for the dashboard to use), so send

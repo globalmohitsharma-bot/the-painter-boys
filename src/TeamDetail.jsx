@@ -27,20 +27,21 @@ async function captureCard(cardEl, backgroundColor) {
   }
 }
 
+const TC_THEME_BG = { blue: '#0d2137', black: '#050505', white: '#ffffff' };
+
 function TeamShareCard({ member, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewBlob, setPreviewBlob] = useState(null);
-  const profileUrl = `${SITE_URL}/team/${member.slug}`;
-
+  const [theme, setTheme] = useState('blue');
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   async function shareAsImage() {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
     try {
-      const canvas = await captureCard(cardRef.current, '#0d2137');
+      const canvas = await captureCard(cardRef.current, TC_THEME_BG[theme]);
       canvas.toBlob(blob => {
         setPreviewBlob(blob);
         setPreviewUrl(URL.createObjectURL(blob));
@@ -76,7 +77,6 @@ function TeamShareCard({ member, onClose }) {
       ``,
       `📞 Corporate: ${PHONE}`,
       `🌐 www.thepainterboys.com`,
-      `🔗 ${profileUrl}`,
     ].join('\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
@@ -94,7 +94,14 @@ function TeamShareCard({ member, onClose }) {
           </>
         ) : (
           <>
-            <div className="tc-card" ref={cardRef}>
+            <div className="tc-theme-picker">
+              {['blue', 'black', 'white'].map(t => (
+                <button key={t} type="button"
+                  className={`tc-theme-swatch tc-theme-swatch-${t}${theme === t ? ' active' : ''}`}
+                  onClick={() => setTheme(t)} aria-label={`${t} card theme`} title={`${t[0].toUpperCase()}${t.slice(1)} card`} />
+              ))}
+            </div>
+            <div className={`tc-card tc-card-${theme}`} ref={cardRef}>
               <div className="tc-card-frame">
                 <div className="tc-card-header">
                   <img className="tc-card-logo-img" src="/logo-header.png" alt="" />
@@ -109,9 +116,9 @@ function TeamShareCard({ member, onClose }) {
                 <div className="tc-card-divider" />
                 <p className="tc-card-bio">{member.bio}</p>
                 <div className="tc-card-footer">
+                  <div style={{ fontSize: '.7rem', marginBottom: 2 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
                   <div>📞 Corporate: {PHONE}</div>
                   <div>🌐 www.thepainterboys.com</div>
-                  <div className="tc-card-link">{profileUrl.replace('https://', '')}</div>
                 </div>
               </div>
             </div>

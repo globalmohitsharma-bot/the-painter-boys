@@ -26,8 +26,9 @@ function log(name, ok, detail) {
 // ── Feature: Team member "Share My Card" on WhatsApp (added 2026-09-01) ──
 // A team member's public profile page can generate a branded, card-style
 // image (photo, name, role, bio, corporate number, site URL, profile link)
-// and share it on WhatsApp. Verifies the button exists, the modal opens with
-// correct info, and html2canvas actually produces an image.
+// in a choice of blue/black/white themes, and share it on WhatsApp.
+// Verifies the button exists, the modal opens with correct info, theme
+// switching actually changes the card, and html2canvas produces an image.
 async function checkTeamShareCard(browser) {
   const page = await browser.newPage();
   try {
@@ -43,7 +44,12 @@ async function checkTeamShareCard(browser) {
     log('Team share-card: modal shows name', cardText.includes('Rajeev Kumar'));
     log('Team share-card: modal shows corporate number', /\d{10}/.test(cardText));
     log('Team share-card: modal shows site URL', cardText.includes('thepainterboys.com'));
-    log('Team share-card: modal shows profile link', cardText.includes('/team/rajeev-kumar'));
+    log('Team share-card: modal shows the registration nudge', cardText.includes('best service') && cardText.includes('after-service'));
+
+    log('Team share-card: defaults to blue theme', await page.locator('.tc-card-blue').count() === 1);
+    await page.locator('.tc-theme-swatch-white').click();
+    await page.waitForTimeout(200);
+    log('Team share-card: switching theme swaps the card class', await page.locator('.tc-card-white').count() === 1);
 
     await page.getByRole('button', { name: /Share Image on WhatsApp/i }).click();
     const imgOk = await page.waitForSelector('.tc-preview-img', { timeout: 15000 }).then(() => true).catch(() => false);

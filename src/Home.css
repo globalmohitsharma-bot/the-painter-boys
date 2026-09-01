@@ -726,32 +726,54 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 }
 .tc-wrap { width: 100%; max-width: 380px; max-height: 92vh; overflow-y: auto; }
 .tc-card {
-  background: linear-gradient(180deg, var(--obsidian) 0%, var(--ink) 100%);
   border-radius: 22px; padding: 6px;
   box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,159,67,.25);
 }
+/* Three selectable bases — blue (default, matches the rest of the site),
+   black (premium/noir), white (light, print-friendly). Each sets its own
+   background; everything else inherits sensible defaults for a dark card
+   and gets overridden under .tc-card-white where white text wouldn't read. */
+.tc-card-blue  { background: linear-gradient(180deg, var(--obsidian) 0%, var(--ink) 100%); }
+.tc-card-black { background: linear-gradient(180deg, #050505 0%, #161616 100%); }
+.tc-card-white { background: linear-gradient(180deg, #ffffff 0%, #eef2f8 100%); }
 .tc-card-frame {
   border: 1.5px solid rgba(255,191,115,.4); border-radius: 18px;
-  padding: 30px 24px 22px;
+  padding: 22px 24px 16px;
   /* Inner highlight + outer inset shadow simulate a raised, embossed edge. */
   box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 24px rgba(0,0,0,.35);
   text-align: center;
 }
-.tc-card-header { margin-bottom: 18px; }
+.tc-card-white .tc-card-frame { border-color: rgba(201,106,15,.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 0 24px rgba(13,33,55,.06); }
+.tc-card-header { margin-bottom: 12px; }
 .tc-card-logo-img { height: 64px; width: auto; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
 .tc-card-company { font-family: var(--font-display); font-size: 1.3rem; font-weight: 900; color: var(--gold-soft); letter-spacing: .02em; }
+.tc-card-white .tc-card-company { color: var(--gold-deep); }
 .tc-card-tagline { font-size: .62rem; color: rgba(255,255,255,.55); letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; }
+.tc-card-white .tc-card-tagline { color: var(--ink-faint); }
 .tc-card-photo, .tc-card-avatar {
-  width: 110px; height: 110px; border-radius: 50%; object-fit: cover; margin: 0 auto 14px; display: flex;
+  width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: flex;
   align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; color: #fff;
   border: 3px solid var(--gold); box-shadow: 0 0 0 4px rgba(255,159,67,.2), 0 8px 24px rgba(0,0,0,.4);
 }
 .tc-card-name { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: #fff; }
+.tc-card-white .tc-card-name { color: var(--ink); }
 .tc-card-role { font-size: .74rem; font-weight: 700; color: var(--gold-soft); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
-.tc-card-divider { width: 40px; height: 2px; background: var(--gold); margin: 16px auto; border-radius: 2px; }
-.tc-card-bio { font-size: .82rem; line-height: 1.6; color: rgba(255,255,255,.85); margin-bottom: 20px; }
+.tc-card-white .tc-card-role { color: var(--gold-deep); }
+.tc-card-divider { width: 40px; height: 2px; background: var(--gold); margin: 12px auto; border-radius: 2px; }
+.tc-card-bio { font-size: .82rem; line-height: 1.55; color: rgba(255,255,255,.85); margin-bottom: 14px; }
+.tc-card-white .tc-card-bio { color: var(--ink-soft); }
 .tc-card-footer { border-top: 1px solid rgba(255,191,115,.25); padding-top: 14px; font-size: .78rem; color: rgba(255,255,255,.75); display: flex; flex-direction: column; gap: 4px; }
-.tc-card-link { color: var(--gold-soft); font-weight: 700; word-break: break-all; }
+.tc-card-white .tc-card-footer { border-top-color: rgba(201,106,15,.3); color: var(--ink-soft); }
+.tc-theme-picker { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; }
+.tc-theme-swatch {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+  padding: 0; transition: transform .15s, border-color .15s;
+}
+.tc-theme-swatch:hover { transform: scale(1.1); }
+.tc-theme-swatch.active { border-color: var(--gold); }
+.tc-theme-swatch-blue  { background: linear-gradient(135deg, var(--obsidian), var(--ink)); }
+.tc-theme-swatch-black { background: linear-gradient(135deg, #050505, #161616); }
+.tc-theme-swatch-white { background: linear-gradient(135deg, #ffffff, #eef2f8); box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
 .tc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .tc-share-btn {
   width: 100%; border: none; cursor: pointer; padding: 14px; border-radius: 12px;

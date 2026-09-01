@@ -1894,6 +1894,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
       : `✅ *Total Received = ₹${receivedTotal.toLocaleString('en-IN')}*` + (pendingTotal > 0 ? `\n⏳ *Pending Payment = ₹${pendingTotal.toLocaleString('en-IN')}*` : ''),
     `━━━━━━━━━━━━━━━━━━━━━━`,
     ``,
+    `📱 Register at thepainterboys.com for the best service, full traceability, and after-service support`,
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
   ].filter(Boolean).join('\n');
@@ -1948,6 +1949,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
             </div>
           )}
           <div className="aq-card-footer">
+            <div style={{ fontSize: '.72rem', marginBottom: 4 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
             <div>🌐 www.thepainterboys.com</div>
             <div>📞 Corporate: 7838888509</div>
           </div>
@@ -2025,6 +2027,7 @@ function ThankYouCardModal({ client, onClose }) {
     `Thank you for reaching out to *The Painter Boys*.`,
     `Our team will contact you shortly.`,
     ``,
+    `📱 Register at thepainterboys.com for the best service, full traceability, and after-service support`,
     `━━━━━━━━━━━━━━━━━━━━━━`,
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
@@ -2062,6 +2065,7 @@ function ThankYouCardModal({ client, onClose }) {
             <p>We look forward to transforming<br />your space with our expert<br />painting services.</p>
           </div>
           <div className="aq-card-footer">
+            <div style={{ fontSize: '.72rem', marginBottom: 4 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
             <div>🌐 www.thepainterboys.com</div>
             <div>📞 Corporate: 7838888509</div>
           </div>
@@ -2440,6 +2444,8 @@ function QuotationCard({ quotation, onClose }) {
     ``,
     `📌 Valid until ${validUntil}`,
     ...(learnLinks.length ? ['', '📚 *Learn more about your paint:*', ...learnLinks.map(l => `${l.name}: ${l.url}`)] : []),
+    ``,
+    `📱 Register at thepainterboys.com for the best service, full traceability, and after-service support`,
     `🌐 www.thepainterboys.com`,
     `📞 Corporate: 7838888509`,
   ].filter(Boolean).join('\n');
@@ -2498,6 +2504,7 @@ function QuotationCard({ quotation, onClose }) {
             {learnLinks.map(l => <div key={l.name}>📚 Learn about {l.name}: thepainterboys.com/paint-types/{PAINT_TYPE_LEARN_SLUGS[l.name]}</div>)}
           </div>
           <div className="aq-card-footer">
+            <div style={{ fontSize: '.72rem', marginBottom: 4 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
             <div>🌐 www.thepainterboys.com</div>
             <div>📞 Corporate: 7838888509</div>
           </div>

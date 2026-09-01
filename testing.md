@@ -3,6 +3,22 @@
 **Read this before testing anything on this project, and add to it when a
 new gotcha or pattern is found — same spirit as [deployment.md](deployment.md).**
 
+## Checked-in feature tests (standing practice, added 2026-09-01)
+
+Per explicit user instruction: every new feature gets a permanent, checked-in
+test in [testing/feature-checks.mjs](testing/feature-checks.mjs) at the same
+time it's built — not a `_test_*.mjs` scratch script that gets deleted after
+one manual run. After every prod deploy, run **both**:
+```
+npm run smoke:prod        # universal, feature-independent checks
+npm run verify:features   # every shipped feature's own functional check
+```
+`feature-checks.mjs` defaults to checking prod but accepts a base URL
+override (`node testing/feature-checks.mjs http://localhost:5173`) for
+verifying locally before deploying. Never delete an old feature's check —
+update its assertions if the feature changes, so the suite keeps growing and
+regressions in older features get caught too, not just the newest one.
+
 ## Admin Portal functional checklist (run through locally before every push that touches AdminPortal.jsx)
 
 Grew out of a full pass on 2026-08-30 — add a row here whenever a new

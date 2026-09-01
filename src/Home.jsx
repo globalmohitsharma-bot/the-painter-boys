@@ -545,8 +545,8 @@ export default function Home() {
           <div className="inner-page">
             <div className="page-hero page-hero-dark">
               <div className="ph-content">
-                <span className="sec-tag light">Founding Team</span>
-                <h1 className="ph-title">Meet the Founders</h1>
+                <span className="sec-tag light">Leadership Partners</span>
+                <h1 className="ph-title">Meet Our Partners</h1>
                 <p className="ph-sub">The leadership team who built The Painter Boys from the ground up — backed by a full crew of painters, supervisors, and project coordinators who execute every job on the ground.</p>
               </div>
             </div>
@@ -571,6 +571,12 @@ export default function Home() {
                   </div>
                   <p className="svc-detail-text" style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
                     The three of us above lead the company and set the standard every job is held to — but we're not the ones alone on a ladder. Every project runs through a dedicated crew of trained painters, on-site supervisors, and project coordinators who handle the day-to-day execution under our direct oversight, so the quality and accountability you see in this team carries through to every job, on every site, whether or not we're personally there that day.
+                  </p>
+                  <p className="svc-detail-text" style={{ maxWidth: 760, margin: '16px auto 0', textAlign: 'center' }}>
+                    That extends across the whole team, not just the three of us — every painter, supervisor, and coordinator on a job works as a partner in the organization, sharing the same responsibility toward a client's commitment rather than treating it as someone else's job up the chain. Whichever of us you're speaking with, the same standard and the same accountability applies.
+                  </p>
+                  <p className="svc-detail-text" style={{ maxWidth: 760, margin: '16px auto 0', textAlign: 'center' }}>
+                    The Painter Boys is an equal opportunity company — every partner on our team is judged on the work, not on anything else.
                   </p>
                 </div>
               </div>

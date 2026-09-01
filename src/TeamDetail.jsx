@@ -1,16 +1,138 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import html2canvas from 'html2canvas';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { SITE_URL, WA_LINK_DEFAULT } from './siteConfig.js';
+import { SITE_URL, PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
 import { TEAM } from './siteData.js';
 import './Home.css';
 import './Blog.css';
 
+// Same lift-the-scroll-clip trick the Admin Portal's receipt/quotation cards
+// use — html2canvas otherwise renders a scrollable ancestor at its current
+// clipped viewport, silently cutting off anything below the fold.
+async function captureCard(cardEl, backgroundColor) {
+  const wrap = cardEl.parentElement;
+  const prevOverflow = wrap.style.overflowY;
+  const prevMaxHeight = wrap.style.maxHeight;
+  wrap.style.overflowY = 'visible';
+  wrap.style.maxHeight = 'none';
+  try {
+    return await html2canvas(cardEl, { scale: 2, useCORS: true, backgroundColor, logging: false });
+  } finally {
+    wrap.style.overflowY = prevOverflow;
+    wrap.style.maxHeight = prevMaxHeight;
+  }
+}
+
+function TeamShareCard({ member, onClose }) {
+  const cardRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewBlob, setPreviewBlob] = useState(null);
+  const profileUrl = `${SITE_URL}/team/${member.slug}`;
+
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
+  async function shareAsImage() {
+    if (!cardRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const canvas = await captureCard(cardRef.current, '#0d2137');
+      canvas.toBlob(blob => {
+        setPreviewBlob(blob);
+        setPreviewUrl(URL.createObjectURL(blob));
+        setCapturing(false);
+      }, 'image/png');
+    } catch { setCapturing(false); }
+  }
+
+  async function handleShareImage() {
+    const file = new File([previewBlob], `${member.slug}-the-painter-boys.png`, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: `${member.name} — The Painter Boys` }); }
+      catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
+    } else {
+      downloadFallback();
+    }
+  }
+
+  function downloadFallback() {
+    const a = document.createElement('a');
+    a.href = previewUrl; a.download = `${member.slug}-the-painter-boys.png`; a.click();
+    alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
+  }
+
+  function shareAsText() {
+    const text = [
+      `🎨 *The Painter Boys*`,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `👤 *${member.name}*`,
+      member.role,
+      ``,
+      member.bio,
+      ``,
+      `📞 Corporate: ${PHONE}`,
+      `🌐 www.thepainterboys.com`,
+      `🔗 ${profileUrl}`,
+    ].join('\n');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  }
+
+  return (
+    <div className="tc-overlay" onClick={onClose}>
+      <div className="tc-wrap" onClick={e => e.stopPropagation()}>
+        {previewUrl ? (
+          <>
+            <img src={previewUrl} alt={`${member.name} share card`} className="tc-preview-img" />
+            <div className="tc-actions">
+              <button className="tc-share-btn" onClick={handleShareImage}>📤 Share on WhatsApp</button>
+              <button className="tc-close-btn" onClick={onClose}>✕ Close</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="tc-card" ref={cardRef}>
+              <div className="tc-card-frame">
+                <div className="tc-card-header">
+                  <img className="tc-card-logo-img" src="/logo-header.png" alt="" />
+                  <div className="tc-card-company">The Painter Boys</div>
+                  <div className="tc-card-tagline">Professional Painting Services</div>
+                </div>
+                {member.img
+                  ? <img src={member.img} alt="" className="tc-card-photo" />
+                  : <div className="tc-card-avatar" style={{ background: member.color }}>{member.initials}</div>}
+                <div className="tc-card-name">{member.name}</div>
+                <div className="tc-card-role">{member.role}</div>
+                <div className="tc-card-divider" />
+                <p className="tc-card-bio">{member.bio}</p>
+                <div className="tc-card-footer">
+                  <div>📞 Corporate: {PHONE}</div>
+                  <div>🌐 www.thepainterboys.com</div>
+                  <div className="tc-card-link">{profileUrl.replace('https://', '')}</div>
+                </div>
+              </div>
+            </div>
+            <div className="tc-actions">
+              <button className="tc-share-btn" onClick={shareAsImage} disabled={capturing}>
+                {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
+              </button>
+              <button className="tc-share-btn tc-share-text" onClick={shareAsText}>💬 Send as WhatsApp Text</button>
+              <button className="tc-close-btn" onClick={onClose}>✕ Close</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TeamDetail() {
   const { slug } = useParams();
   const member = TEAM.find(t => t.slug === slug);
+  const [showCard, setShowCard] = useState(false);
 
   if (!member) {
     return (
@@ -68,6 +190,9 @@ export default function TeamDetail() {
                 <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">
                   <Icon name="whatsapp" size={17} />Get in Touch
                 </a>
+                <button type="button" className="btn-secondary" onClick={() => setShowCard(true)}>
+                  📤 Share My Card
+                </button>
                 <Link to="/team" className="btn-secondary">← All Team Members</Link>
               </div>
             </div>
@@ -75,6 +200,7 @@ export default function TeamDetail() {
         </div>
       </main>
       <SiteFooter />
+      {showCard && <TeamShareCard member={member} onClose={() => setShowCard(false)} />}
     </div>
   );
 }

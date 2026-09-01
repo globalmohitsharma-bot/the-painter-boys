@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "smoke:prod": "node testing/prod-smoke-test.mjs"
+    "smoke:prod": "node testing/prod-smoke-test.mjs",
+    "verify:features": "node testing/feature-checks.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

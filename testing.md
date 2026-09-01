@@ -315,6 +315,47 @@ feature is ever wanted later.
   tested against `localhost:5173`) — manifest on `/admin` came back as a
   `blob:` URL with `start_url: "/admin"`, manifest on `/` was untouched.
 
+## Reference-grounded content added to all 7 paint pages (added 2026-09-01)
+
+Per explicit request to pull from real, known references rather than just
+writing more prose — used WebSearch against Asian Paints' own published
+product information sheets and Bureau of Indian Standards (BIS) specs
+before writing, so the new content cites real figures instead of invented
+ones. Added one new "The Real Numbers Behind X" section per paint type:
+
+- **Royale**: 270-310/140-160 sq ft/litre coverage, the real 8-year
+  warranty terms, IGBC v1.0 LEED VOC criteria — all from Asian Paints'
+  own PDF product information sheet.
+- **Tractor Emulsion**: 250-270/130-150 sq ft/litre, 28-day cure time on
+  new masonry, and the existence of Tractor Emulsion Shyne as a real
+  in-between tier.
+- **Royale Shyne**: 100-130 sq ft/litre, 20-30% water thinning, same
+  8-year warranty terms as standard Royale.
+- **Apex**: real algae/fungal/UV resistance claims and coverage converted
+  from Asian Paints' sq m/litre figures, plus Apex Ultima/Suprema as real
+  higher tiers.
+- **Distemper**: grounded in IS 428 (Washable Distemper) — including the
+  honest caveat that IS 428 certifies the product, not a specific
+  installation's real-world lifespan.
+- **Texture & Designer Finishes**: named the real Royale Play sub-range
+  (Velour, Stucco Mirror, Luxe collection) and its actual 2-week cure
+  requirement before first cleaning.
+- **Apcolite**: real gloss-level figures (75-85 on a 20° gloss head),
+  IGBC VOC testing reference, and IS 2932 (Synthetic Enamel) — including
+  what that standard specifically requires (genuine alkyd resin, no rosin
+  substitutes).
+
+**Also, per explicit "always try to sell Royale and Royale Shyne most"
+instruction**: added a persuasive-but-factual section to both pages
+built around the furniture/curtains-matching argument (a home is usually
+decorated *around* the wall colour, so a wall that fades out in 2-3 years
+means either living with a mismatched room or re-coordinating furniture
+and curtains all over again) — and added soft, factual upsell nudges
+toward Royale/Royale Shyne inside the new reference sections on Tractor,
+Distemper, and Apex's pages. Verified via Playwright that all 7 pages
+render their new section with the correct sourced figures (16/16 checks
+passed).
+
 ## Quotation calculator hide, Admin-only auto-redirect, LeadBot swap, Team/Royale content (added 2026-09-01)
 
 - **Painting Area Calculator hidden from Quotation**: `<AreaCalculator>` no

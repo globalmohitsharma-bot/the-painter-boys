@@ -2300,7 +2300,10 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
 
   return (
     <div className="ap-quote-tool">
-      <AreaCalculator area={area} onChange={setArea} ratePerSqFt={ratePerSqFt} />
+      {/* Hidden for now, per explicit request — belongs as its own separate
+          feature/space rather than bundled into the Quotation tool. Left the
+          component and area/ratePerSqFt state below intact so it's a quick
+          re-add once that separate space exists, not a rebuild. */}
 
       <div className="ap-calc-box">
         <h3>Generate Quotation</h3>

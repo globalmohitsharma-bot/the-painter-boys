@@ -81,6 +81,7 @@ function TeamShareCard({ member, onClose }) {
       ``,
       member.bio,
       ``,
+      `📱 Register at thepainterboys.com — registered customers get priority on touch-ups & after-sale service`,
       `📞 Corporate: ${PHONE}`,
       `🌐 www.thepainterboys.com`,
       ``,
@@ -124,7 +125,7 @@ function TeamShareCard({ member, onClose }) {
                 <div className="tc-card-divider" />
                 <p className="tc-card-bio">{member.bio}</p>
                 <div className="tc-card-footer">
-                  <div style={{ fontSize: '.7rem', marginBottom: 2 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
+                  <div style={{ fontSize: '.7rem', marginBottom: 2 }}>📱 Register at thepainterboys.com — priority on touch-ups & after-sale service</div>
                   <div>📞 Corporate: {PHONE}</div>
                   <div>🌐 www.thepainterboys.com</div>
                   <div className="tc-card-date">🗓️ Generated: {generatedDateStr} — ask for today's latest card</div>

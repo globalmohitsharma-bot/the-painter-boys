@@ -44,7 +44,7 @@ async function checkTeamShareCard(browser) {
     log('Team share-card: modal shows name', cardText.includes('Rajeev Kumar'));
     log('Team share-card: modal shows corporate number', /\d{10}/.test(cardText));
     log('Team share-card: modal shows site URL', cardText.includes('thepainterboys.com'));
-    log('Team share-card: modal shows the registration nudge', cardText.includes('best service') && cardText.includes('after-service'));
+    log('Team share-card: modal shows the registration nudge', cardText.includes('priority on touch-ups') && cardText.includes('after-sale service'));
     log('Team share-card: modal shows a generated-date stamp', /Generated:.*\d{4}/.test(cardText) && cardText.includes("today's latest card"));
 
     log('Team share-card: defaults to blue theme', await page.locator('.tc-card-blue').count() === 1);

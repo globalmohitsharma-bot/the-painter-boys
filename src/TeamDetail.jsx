@@ -37,6 +37,12 @@ function TeamShareCard({ member, onClose }) {
   const [theme, setTheme] = useState('blue');
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
+  // Cards get generated once and then reused/reshared many times rather
+  // than regenerated on-site every time — stamping the generation date in
+  // directly (baked into the shared image, not live) lets anyone who
+  // receives an old, reshared copy see it's stale and ask for a fresh one.
+  const generatedDateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
   async function shareAsImage() {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
@@ -77,6 +83,8 @@ function TeamShareCard({ member, onClose }) {
       ``,
       `📞 Corporate: ${PHONE}`,
       `🌐 www.thepainterboys.com`,
+      ``,
+      `🗓️ Card generated: ${generatedDateStr} — please ask for today's latest card, not an older shared copy.`,
     ].join('\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
@@ -119,6 +127,7 @@ function TeamShareCard({ member, onClose }) {
                   <div style={{ fontSize: '.7rem', marginBottom: 2 }}>📱 Register at thepainterboys.com for the best service, full traceability & after-service support</div>
                   <div>📞 Corporate: {PHONE}</div>
                   <div>🌐 www.thepainterboys.com</div>
+                  <div className="tc-card-date">🗓️ Generated: {generatedDateStr} — ask for today's latest card</div>
                 </div>
               </div>
             </div>

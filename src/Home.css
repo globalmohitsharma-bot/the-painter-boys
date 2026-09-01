@@ -764,6 +764,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .tc-card-white .tc-card-bio { color: var(--ink-soft); }
 .tc-card-footer { border-top: 1px solid rgba(255,191,115,.25); padding-top: 14px; font-size: .78rem; color: rgba(255,255,255,.75); display: flex; flex-direction: column; gap: 4px; }
 .tc-card-white .tc-card-footer { border-top-color: rgba(201,106,15,.3); color: var(--ink-soft); }
+.tc-card-date { margin-top: 6px; font-size: .66rem; font-weight: 700; color: var(--gold-soft); letter-spacing: .01em; }
+.tc-card-white .tc-card-date { color: var(--gold-deep); }
 .tc-theme-picker { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; }
 .tc-theme-swatch {
   width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;

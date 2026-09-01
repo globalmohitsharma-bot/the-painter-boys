@@ -315,6 +315,43 @@ feature is ever wanted later.
   tested against `localhost:5173`) — manifest on `/admin` came back as a
   `blob:` URL with `start_url: "/admin"`, manifest on `/` was untouched.
 
+## Warranty wording removed, Deco Paint + PU Enamel pages added (added 2026-09-01)
+
+- **"Warranty" wording removed site-wide from paint copy**, per explicit
+  request — every "8-year warranty"/"4-year warranty" phrase in
+  `siteData.js` rewritten to "long-lasting N years of durability" / "rated
+  for N years of durability" instead, preserving the real sourced figures
+  without using a word that could read as a formal guarantee from the
+  business itself. `LegalPages.jsx`'s "AS IS, WITHOUT WARRANTY" legal
+  disclaimer language was deliberately left untouched — different, correct
+  usage of the word in a Terms of Service context. Verified via Playwright
+  that neither the Royale nor Royale Shyne page contains the word
+  "warranty" anywhere, case-insensitive.
+- **Two new Education Center pages**: `pu-enamel` and `deco-paint` added to
+  `siteData.js`'s `PAINT_TYPES` (these correspond to the Admin Portal's
+  "PU Paint" and "Deco Paint" quotation tiles, which previously had no real
+  matching page — the learn-link feature was pointing them at the closest
+  approximation instead). Researched via WebSearch (PU vs. alkyd enamel
+  chemistry/durability, Asian Paints' Apcolite Rustshield/Advanced PU
+  Enamel lines, general decorative/"deco paint" finish terminology) before
+  writing. Each page includes a "Process, Precautions, and..." section
+  covering real surface prep, application, and safety steps, per explicit
+  request. `AdminPortal.jsx`'s `PAINT_TYPE_LEARN_SLUGS` map updated to
+  point at these real pages instead of the earlier approximations.
+- **SEO verified, not assumed**: `PaintDetail.jsx` generates title/
+  description/canonical/OG tags dynamically per `PAINT_TYPES` entry, so
+  the two new pages needed no extra code — confirmed via Playwright that
+  both render correct, distinct meta tags. **Gap found and fixed**:
+  `public/sitemap.xml` is a static, hand-maintained file — it did NOT
+  automatically pick up the two new URLs the way the in-app pages did.
+  Added both `paint-types/pu-enamel` and `paint-types/deco-paint` entries
+  manually. Worth remembering for any *future* new paint-types entry too —
+  the sitemap needs a manual line, it isn't generated from `siteData.js`.
+- **Mobile alignment re-checked** on the Education Center hub, Royale
+  detail page, and Team page after this whole batch of changes — zero
+  horizontal overflow on all three (iPhone 13 viewport), confirming a
+  single shared responsive component doesn't need a separate mobile fix.
+
 ## Reference-grounded content added to all 7 paint pages (added 2026-09-01)
 
 Per explicit request to pull from real, known references rather than just

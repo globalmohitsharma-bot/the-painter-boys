@@ -50,8 +50,8 @@ const PAINT_TYPE_LEARN_SLUGS = {
   'Royale': 'asian-paints-royale',
   'Royale Shyne': 'royale-shyne-luxury-emulsion',
   'Apex': 'apex-exterior-emulsion',
-  'Deco Paint': 'texture-designer-finishes',
-  'PU Paint': 'apcolite-premium-enamel',
+  'Deco Paint': 'deco-paint',
+  'PU Paint': 'pu-enamel',
 };
 // The step-by-step scope committed to the customer — kept separate from
 // PaintType so "what product" and "what process" can both be tracked.

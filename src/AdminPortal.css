@@ -329,6 +329,19 @@
   padding: 9px 12px; border: 1.5px solid var(--hairline); border-radius: 6px; font-size: .88rem; font-family: inherit; color: var(--ink); background: var(--parchment);
 }
 .ap-field input:focus, .ap-field select:focus, .ap-field textarea:focus { outline: none; border-color: var(--gold); background: var(--ivory); }
+.ap-suggest-wrap { position: relative; }
+.ap-suggest-list {
+  position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; z-index: 20;
+  background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 8px;
+  max-height: 200px; overflow-y: auto; box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+.ap-suggest-option {
+  display: block; width: 100%; text-align: left; padding: 9px 12px; font-size: .85rem;
+  color: var(--ink); background: none; border: none; border-bottom: 1px solid var(--hairline);
+  cursor: pointer; text-transform: none; font-family: inherit;
+}
+.ap-suggest-option:last-child { border-bottom: none; }
+.ap-suggest-option:hover, .ap-suggest-option:focus { background: var(--parchment); outline: none; }
 .ap-primary-painter-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
 .ap-primary-painter-row { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
 .ap-primary-badge { background: rgba(242,135,31,.15); color: var(--gold-deep); font-weight: 800; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 10px; }

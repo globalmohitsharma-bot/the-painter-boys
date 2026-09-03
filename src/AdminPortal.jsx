@@ -343,6 +343,11 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [quotations, setQuotations] = useState([]);
   const [editingQuotation, setEditingQuotation] = useState(null); // quotation being loaded into the form for edit, or null for a fresh one
   const [loading, setLoading] = useState(true);
+  // Users/quotations aren't needed for the default Dashboard/Grid/Clients
+  // views, so they're fetched in parallel but tracked separately — the
+  // portal's main views become usable as soon as clients+projects land,
+  // instead of every view waiting on the slowest of four backend calls.
+  const [loadingExtra, setLoadingExtra] = useState(true);
   const [error, setError] = useState('');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [editingClient, setEditingClient] = useState(null);
@@ -372,23 +377,21 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadingExtra(true);
     setError('');
-    try {
-      const [c, p, u, q] = await Promise.all([
-        api('/api/clients', idToken),
-        api('/api/projects', idToken),
-        api('/api/users', idToken),
-        api('/api/quotations', idToken),
-      ]);
-      setClients(c);
-      setProjects(p);
-      setUsers(u);
-      setQuotations(q);
-    } catch (e) {
-      setError('Could not load data — ' + e.message);
-    } finally {
-      setLoading(false);
-    }
+    const primary = Promise.all([
+      api('/api/clients', idToken),
+      api('/api/projects', idToken),
+    ]).then(([c, p]) => { setClients(c); setProjects(p); })
+      .catch(e => setError('Could not load data — ' + e.message))
+      .finally(() => setLoading(false));
+    const extra = Promise.all([
+      api('/api/users', idToken),
+      api('/api/quotations', idToken),
+    ]).then(([u, q]) => { setUsers(u); setQuotations(q); })
+      .catch(e => setError('Could not load data — ' + e.message))
+      .finally(() => setLoadingExtra(false));
+    await Promise.all([primary, extra]);
   }, [idToken]);
 
   useEffect(() => { load(); }, [load]);
@@ -903,6 +906,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
         ) : view === 'saved-quotes' ? (
           <SavedQuotesView
             quotations={quotations}
+            loading={loadingExtra}
             onEdit={qt => { setEditingQuotation(qt); goto('quotation'); }}
             onDelete={deleteQuotation}
           />
@@ -975,19 +979,19 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             {pushResult && <p className={pushResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{pushResult.message}</p>}
           </>
         ) : view === 'dashboard' ? (
-          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} onSelectClient={setSelectedClientId}
+          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} loading={loading} onSelectClient={setSelectedClientId}
             onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }}
             pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
             onNavigate={goto} />
         ) : view === 'linked' ? (
-          <LinkedAccountsView clients={clients} users={users} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
+          <LinkedAccountsView clients={clients} users={users} loading={loadingExtra} onUnlink={unlinkUser} onSelectClient={setSelectedClientId} />
         ) : view === 'pending-links' ? (
-          <PendingLinksView projects={projects} clients={clients} users={users}
+          <PendingLinksView projects={projects} clients={clients} users={users} loading={loadingExtra}
             onApprove={toggleProjectShare} onReject={unshareProject} onSelectClient={setSelectedClientId} />
         ) : view === 'requests' ? (
-          <ProjectRequestsView users={users} clients={clients} onResolve={resolveRequest} onSelectClient={setSelectedClientId} onLinkUser={linkUser} />
+          <ProjectRequestsView users={users} clients={clients} loading={loadingExtra} onResolve={resolveRequest} onSelectClient={setSelectedClientId} onLinkUser={linkUser} />
         ) : view === 'users' ? (
-          <UsersView users={users} clients={clients} onImpersonate={impersonateUser} onSelectClient={setSelectedClientId} />
+          <UsersView users={users} clients={clients} loading={loadingExtra} onImpersonate={impersonateUser} onSelectClient={setSelectedClientId} />
         ) : view === 'clients' ? (
           <>
             <div className="ap-toolbar">
@@ -1236,7 +1240,7 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
 
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
-function DashboardOverview({ stats, statusCounts, projects, clients, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
+function DashboardOverview({ stats, statusCounts, projects, clients, loading, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
   // Same "archived clients don't count" rule as the stats/statusCounts above
   // — an archived client's inquiry shouldn't show up in the triage list either.
   const activeClientIds = new Set(clients.filter(c => c.isActive !== false).map(c => c.id));
@@ -1276,7 +1280,7 @@ function DashboardOverview({ stats, statusCounts, projects, clients, onSelectCli
       </div>
 
       <h3 className="ap-dashboard-subhead">Newest Inquiries</h3>
-      {recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
+      {loading ? <p className="ap-loading">Loading…</p> : recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
         <div className="ap-cards-grid">
           {recentInquiries.map(p => {
             const client = clients.find(c => c.id === p.clientId);
@@ -1300,10 +1304,11 @@ function DashboardOverview({ stats, statusCounts, projects, clients, onSelectCli
 // Every client with a linked customer Google account, in one place — the
 // per-client LinkedAccountBox only shows one client at a time, this is the
 // "see everything at once" version for auditing who has portal access.
-function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
+function LinkedAccountsView({ clients, users, loading, onUnlink, onSelectClient }) {
   const linked = clients.filter(c => c.linkedUserId).map(c => ({
     client: c, user: users.find(u => u.id === c.linkedUserId),
   }));
+  if (loading) return <p className="ap-loading">Loading…</p>;
   if (linked.length === 0) return <p className="ap-loading">No clients have their email ID associated with a dashboard account yet.</p>;
   return (
     <table className="ap-table">
@@ -1330,11 +1335,12 @@ function LinkedAccountsView({ clients, users, onUnlink, onSelectClient }) {
 // submitted a project's link code from their dashboard and is waiting on an
 // admin to approve it. Approve/Reject just reuse the same show/hide-share and
 // unshare endpoints admins already use for manual sharing.
-function PendingLinksView({ projects, clients, users, onApprove, onReject, onSelectClient }) {
+function PendingLinksView({ projects, clients, users, loading, onApprove, onReject, onSelectClient }) {
   const rows = projects.flatMap(p => (p.sharedWith || [])
     .filter(s => !s.visible)
     .map(s => ({ project: p, share: s, client: clients.find(c => c.id === p.clientId), user: users.find(u => u.id === s.userId) })));
 
+  if (loading) return <p className="ap-loading">Loading…</p>;
   if (rows.length === 0) return <p className="ap-loading">No pending link requests right now.</p>;
   return (
     <table className="ap-table">
@@ -1362,7 +1368,7 @@ function PendingLinksView({ projects, clients, users, onApprove, onReject, onSel
 // without a link code — no project is known yet, so this is a triage list:
 // find/create the right project via the client's own detail page (or
 // Photos & Sharing on any project) and share it, then mark resolved.
-function ProjectRequestsView({ users, clients, onResolve, onSelectClient, onLinkUser }) {
+function ProjectRequestsView({ users, clients, loading, onResolve, onSelectClient, onLinkUser }) {
   const [busyId, setBusyId] = useState(null);
   const [pickerFor, setPickerFor] = useState(null);
   const [pickedClientId, setPickedClientId] = useState('');
@@ -1393,6 +1399,7 @@ function ProjectRequestsView({ users, clients, onResolve, onSelectClient, onLink
     }
   }
 
+  if (loading) return <p className="ap-loading">Loading…</p>;
   if (requests.length === 0) return <p className="ap-loading">No open project requests.</p>;
   return (
     <table className="ap-table">
@@ -1448,7 +1455,7 @@ function ProjectRequestsView({ users, clients, onResolve, onSelectClient, onLink
 // linked client (if any) and a one-click "Log in as" that opens the
 // dashboard in a new tab under that user's own identity — see
 // impersonateUser above for how the short-lived token is issued.
-function UsersView({ users, clients, onImpersonate, onSelectClient }) {
+function UsersView({ users, clients, loading, onImpersonate, onSelectClient }) {
   const [busyId, setBusyId] = useState(null);
 
   async function handleImpersonate(userId) {
@@ -1462,6 +1469,7 @@ function UsersView({ users, clients, onImpersonate, onSelectClient }) {
     }
   }
 
+  if (loading) return <p className="ap-loading">Loading…</p>;
   if (users.length === 0) return <p className="ap-loading">No users have signed in yet.</p>;
   return (
     <table className="ap-table">
@@ -1530,6 +1538,54 @@ function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
 
 const REQUIRED_CLIENT_FIELDS = ['contactName', 'phone'];
 
+// Replaces a plain <input list> + <datalist> for society/customer-name
+// pickers. The native datalist popup is rendered by the WebView itself (not
+// by our CSS) and on Android positions badly once the on-screen keyboard is
+// up — it can render cut off at the top of the viewport, hard to read or
+// tap. This renders the suggestion list ourselves, anchored to the input via
+// normal in-flow positioning, so it stays predictable on mobile.
+function SuggestField({ label, value, onChange, options, placeholder, required, className }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const q = (value || '').trim().toLowerCase();
+  const filtered = q
+    ? options.filter(o => o.toLowerCase().includes(q) && o.toLowerCase() !== q)
+    : options;
+
+  useEffect(() => {
+    function onDocPointerDown(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocPointerDown);
+    return () => document.removeEventListener('mousedown', onDocPointerDown);
+  }, []);
+
+  return (
+    <label className={`ap-field ap-suggest-wrap${className ? ' ' + className : ''}`} ref={wrapRef}>
+      <span>{label}{required ? ' *' : ''}</span>
+      <input
+        value={value || ''}
+        placeholder={placeholder}
+        onChange={e => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+      />
+      {open && filtered.length > 0 && (
+        <div className="ap-suggest-list">
+          {filtered.slice(0, 8).map(o => (
+            <button
+              type="button" key={o} className="ap-suggest-option"
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => { onChange(o); setOpen(false); }}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
+    </label>
+  );
+}
+
 function ClientForm({ client, onCancel, onSave, societies = [] }) {
   const [form, setForm] = useState(client);
   const canSave = REQUIRED_CLIENT_FIELDS.every(f => (form[f] || '').trim());
@@ -1537,19 +1593,19 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
     <div className="ap-modal-overlay" onClick={onCancel}>
       <div className="ap-modal" onClick={e => e.stopPropagation()}>
         <h3>{form.id ? 'Edit Client' : 'New Client'}</h3>
-        {['contactName', 'phone', 'email', 'address', 'society'].map(field => (
+        {['contactName', 'phone', 'email', 'address'].map(field => (
           <label key={field} className="ap-field">
             <span>{field}{REQUIRED_CLIENT_FIELDS.includes(field) ? ' *' : ''}</span>
             <input
               value={form[field] || ''}
-              list={field === 'society' ? 'ap-society-options' : undefined}
               onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
             />
           </label>
         ))}
-        <datalist id="ap-society-options">
-          {societies.map(s => <option key={s} value={s} />)}
-        </datalist>
+        <SuggestField
+          label="society" value={form.society} options={societies}
+          onChange={v => setForm(f => ({ ...f, society: v }))}
+        />
         <label className="ap-field">
           <span>Other Details — notes about the customer</span>
           <textarea rows={2} value={form.otherDetails || ''} onChange={e => setForm(f => ({ ...f, otherDetails: e.target.value }))} />
@@ -2223,7 +2279,7 @@ function AreaCalculator({ area, onChange, ratePerSqFt }) {
 }
 
 // ── Quotation generator ───────────────────────────────────────────
-function SavedQuotesView({ quotations, onEdit, onDelete }) {
+function SavedQuotesView({ quotations, loading, onEdit, onDelete }) {
   const [search, setSearch] = useState('');
   const q = search.trim().toLowerCase();
   const filtered = quotations.filter(qt =>
@@ -2234,7 +2290,9 @@ function SavedQuotesView({ quotations, onEdit, onDelete }) {
       <div className="ap-toolbar">
         <input className="ap-search" placeholder="Search saved quotes by name or mobile…" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-      {quotations.length === 0 ? (
+      {loading ? (
+        <p className="ap-loading">Loading…</p>
+      ) : quotations.length === 0 ? (
         <p className="ap-loading">No saved quotations yet — save one from the Quotation tool.</p>
       ) : filtered.length === 0 ? (
         <p className="ap-loading">No saved quotes match "{search}".</p>
@@ -2314,13 +2372,11 @@ function QuotationTool({ societies = [], onCreateClient, initialQuotation, onSav
         <div className="ap-form-grid">
           <label className="ap-field"><span>Customer Name</span><input value={form.customerName} onChange={e => field('customerName', e.target.value)} /></label>
           <label className="ap-field"><span>Mobile Number</span><input value={form.mobile} onChange={e => field('mobile', e.target.value)} /></label>
-          <label className="ap-field">
-            <span>Society — pick an existing one or type a new one</span>
-            <input value={form.society} onChange={e => field('society', e.target.value)} list="ap-quote-society-options" />
-            <datalist id="ap-quote-society-options">
-              {societies.map(s => <option key={s} value={s} />)}
-            </datalist>
-          </label>
+          <SuggestField
+            label="Society — pick an existing one or type a new one"
+            value={form.society} options={societies}
+            onChange={v => field('society', v)}
+          />
           <label className="ap-field"><span>Address</span><input value={form.address} onChange={e => field('address', e.target.value)} placeholder="e.g. Tower 4, Flat 1203" /></label>
           <label className="ap-field"><span>Property Type</span><input value={form.bhk} onChange={e => field('bhk', e.target.value)} placeholder="e.g. Shop, Home, 3 BHK Flat" /></label>
         </div>

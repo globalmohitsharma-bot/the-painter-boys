@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 
 // Shared Google sign-in state, used independently by both SiteHeader (desktop
@@ -44,6 +45,7 @@ export function decodeIdToken(token) {
 
 export default function useGoogleAccount() {
   const [user, setUser] = useState(loadStoredUser);
+  const navigate = useNavigate();
 
   // Memoized so AccountModal's effect (which depends on this callback) doesn't
   // re-run — and re-call google.accounts.id.initialize() — on every parent
@@ -85,14 +87,19 @@ export default function useGoogleAccount() {
       // click-through banner, no choice between Admin/Staff Portal to make
       // first. Manager/Partner aren't wired up to it yet, so they (and every
       // customer) land on the regular dashboard as before.
-      window.location.href = verifiedUser.role === 'Admin' ? '/admin' : '/my-projects';
+      // A client-side route change (not window.location.href), since /admin
+      // and /my-projects are both routes in this same SPA — a full navigation
+      // would re-fetch and re-parse the whole JS bundle from the network
+      // (especially slow in the Android app, which loads the site remotely)
+      // instead of an instant in-app transition.
+      navigate(verifiedUser.role === 'Admin' ? '/admin' : '/my-projects');
     } catch {
       // Backend unreachable — the customer sign-in above already succeeded
       // (its raw token is already stored for the dashboard to use), so send
       // them there anyway rather than stranding them on this modal.
-      window.location.href = '/my-projects';
+      navigate('/my-projects');
     }
-  }, []);
+  }, [navigate]);
 
   const signOut = useCallback(() => {
     setUser(null);

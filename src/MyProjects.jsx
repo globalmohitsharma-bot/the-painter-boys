@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
@@ -85,6 +86,7 @@ async function apiPost(path, idToken, body) {
 // useGoogleAccount.js) so signing in once there carries over here instead
 // of prompting a second, separate Google sign-in for the same person.
 export default function MyProjects() {
+  const navigate = useNavigate();
   // An admin's "Log in as" link (see AdminPortal.jsx) lands here with
   // ?impersonate=TOKEN — that token isn't a Google ID token (decodeIdToken
   // can't read it), so treat it exactly like a normal session token but pull
@@ -232,8 +234,8 @@ export default function MyProjects() {
   // Never redirect while actively impersonating a customer, since that's a
   // deliberate "view as them" state.
   useEffect(() => {
-    if (whoami?.role === 'Admin' && !isImpersonating) window.location.href = '/admin';
-  }, [whoami, isImpersonating]);
+    if (whoami?.role === 'Admin' && !isImpersonating) navigate('/admin');
+  }, [whoami, isImpersonating, navigate]);
 
   useEffect(() => {
     if (idToken || isNativeApp()) return;

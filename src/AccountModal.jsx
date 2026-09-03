@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import { DEV_TEST_TOKEN, DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
 import { isNativeApp, nativeGoogleSignIn } from './nativeGoogleSignIn.js';
@@ -28,6 +29,7 @@ let currentCredentialHandler = null;
 // (SiteHeader.jsx) and the mobile bottom nav (BottomNav.jsx) — same modal,
 // same Google button, just triggered from two different places.
 export default function AccountModal({ open, tab, onClose, user, onCredential, onSignOut }) {
+  const navigate = useNavigate();
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
@@ -53,9 +55,9 @@ export default function AccountModal({ open, tab, onClose, user, onCredential, o
   // the Admin role goes straight to the Admin Portal, no click-through choice.
   useEffect(() => {
     if (open && user && 'isStaff' in user) {
-      window.location.href = user.role === 'Admin' ? '/admin' : '/my-projects';
+      navigate(user.role === 'Admin' ? '/admin' : '/my-projects');
     }
-  }, [open, user]);
+  }, [open, user, navigate]);
 
   useEffect(() => {
     if (!open || user || isNativeApp()) return;

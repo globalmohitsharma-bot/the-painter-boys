@@ -736,6 +736,9 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .tc-card-blue  { background: linear-gradient(180deg, var(--obsidian) 0%, var(--ink) 100%); }
 .tc-card-black { background: linear-gradient(180deg, #050505 0%, #161616 100%); }
 .tc-card-white { background: linear-gradient(180deg, #ffffff 0%, #eef2f8 100%); }
+.tc-card-teal   { background: linear-gradient(180deg, #0f2e2b 0%, #133a35 100%); }
+.tc-card-maroon { background: linear-gradient(180deg, #3a1220 0%, #481626 100%); }
+.tc-card-gold   { background: linear-gradient(180deg, #4a2f0a 0%, #5a3a0d 100%); }
 .tc-card-frame {
   border: 1.5px solid rgba(255,191,115,.4); border-radius: 18px;
   padding: 22px 24px 16px;
@@ -776,6 +779,9 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .tc-theme-swatch-blue  { background: linear-gradient(135deg, var(--obsidian), var(--ink)); }
 .tc-theme-swatch-black { background: linear-gradient(135deg, #050505, #161616); }
 .tc-theme-swatch-white { background: linear-gradient(135deg, #ffffff, #eef2f8); box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.tc-theme-swatch-teal   { background: linear-gradient(135deg, #0f2e2b, #133a35); }
+.tc-theme-swatch-maroon { background: linear-gradient(135deg, #3a1220, #481626); }
+.tc-theme-swatch-gold   { background: linear-gradient(135deg, #4a2f0a, #5a3a0d); }
 .tc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .tc-share-btn {
   width: 100%; border: none; cursor: pointer; padding: 14px; border-radius: 12px;
@@ -876,7 +882,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   padding: 20px 0; flex-wrap: wrap; gap: 12px;
 }
 .footer-copy { font-size: .78rem; color: rgba(255,255,255,.22); }
-.footer-bottom-links { display: flex; gap: 16px; }
+.footer-bottom-links { display: flex; flex-wrap: wrap; gap: 16px; }
 
 /* ── WhatsApp FAB ── */
 .wa-fab {
@@ -983,6 +989,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
   /* Footer */
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
   .footer-bottom { flex-direction: column; text-align: center; }
+  .footer-bottom-links { justify-content: center; }
   .footer { padding-bottom: 78px; }
 
   /* BottomNav (portal tab bar) replaces the floating WhatsApp button on mobile */

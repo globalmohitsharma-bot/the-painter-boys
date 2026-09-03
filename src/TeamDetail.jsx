@@ -27,7 +27,8 @@ async function captureCard(cardEl, backgroundColor) {
   }
 }
 
-const TC_THEME_BG = { blue: '#0d2137', black: '#050505', white: '#ffffff' };
+const TC_THEMES = ['blue', 'black', 'white', 'teal', 'maroon', 'gold'];
+const TC_THEME_BG = { blue: '#0d2137', black: '#050505', white: '#ffffff', teal: '#0f2e2b', maroon: '#3a1220', gold: '#4a2f0a' };
 
 function TeamShareCard({ member, onClose }) {
   const cardRef = useRef(null);
@@ -104,7 +105,7 @@ function TeamShareCard({ member, onClose }) {
         ) : (
           <>
             <div className="tc-theme-picker">
-              {['blue', 'black', 'white'].map(t => (
+              {TC_THEMES.map(t => (
                 <button key={t} type="button"
                   className={`tc-theme-swatch tc-theme-swatch-${t}${theme === t ? ' active' : ''}`}
                   onClick={() => setTheme(t)} aria-label={`${t} card theme`} title={`${t[0].toUpperCase()}${t.slice(1)} card`} />

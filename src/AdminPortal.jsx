@@ -11,6 +11,24 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 const TOKEN_KEY = 'pb_admin_id_token';
 const WHOAMI_KEY = 'pb_admin_whoami';
+// Data volume here is small enough to cache the whole thing — lets the
+// portal paint instantly from last-known data on every open instead of
+// showing a blank/"Loading…" state every single time, especially costly in
+// the Android app (loads the site remotely — see deployment.md). A real
+// fetch always still runs in the background and silently replaces this the
+// moment it resolves, so staleness is bounded by however long that takes,
+// not by whether the admin happens to click into something.
+const DATA_CACHE_KEY = 'pb_admin_data_cache';
+
+function loadDataCache() {
+  try { return JSON.parse(localStorage.getItem(DATA_CACHE_KEY) || 'null'); } catch { return null; }
+}
+function saveDataCache(patch) {
+  try {
+    const next = { ...(loadDataCache() || {}), ...patch };
+    localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(next));
+  } catch { /* storage full/unavailable — cache is a nice-to-have, not required */ }
+}
 
 async function api(path, idToken, options = {}) {
   // FormData sets its own multipart Content-Type (with boundary) — letting the
@@ -337,17 +355,21 @@ export default function AdminPortal() {
 
 function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [view, setView] = useState('dashboard'); // 'dashboard' | 'grid' | 'clients' | 'quotation' | 'linked'
-  const [clients, setClients] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [quotations, setQuotations] = useState([]);
+  const [dataCache] = useState(loadDataCache); // read once — load() below keeps it updated
+  const [clients, setClients] = useState(dataCache?.clients || []);
+  const [projects, setProjects] = useState(dataCache?.projects || []);
+  const [users, setUsers] = useState(dataCache?.users || []);
+  const [quotations, setQuotations] = useState(dataCache?.quotations || []);
   const [editingQuotation, setEditingQuotation] = useState(null); // quotation being loaded into the form for edit, or null for a fresh one
-  const [loading, setLoading] = useState(true);
   // Users/quotations aren't needed for the default Dashboard/Grid/Clients
   // views, so they're fetched in parallel but tracked separately — the
   // portal's main views become usable as soon as clients+projects land,
   // instead of every view waiting on the slowest of four backend calls.
-  const [loadingExtra, setLoadingExtra] = useState(true);
+  // Only start "Loading…" if there's no cached data to show meanwhile —
+  // with cache, the last-known data renders immediately and the real fetch
+  // below just quietly replaces it once it resolves.
+  const [loading, setLoading] = useState(!dataCache?.clients);
+  const [loadingExtra, setLoadingExtra] = useState(!dataCache?.users);
   const [error, setError] = useState('');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [editingClient, setEditingClient] = useState(null);
@@ -376,19 +398,20 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   }
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setLoadingExtra(true);
+    // Not forced true here — if cache already populated state above, the
+    // portal keeps showing that while this runs silently in the background,
+    // rather than flashing back to a "Loading…" state on every refresh.
     setError('');
     const primary = Promise.all([
       api('/api/clients', idToken),
       api('/api/projects', idToken),
-    ]).then(([c, p]) => { setClients(c); setProjects(p); })
+    ]).then(([c, p]) => { setClients(c); setProjects(p); saveDataCache({ clients: c, projects: p }); })
       .catch(e => setError('Could not load data — ' + e.message))
       .finally(() => setLoading(false));
     const extra = Promise.all([
       api('/api/users', idToken),
       api('/api/quotations', idToken),
-    ]).then(([u, q]) => { setUsers(u); setQuotations(q); })
+    ]).then(([u, q]) => { setUsers(u); setQuotations(q); saveDataCache({ users: u, quotations: q }); })
       .catch(e => setError('Could not load data — ' + e.message))
       .finally(() => setLoadingExtra(false));
     await Promise.all([primary, extra]);

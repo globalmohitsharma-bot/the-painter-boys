@@ -98,6 +98,15 @@ export default function MyProjects() {
   });
   const [projects, setProjects] = useState(null);
   const [error, setError] = useState('');
+  // Plain "Loading…" is fine for a normal-speed fetch, but with nothing else
+  // on screen a slow one can look stuck — after a couple seconds, say what's
+  // actually happening so it reads as "still working," not "broken."
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (projects !== null) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 2000);
+    return () => clearTimeout(t);
+  }, [projects]);
   const [view, setView] = useState('projects'); // 'profile' | 'projects' | 'history'
   const [isStaff, setIsStaff] = useState(false);
   const [whoami, setWhoami] = useState(null);
@@ -369,7 +378,7 @@ export default function MyProjects() {
           )}
           {error && <div className="mp-error">{error}</div>}
           {projects === null ? (
-            <p className="mp-loading">Loading…</p>
+            <p className="mp-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p>
           ) : (
             <>
               {view === 'profile' ? (

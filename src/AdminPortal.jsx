@@ -372,6 +372,15 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // below just quietly replaces it once it resolves.
   const [loading, setLoading] = useState(!dataCache?.clients);
   const [loadingExtra, setLoadingExtra] = useState(!dataCache?.users);
+  // Only relevant on a device with no cache yet — after a couple seconds of
+  // a real "Loading…" (not the instant cached-then-refresh case), say what's
+  // actually happening so a slow connection doesn't look stuck.
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (!loading) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 2000);
+    return () => clearTimeout(t);
+  }, [loading]);
   const [error, setError] = useState('');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [editingClient, setEditingClient] = useState(null);
@@ -910,9 +919,9 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                         <button className="ap-act ap-act-thankyou" onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
                       {p.isActive === false ? (
-                        <button className="ap-act ap-act-activate" title="Bring this project back into the normal lists — it's currently hidden" onClick={() => saveProject({ ...p, isActive: true })}>↩️ Restore</button>
+                        <button className="ap-act ap-act-activate" title="Bring this project back into the normal lists — it's currently hidden" onClick={() => confirm('Restore this project back into the normal lists?') && saveProject({ ...p, isActive: true })}>↩️ Restore</button>
                       ) : (
-                        <button className="ap-act ap-act-deactivate" title="Hide this project from the normal lists — doesn't delete it, doesn't change its status" onClick={() => saveProject({ ...p, isActive: false })}>🗄️ Archive (Hide)</button>
+                        <button className="ap-act ap-act-deactivate" title="Hide this project from the normal lists — doesn't delete it, doesn't change its status" onClick={() => confirm('Archive this project? It will be hidden from the normal lists — nothing is deleted, and it can be restored anytime.') && saveProject({ ...p, isActive: false })}>🗄️ Archive (Hide)</button>
                       )}
                     </td>
                   </tr>
@@ -1004,7 +1013,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             {pushResult && <p className={pushResult.ok ? 'ap-add-payment-ok' : 'ap-warn ap-warn-error'}>{pushResult.message}</p>}
           </>
         ) : view === 'dashboard' ? (
-          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} loading={loading} onSelectClient={setSelectedClientId}
+          <DashboardOverview stats={stats} statusCounts={statusCounts} projects={projects} clients={clients} loading={loading} slowLoad={slowLoad} onSelectClient={setSelectedClientId}
             onFilterStatus={(status) => { setProjectFilter(status); goto('grid'); }}
             pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
             onNavigate={goto} />
@@ -1022,7 +1031,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             <div className="ap-toolbar">
               <input className="ap-search" placeholder="Search by name, phone, society…" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
-            {loading ? <p className="ap-loading">Loading…</p> : (
+            {loading ? <p className="ap-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p> : (
               <table className="ap-table">
                 <thead>
                   <tr><th>Name</th><th>Phone</th><th>Society</th><th>Projects</th></tr>
@@ -1061,7 +1070,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 </button>
               ))}
             </div>
-            {loading ? <p className="ap-loading">Loading…</p> : filteredProjectCards.length === 0 ? (
+            {loading ? <p className="ap-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p> : filteredProjectCards.length === 0 ? (
               <p className="ap-loading">No {projectFilter === 'All' ? '' : projectFilter.toLowerCase()} records match.</p>
             ) : (
               <div className="ap-cards-grid">
@@ -1265,7 +1274,7 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
 
 // Overview landing page — big-picture status counts plus a quick-glance list
 // of the newest inquiries, so triage doesn't require opening Grid View first.
-function DashboardOverview({ stats, statusCounts, projects, clients, loading, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
+function DashboardOverview({ stats, statusCounts, projects, clients, loading, slowLoad, onSelectClient, onFilterStatus, onNavigate, pendingLinkCount, projectRequestCount }) {
   // Same "archived clients don't count" rule as the stats/statusCounts above
   // — an archived client's inquiry shouldn't show up in the triage list either.
   const activeClientIds = new Set(clients.filter(c => c.isActive !== false).map(c => c.id));
@@ -1305,7 +1314,7 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, on
       </div>
 
       <h3 className="ap-dashboard-subhead">Newest Inquiries</h3>
-      {loading ? <p className="ap-loading">Loading…</p> : recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
+      {loading ? <p className="ap-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p> : recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
         <div className="ap-cards-grid">
           {recentInquiries.map(p => {
             const client = clients.find(c => c.id === p.clientId);
@@ -2141,6 +2150,7 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
   const [busy, setBusy] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   if (!client) return null;
 
   const linkedUser = users.find(u => u.id === client.linkedUserId);
@@ -2190,14 +2200,22 @@ function LinkedAccountBox({ client, users, onLink, onUnlink, onGenerateInvite })
 
   return (
     <div className="ap-calc-box" style={{ marginBottom: 20 }}>
-      <h3>🔗 Associate Project with Client's Email ID</h3>
       {linkedUser ? (
-        <div className="ap-card-row" style={{ padding: '6px 0' }}>
-          <span>✅ {linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>
-          <button className="ap-danger" disabled={busy} onClick={handleUnlink}>Unlink</button>
+        <>
+          <h3>🔗 Associate Project with Client's Email ID</h3>
+          <div className="ap-card-row" style={{ padding: '6px 0' }}>
+            <span>✅ {linkedUser.name} <span className="ap-calc-formula">({linkedUser.email})</span></span>
+            <button className="ap-danger" disabled={busy} onClick={handleUnlink}>Unlink</button>
+          </div>
+        </>
+      ) : !expanded ? (
+        <div className="ap-card-row" style={{ padding: '2px 0' }}>
+          <span>🔗 Not linked to a client account yet</span>
+          <button type="button" className="ap-link" onClick={() => setExpanded(true)}>Link now</button>
         </div>
       ) : (
         <>
+          <h3>🔗 Associate Project with Client's Email ID</h3>
           <p className="ap-calc-hint">Not linked yet — the customer won't see this project on their dashboard until it is.</p>
 
           <button className="ap-btn-primary ap-upload-btn" disabled={sendingInvite || !client.phone} onClick={handleSendInvite}>

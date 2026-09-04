@@ -227,7 +227,11 @@
 /* One color per status, used consistently everywhere it appears — chips,
    card borders, dashboard tiles/icons, so "green" always means the same
    thing across the whole Admin Portal. */
-.ap-progress-chip { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700; white-space: nowrap; color: #fff; }
+.ap-progress-chip {
+  display: inline-flex; align-items: center; justify-content: center; text-align: center;
+  padding: 5px 16px; border-radius: 99px; font-size: .74rem; font-weight: 700; white-space: nowrap; color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.2);
+}
 /* Same colored-pill look as the chip, but an actual <select> — changing a
    project's status shouldn't require opening the full Edit form. Reuses
    the .ap-progress-* color classes so the dropdown itself is colored. */
@@ -266,7 +270,7 @@
 .ap-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .ap-card {
   background: #fff; border-radius: 14px; padding: 14px 16px; cursor: pointer;
-  color: #111827; box-shadow: 0 2px 10px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.06);
+  color: #111827; box-shadow: 0 4px 14px rgba(16,35,61,.1), 0 1px 3px rgba(16,35,61,.06);
   border-left: 5px solid #e5e7eb; transition: transform .15s, box-shadow .15s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -441,7 +445,7 @@
 /* Thank You card reads better warm and light (cream) than the dark navy/
    maroon look the Receipt/Quote cards use — text colors below are flipped
    to dark ink accordingly, scoped to just this card. */
-.ap-ty-card { background: linear-gradient(180deg, #fffaf3 0%, #fdf1de 100%); }
+.ap-ty-card { background: linear-gradient(180deg, #fffdfa 0%, #fef8ee 100%); }
 .ap-ty-card .aq-card-company { color: var(--gold-deep); }
 .ap-ty-card .aq-card-tagline { color: var(--ink-faint); }
 .ap-ty-card .aq-card-footer { color: var(--ink-soft); }

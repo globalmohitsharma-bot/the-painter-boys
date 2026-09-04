@@ -113,7 +113,7 @@ function TeamShareCard({ member, onClose }) {
             <div className={`tc-card tc-card-${theme}`} ref={cardRef}>
               <div className="tc-card-frame">
                 <div className="tc-card-header">
-                  <img className="tc-card-logo-img" src="/logo-header.png" alt="" />
+                  <img className="tc-card-logo-img" src="/logo-card.png" alt="" />
                   <div className="tc-card-company">The Painter Boys</div>
                   <div className="tc-card-tagline">Professional Painting Services</div>
                 </div>

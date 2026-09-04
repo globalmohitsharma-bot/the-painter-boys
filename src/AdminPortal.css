@@ -38,11 +38,7 @@
 .ap-header-brand-btn { background: none; border: none; padding: 0; cursor: pointer; }
 .ap-header-logo {
   height: 46px; width: auto; object-fit: contain;
-  animation: ap-logo-glow 2.4s ease-in-out infinite;
-}
-@keyframes ap-logo-glow {
-  0%, 100% { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
-  50% { filter: drop-shadow(0 0 12px rgba(242,135,31,.85)); }
+  filter: drop-shadow(0 2px 6px rgba(16,35,61,.2));
 }
 .ap-header-nav { display: flex; gap: 6px; }
 .ap-nav-btn {

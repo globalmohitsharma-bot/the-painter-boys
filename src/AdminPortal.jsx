@@ -1596,7 +1596,7 @@ function SuggestField({ label, value, onChange, options, placeholder, required, 
       />
       {open && filtered.length > 0 && (
         <div className="ap-suggest-list">
-          {filtered.slice(0, 8).map(o => (
+          {filtered.map(o => (
             <button
               type="button" key={o} className="ap-suggest-option"
               onMouseDown={e => e.preventDefault()}
@@ -2000,7 +2000,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card" ref={cardRef}>
           <div className="aq-card-header">
-            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
+            <img className="aq-card-logo-img" src="/logo-card.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
@@ -2133,7 +2133,7 @@ function ThankYouCardModal({ client, onClose }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card ap-ty-card" ref={cardRef}>
           <div className="aq-card-header">
-            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
+            <img className="aq-card-logo-img" src="/logo-card.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>
@@ -2551,7 +2551,7 @@ function QuotationCard({ quotation, onClose }) {
       <div className="aq-wrap" onClick={e => e.stopPropagation()}>
         <div className="aq-card aq-card-quote" ref={cardRef}>
           <div className="aq-card-header">
-            <img className="aq-card-logo-img" src="/logo-header.png" alt="" />
+            <img className="aq-card-logo-img" src="/logo-card.png" alt="" />
             <div className="aq-card-company">The Painter Boys</div>
             <div className="aq-card-tagline">Professional Painting Services</div>
           </div>

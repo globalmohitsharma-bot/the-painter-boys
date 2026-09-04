@@ -59,13 +59,9 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .topbar-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; cursor: pointer; text-decoration: none; }
 .topbar-logo-img {
   height: 62px; width: auto; object-fit: contain; flex-shrink: 0;
-  animation: topbar-logo-glow 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
 }
 .topbar-sm .topbar-logo-img { height: 46px; }
-@keyframes topbar-logo-glow {
-  0%, 100% { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
-  50% { filter: drop-shadow(0 0 14px rgba(242,135,31,.85)); }
-}
 .topbar-brand-text { display: flex; flex-direction: column; gap: 1px; }
 .topbar-name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; white-space: nowrap; letter-spacing: .02em; }
 .topbar-sub { font-size: .6rem; font-weight: 600; color: var(--gold-soft); letter-spacing: .12em; text-transform: uppercase; }

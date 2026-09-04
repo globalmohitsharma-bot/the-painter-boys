@@ -6,6 +6,7 @@ import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
 import { SITE_URL, PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
+import { shareImage } from './nativeShare.js';
 import { TEAM } from './siteData.js';
 import './Home.css';
 import './Blog.css';
@@ -58,12 +59,10 @@ function TeamShareCard({ member, onClose }) {
   }
 
   async function handleShareImage() {
-    const file = new File([previewBlob], `${member.slug}-the-painter-boys.png`, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: `${member.name} — The Painter Boys` }); }
-      catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
-    } else {
-      downloadFallback();
+    try {
+      await shareImage({ blob: previewBlob, filename: `${member.slug}-the-painter-boys.png`, title: `${member.name} — The Painter Boys` });
+    } catch (err) {
+      if (err?.message === 'SHARE_UNSUPPORTED') downloadFallback();
     }
   }
 

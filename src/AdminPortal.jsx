@@ -4,6 +4,7 @@ import Icon from './Icon.jsx';
 import InstallAppButton from './InstallAppButton.jsx';
 import useInstallPrompt from './useInstallPrompt.js';
 import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
+import { shareImage } from './nativeShare.js';
 import { DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
 import './AdminPortal.css';
 
@@ -157,12 +158,13 @@ function SharePreviewModal({ blob, filename, shareTitle, onClose }) {
   }
 
   async function handleShare() {
-    const file = new File([blob], filename, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: shareTitle }); }
-      catch (err) { if (err?.name !== 'AbortError') downloadFallback(); }
-    } else {
-      downloadFallback();
+    try {
+      await shareImage({ blob, filename, title: shareTitle });
+    } catch (err) {
+      // SHARE_UNSUPPORTED = genuinely no way to share files here, fall back
+      // to a download. Anything else (AbortError, a native share-sheet
+      // cancel) just means the admin backed out — nothing to do.
+      if (err?.message === 'SHARE_UNSUPPORTED') downloadFallback();
     }
   }
 

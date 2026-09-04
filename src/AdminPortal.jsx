@@ -1160,12 +1160,12 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
   const [testEmailResult, setTestEmailResult] = useState(null); // { ok, message } | null
   const { canInstall: canInstallApp } = useInstallPrompt();
   const items = [
-    { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator' },
-    { key: 'saved-quotes', icon: '📋', label: 'Saved Quotes' },
-    { key: 'users', icon: '👥', label: 'Users' },
-    { key: 'pending-links', icon: '⏳', label: 'Pending Links', badge: pendingLinkCount },
-    { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount },
-    { key: 'sync', icon: '🔄', label: 'Google Sheet Sync' },
+    { key: 'quotation', icon: '🧾', label: 'Quotation & Calculator', color: '#7c3aed' },
+    { key: 'saved-quotes', icon: '📋', label: 'Saved Quotes', color: '#0d9488' },
+    { key: 'users', icon: '👥', label: 'Users', color: '#2563eb' },
+    { key: 'pending-links', icon: '⏳', label: 'Pending Links', badge: pendingLinkCount, color: '#a855f7' },
+    { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount, color: '#f97316' },
+    { key: 'sync', icon: '🔄', label: 'Google Sheet Sync', color: '#16a34a' },
   ];
   async function handleExport() {
     setExporting(true);
@@ -1196,7 +1196,7 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
       <div className="ap-icon-row">
         {items.map(u => (
           <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)}>
-            <span className="ap-icon-circle ap-icon-circle-utility">
+            <span className="ap-icon-circle" style={{ background: u.color, color: '#fff' }}>
               {u.icon}
               {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
             </span>
@@ -1273,10 +1273,10 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, on
     .filter(p => p.progress === 'Inquiry' && p.isActive !== false && activeClientIds.has(p.clientId))
     .slice(0, 5);
   const utilityIcons = [
-    { key: 'clients', icon: '👤', label: 'All Clients', badge: stats.clients, title: 'Every client on file' },
-    { key: 'linked', icon: '🔗', label: "Client Email Links", title: "Which clients have their email ID associated with a customer-dashboard account" },
-    { key: 'utilities-menu', icon: '🔧', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests' },
-    { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator' },
+    { key: 'clients', icon: '👤', label: 'All Clients', badge: stats.clients, title: 'Every client on file', color: '#f97316' },
+    { key: 'linked', icon: '🔗', label: "Client Email Links", title: "Which clients have their email ID associated with a customer-dashboard account", color: '#0d9488' },
+    { key: 'utilities-menu', icon: '🔧', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests', color: 'var(--gold)' },
+    { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator', color: '#7c3aed' },
   ];
   return (
     <div className="ap-dashboard">
@@ -1295,7 +1295,7 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, on
       <div className="ap-icon-row">
         {utilityIcons.map(u => (
           <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)} title={u.title}>
-            <span className="ap-icon-circle ap-icon-circle-utility">
+            <span className="ap-icon-circle" style={{ background: u.color, color: '#fff' }}>
               {u.icon}
               {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
             </span>

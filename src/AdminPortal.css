@@ -1,5 +1,5 @@
 .ap-root {
-  min-height: 100vh; overflow-x: hidden; background: linear-gradient(160deg, #0a1a6e 0%, #060f4a 55%, #02061e 100%); font-family: var(--font-body);
+  min-height: 100vh; overflow-x: hidden; background: var(--parchment); font-family: var(--font-body);
   --status-inquiry: #ef4444; --status-pending-visit: #a855f7; --status-not-started: #64748b;
   --status-in-progress: #f59e0b; --status-completed: #16a34a; --status-cancelled: #b91c1c;
 }
@@ -30,10 +30,11 @@
 .ap-signout:hover { border-color: var(--gold); color: var(--gold-deep); }
 
 .ap-header {
-  background: var(--obsidian); color: var(--ivory); padding: 16px 28px;
+  background: var(--ivory); color: var(--ink); padding: 16px 28px;
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  border-bottom: 1px solid var(--hairline); box-shadow: 0 2px 10px rgba(16,35,61,.04);
 }
-.ap-header-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; color: var(--gold-soft); }
+.ap-header-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; color: var(--gold-deep); }
 .ap-header-brand-btn { background: none; border: none; padding: 0; cursor: pointer; }
 .ap-header-logo {
   height: 46px; width: auto; object-fit: contain;
@@ -45,18 +46,18 @@
 }
 .ap-header-nav { display: flex; gap: 6px; }
 .ap-nav-btn {
-  background: none; border: 1.5px solid rgba(255,255,255,.15); color: rgba(255,255,255,.75);
+  background: none; border: 1.5px solid var(--hairline); color: var(--ink-soft);
   padding: 7px 16px; border-radius: 8px; font-size: .82rem; font-weight: 700; cursor: pointer;
 }
 .ap-nav-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); border-color: transparent; }
 .ap-header-user { display: flex; align-items: center; gap: 12px; font-size: .88rem; }
-.ap-role-chip { background: rgba(242,135,31,.18); color: var(--gold-soft); padding: 2px 10px; border-radius: 10px; font-size: .7rem; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
+.ap-role-chip { background: rgba(242,135,31,.15); color: var(--gold-deep); padding: 2px 10px; border-radius: 10px; font-size: .7rem; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
 .ap-signout-icon {
   width: 30px; height: 30px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  background: none; border: 1.5px solid rgba(255,255,255,.35); border-radius: 50%; color: rgba(255,255,255,.85);
+  background: none; border: 1.5px solid var(--hairline); border-radius: 50%; color: var(--ink-soft);
   font-size: 1rem; font-weight: 800; line-height: 1; cursor: pointer; font-family: var(--font-body);
 }
-.ap-signout-icon:hover { border-color: var(--gold); background: rgba(255,255,255,.08); }
+.ap-signout-icon:hover { border-color: var(--gold); background: var(--parchment); }
 
 .ap-body { display: flex; align-items: flex-start; max-width: 1300px; margin: 0 auto; }
 .ap-sidebar {
@@ -65,9 +66,9 @@
 }
 .ap-sidebar-btn {
   background: none; border: none; text-align: left; padding: 10px 14px; border-radius: 8px;
-  font-size: .88rem; font-weight: 700; color: rgba(255,255,255,.72); cursor: pointer;
+  font-size: .88rem; font-weight: 700; color: var(--ink-soft); cursor: pointer;
 }
-.ap-sidebar-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.ap-sidebar-btn:hover { background: var(--parchment); color: var(--ink); }
 .ap-sidebar-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
 @keyframes ap-toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .ap-toast {
@@ -117,10 +118,10 @@
 .ap-icon-circle-utility { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
 .ap-icon-badge {
   position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
-  background: #fff; color: #111827; font-size: .68rem; font-weight: 900; border: 2px solid var(--obsidian);
+  background: #fff; color: #111827; font-size: .68rem; font-weight: 900; border: 2px solid var(--parchment);
   display: flex; align-items: center; justify-content: center;
 }
-.ap-icon-label { font-size: .72rem; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; }
+.ap-icon-label { font-size: .72rem; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.2; }
 /* 5 columns instead of 3-4 wrapping oddly at phone widths — shrink to fit. */
 @media (max-width: 480px) {
   .ap-icon-row { gap: 6px; justify-content: space-between; }
@@ -148,7 +149,7 @@
 .ap-tile-green .ap-tile-value { color: #16a34a; }
 .ap-tile-blue .ap-tile-value { color: #2563eb; }
 .ap-tile-red .ap-tile-value { color: #dc2626; }
-.ap-dashboard-subhead { font-family: var(--font-display); color: #fff; margin-bottom: 14px; }
+.ap-dashboard-subhead { font-family: var(--font-display); color: var(--ink); margin-bottom: 14px; }
 .ap-sync-box {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   background: var(--ivory); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.04);
@@ -163,18 +164,18 @@
      with no visible scrollbar), but compact instead of one-per-row. */
   .ap-sidebar {
     width: 100%; flex-direction: row; flex-wrap: wrap; overflow-x: visible; position: static;
-    padding: 10px 14px; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.12);
+    padding: 10px 14px; gap: 8px; border-bottom: 1px solid var(--hairline);
   }
   .ap-sidebar-btn {
-    white-space: nowrap; padding: 9px 14px; background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.1); border-radius: 20px; font-size: .82rem;
+    white-space: nowrap; padding: 9px 14px; background: var(--ivory);
+    border: 1px solid var(--hairline); border-radius: 20px; font-size: .82rem;
   }
   .ap-sidebar-btn.active { border-color: transparent; }
   .ap-main { width: 100%; }
   .ap-tiles-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .ap-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: .88rem; }
-.ap-loading { color: rgba(255,255,255,.7); padding: 40px 0; text-align: center; }
+.ap-loading { color: var(--ink-faint); padding: 40px 0; text-align: center; }
 
 .ap-stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 .ap-stat { background: var(--ivory); border: 1px solid var(--hairline); border-radius: 20px; padding: 6px 14px; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
@@ -223,8 +224,8 @@
 
 .ap-back { background: none; border: none; color: var(--gold-deep); font-weight: 700; cursor: pointer; margin-bottom: 16px; font-size: .88rem; }
 .ap-client-detail { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.ap-client-detail h2 { font-family: var(--font-display); color: #fff; margin-bottom: 4px; }
-.ap-client-detail p { color: rgba(255,255,255,.7); font-size: .88rem; }
+.ap-client-detail h2 { font-family: var(--font-display); color: var(--ink); margin-bottom: 4px; }
+.ap-client-detail p { color: var(--ink-soft); font-size: .88rem; }
 
 /* One color per status, used consistently everywhere it appears — chips,
    card borders, dashboard tiles/icons, so "green" always means the same
@@ -251,7 +252,7 @@
 .ap-card-inactive { opacity: .6; }
 
 .ap-client-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.ap-client-detail-actions button { background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.2); border-radius: 8px; padding: 8px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; color: rgba(255,255,255,.85); }
+.ap-client-detail-actions button { background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 8px; padding: 8px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; color: var(--ink); }
 .ap-client-detail-actions .ap-danger { color: #b91c1c; border-color: #fecaca; }
 
 .ap-filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
@@ -440,7 +441,13 @@
    so an admin flicking between saved cards can tell which is which at a
    glance, without hunting for the badge text. */
 .aq-card-quote { background: linear-gradient(180deg, #0f2e2b 0%, #0a1f1d 100%); }
-.ap-ty-card { background: linear-gradient(180deg, #3a1220 0%, #230c14 100%); }
+/* Thank You card reads better warm and light (cream) than the dark navy/
+   maroon look the Receipt/Quote cards use — text colors below are flipped
+   to dark ink accordingly, scoped to just this card. */
+.ap-ty-card { background: linear-gradient(180deg, #fffaf3 0%, #fdf1de 100%); }
+.ap-ty-card .aq-card-company { color: var(--gold-deep); }
+.ap-ty-card .aq-card-tagline { color: var(--ink-faint); }
+.ap-ty-card .aq-card-footer { color: var(--ink-soft); }
 .aq-card-header { padding: 32px 24px 22px; text-align: center; }
 .aq-card-logo-img { height: 96px; width: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
 .aq-card-company { font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: var(--gold-soft); letter-spacing: .02em; }
@@ -491,10 +498,10 @@
 .aq-share-text { background: linear-gradient(135deg, #25d366, #128c7e); box-shadow: 0 6px 20px rgba(37,211,102,.4); }
 .aq-close-btn { padding: 12px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7); border-radius: 12px; font-size: .9rem; font-weight: 600; cursor: pointer; }
 .ap-ty-body { padding: 30px 28px; text-align: center; }
-.ap-ty-stars { color: var(--gold); letter-spacing: .3em; margin-bottom: 14px; }
-.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--gold-soft); margin-bottom: 10px; }
-.ap-ty-dear { font-size: .95rem; color: rgba(255,255,255,.85); margin-bottom: 14px; }
-.ap-ty-body p { font-size: .88rem; color: rgba(255,255,255,.85); line-height: 1.6; margin-bottom: 10px; }
+.ap-ty-stars { color: var(--gold-deep); letter-spacing: .3em; margin-bottom: 14px; }
+.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--gold-deep); margin-bottom: 10px; }
+.ap-ty-dear { font-size: .95rem; color: var(--ink); margin-bottom: 14px; }
+.ap-ty-body p { font-size: .88rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 10px; }
 
 /* ── Project media (photos + sharing) modal ── */
 .ap-media-section { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--hairline); }

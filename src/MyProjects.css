@@ -34,7 +34,7 @@
 .mp-empty svg { color: var(--gold-deep); margin-bottom: 12px; }
 
 /* ── Dashboard app shell (left nav + content) ─────────────────────── */
-.mp-app { min-height: 100dvh; overflow-x: hidden; background: var(--parchment); font-family: var(--font-body); }
+.mp-app { min-height: 100dvh; overflow-x: hidden; overflow-y: visible; background: var(--parchment); font-family: var(--font-body); }
 .mp-app-topbar {
   background: var(--parchment); color: var(--ink); padding: 14px 24px;
   display: flex; align-items: center; justify-content: space-between;
@@ -130,6 +130,17 @@
   margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--hairline);
 }
 .mp-request-row span { font-size: .85rem; color: var(--ink-soft); }
+/* Compact default: "Ask Admin" leads, the code-entry form is collapsed
+   behind a small text toggle instead of always taking up space. */
+.mp-link-box-compact { padding: 14px 20px; }
+.mp-link-box-compact .mp-request-row { margin-top: 0; padding-top: 0; border-top: none; }
+.mp-link-toggle {
+  background: none; border: none; padding: 10px 0 0; margin: 0;
+  color: var(--ink-faint); font-size: .78rem; font-weight: 600; text-decoration: underline;
+  cursor: pointer; text-align: left;
+}
+.mp-link-toggle:hover { color: var(--gold-deep); }
+.mp-link-toggle-hint { font-size: .8rem; color: var(--ink-soft); margin: 14px 0 10px; }
 .mp-btn-secondary {
   background: #fff; color: var(--ink); border: 1.5px solid var(--hairline);
   padding: 9px 18px; border-radius: 8px; font-weight: 700; font-size: .85rem; cursor: pointer;

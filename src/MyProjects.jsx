@@ -106,6 +106,7 @@ export default function MyProjects() {
   const [linking, setLinking] = useState(false);
   const [requestStatus, setRequestStatus] = useState(null); // { ok: bool, message: string }
   const [requesting, setRequesting] = useState(false);
+  const [showCodeInput, setShowCodeInput] = useState(false);
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
@@ -389,33 +390,40 @@ export default function MyProjects() {
                     </div>
                   </div>
 
-                  <div className="mp-link-box">
-                    <h3>Have a project code?</h3>
-                    <p>Your painter or admin can give you a short code to link a project to your dashboard.</p>
-                    <div className="mp-link-form">
-                      <input
-                        value={linkCode}
-                        onChange={e => setLinkCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. AB3CD9"
-                        maxLength={6}
-                        onKeyDown={e => e.key === 'Enter' && submitLinkCode()}
-                      />
-                      <button className="mp-btn-primary" disabled={!linkCode.trim() || linking} onClick={submitLinkCode}>
-                        {linking ? 'Sending…' : 'Link Project'}
-                      </button>
-                    </div>
-                    {linkStatus && (
-                      <p className={linkStatus.ok ? 'mp-link-success' : linkStatus.info ? 'mp-link-info' : 'mp-link-error'}>{linkStatus.message}</p>
-                    )}
-
+                  <div className="mp-link-box mp-link-box-compact">
                     <div className="mp-request-row">
-                      <span>Don't have a code?</span>
+                      <span>Don't have a project yet?</span>
                       <button className="mp-btn-secondary" disabled={requesting} onClick={requestProjectLink}>
                         {requesting ? 'Sending…' : '📨 Ask Admin to Add My Project'}
                       </button>
                     </div>
                     {requestStatus && (
                       <p className={requestStatus.ok ? 'mp-link-success' : 'mp-link-error'}>{requestStatus.message}</p>
+                    )}
+
+                    {showCodeInput ? (
+                      <>
+                        <p className="mp-link-toggle-hint">Your painter or admin can give you a short code to link a project to your dashboard.</p>
+                        <div className="mp-link-form">
+                          <input
+                            value={linkCode}
+                            onChange={e => setLinkCode(e.target.value.toUpperCase())}
+                            placeholder="e.g. AB3CD9"
+                            maxLength={6}
+                            onKeyDown={e => e.key === 'Enter' && submitLinkCode()}
+                          />
+                          <button className="mp-btn-primary" disabled={!linkCode.trim() || linking} onClick={submitLinkCode}>
+                            {linking ? 'Sending…' : 'Link Project'}
+                          </button>
+                        </div>
+                        {linkStatus && (
+                          <p className={linkStatus.ok ? 'mp-link-success' : linkStatus.info ? 'mp-link-info' : 'mp-link-error'}>{linkStatus.message}</p>
+                        )}
+                      </>
+                    ) : (
+                      <button type="button" className="mp-link-toggle" onClick={() => setShowCodeInput(true)}>
+                        Have a project code instead?
+                      </button>
                     )}
                   </div>
                 </>

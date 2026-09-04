@@ -563,7 +563,10 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .fp-base-oil { background: rgba(71,85,105,.85); }
 .fp-body { padding: 16px 18px 18px; }
 .fp-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
-.fp-name { font-family: var(--font-display); font-size: .98rem; font-weight: 700; color: var(--ink); line-height: 1.3; }
+/* min-width: 0 lets a long product name shrink instead of refusing to
+   (flex items default to min-width: auto), which was pushing the tier
+   badge past the card's edge on narrower grid columns. */
+.fp-name { font-family: var(--font-display); font-size: .98rem; font-weight: 700; color: var(--ink); line-height: 1.3; min-width: 0; }
 .fp-finish { font-size: .78rem; color: var(--ink-soft); margin-bottom: 10px; }
 .fp-learn { font-size: .78rem; font-weight: 700; color: var(--fp-accent); }
 

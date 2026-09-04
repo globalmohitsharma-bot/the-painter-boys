@@ -456,8 +456,8 @@
 /* Thank You card reads better warm and light (cream) than the dark navy/
    maroon look the Receipt/Quote cards use — text colors below are flipped
    to dark ink accordingly, scoped to just this card. */
-.ap-ty-card { background: linear-gradient(180deg, #fffdfa 0%, #fef8ee 100%); }
-.ap-ty-card .aq-card-company { color: var(--gold-deep); }
+.ap-ty-card { background: #ffffff; }
+.ap-ty-card .aq-card-company { color: var(--obsidian); }
 .ap-ty-card .aq-card-tagline { color: var(--ink-faint); }
 .ap-ty-card .aq-card-footer { color: var(--ink-soft); }
 .aq-card-header { padding: 32px 24px 22px; text-align: center; }
@@ -510,8 +510,8 @@
 .aq-share-text { background: linear-gradient(135deg, #25d366, #128c7e); box-shadow: 0 6px 20px rgba(37,211,102,.4); }
 .aq-close-btn { padding: 12px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7); border-radius: 12px; font-size: .9rem; font-weight: 600; cursor: pointer; }
 .ap-ty-body { padding: 30px 28px; text-align: center; }
-.ap-ty-stars { color: var(--gold-deep); letter-spacing: .3em; margin-bottom: 14px; }
-.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--gold-deep); margin-bottom: 10px; }
+.ap-ty-stars { color: var(--obsidian); letter-spacing: .3em; margin-bottom: 14px; }
+.ap-ty-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--obsidian); margin-bottom: 10px; }
 .ap-ty-dear { font-size: .95rem; color: var(--ink); margin-bottom: 14px; }
 .ap-ty-body p { font-size: .88rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 10px; }
 

@@ -295,17 +295,14 @@
 .mp-payment-row { display: flex; justify-content: space-between; font-size: .85rem; color: var(--ink); padding: 2px 0; }
 .mp-payment-pending { color: #b45309; font-weight: 700; }
 
-/* Reused progress-chip look from the Admin Portal, kept self-contained here
-   rather than importing AdminPortal.css across this public/admin boundary. */
-.ap-progress-chip { padding: 3px 10px; border-radius: 12px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
-/* Same status colors as the Admin Portal (green=Completed, amber=In
-   Progress, red=Inquiry) — these class names collide across the two CSS
-   files since Vite bundles all page CSS together regardless of route, so
-   keeping the palette identical here avoids one page silently overriding
-   the other's colors. */
-.ap-progress-completed { background: #dcfce7; color: #15803d; }
-.ap-progress-cancelled { background: #fecaca; color: #991b1b; }
-.ap-progress-not-started { background: #f1f5f9; color: #475569; }
-.ap-progress-in-progress { background: #fef3c7; color: #b45309; }
-.ap-progress-inquiry { background: #fee2e2; color: #b91c1c; }
-.ap-progress-pending-visit { background: #ede9fe; color: #6d28d9; }
+/* Own prefix (mp-, not ap-) so this never collides with AdminPortal.css's
+   .ap-progress-chip again — Vite bundles all page CSS together regardless
+   of route, so identically-named classes in two files silently fight over
+   which one wins, which is exactly what happened here before this rename. */
+.mp-progress-chip { padding: 3px 10px; border-radius: 12px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+.mp-progress-completed { background: #dcfce7; color: #15803d; }
+.mp-progress-cancelled { background: #fecaca; color: #991b1b; }
+.mp-progress-not-started { background: #f1f5f9; color: #475569; }
+.mp-progress-in-progress { background: #fef3c7; color: #b45309; }
+.mp-progress-inquiry { background: #fee2e2; color: #b91c1c; }
+.mp-progress-pending-visit { background: #ede9fe; color: #6d28d9; }

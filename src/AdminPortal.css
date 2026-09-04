@@ -276,12 +276,14 @@
 }
 .ap-card:active { transform: scale(0.99); }
 .ap-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.16); }
-.ap-card-inquiry { background: #fef2f2; border-left-color: var(--status-inquiry); }
-.ap-card-pending-visit { background: #faf5ff; border-left-color: var(--status-pending-visit); }
-.ap-card-not-started { background: #f8fafc; border-left-color: var(--status-not-started); }
-.ap-card-in-progress { background: #fffbeb; border-left-color: var(--status-in-progress); }
-.ap-card-completed { background: #f0fdf4; border-left-color: var(--status-completed); }
-.ap-card-cancelled { background: #fef2f2; border-left-color: var(--status-cancelled); }
+/* Plain white cards, color-coded only by the left border + status badge —
+   reads as a professional dashboard instead of a pastel candy grid. */
+.ap-card-inquiry { border-left-color: var(--status-inquiry); }
+.ap-card-pending-visit { border-left-color: var(--status-pending-visit); }
+.ap-card-not-started { border-left-color: var(--status-not-started); }
+.ap-card-in-progress { border-left-color: var(--status-in-progress); }
+.ap-card-completed { border-left-color: var(--status-completed); }
+.ap-card-cancelled { border-left-color: var(--status-cancelled); }
 .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
 .ap-card-top-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .ap-card-name { font-size: 1rem; font-weight: 700; color: #111827; line-height: 1.3; }

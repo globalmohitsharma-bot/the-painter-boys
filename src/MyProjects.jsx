@@ -501,7 +501,7 @@ function ProjectCard({ project }) {
       <div className={`mp-card ${images.length > 0 ? 'mp-card-clickable' : ''}`} onClick={() => images.length > 0 && setLightboxIndex(0)}>
         <div className="mp-card-head">
           <h3>{project.name || project.paintType || 'Painting Project'}</h3>
-          <span className={`ap-progress-chip ap-progress-${project.progress.toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
+          <span className={`mp-progress-chip mp-progress-${project.progress.toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
         </div>
         <ProgressTimeline progress={project.progress} />
         {(project.clientSociety || project.clientAddress) && (

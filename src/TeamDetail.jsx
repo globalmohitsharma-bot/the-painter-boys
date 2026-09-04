@@ -72,24 +72,6 @@ function TeamShareCard({ member, onClose }) {
     alert('This browser can\'t hand the image straight to WhatsApp — image downloaded instead. On a phone, this button opens the share sheet with WhatsApp as an option directly.');
   }
 
-  function shareAsText() {
-    const text = [
-      `🎨 *The Painter Boys*`,
-      `━━━━━━━━━━━━━━━━━━━━━━`,
-      `👤 *${member.name}*`,
-      member.role,
-      ``,
-      member.bio,
-      ``,
-      `📱 Register at thepainterboys.com — registered customers get priority on touch-ups & after-sale service`,
-      `📞 Corporate: ${PHONE}`,
-      `🌐 www.thepainterboys.com`,
-      ``,
-      `🗓️ Card generated: ${generatedDateStr} — please ask for today's latest card, not an older shared copy.`,
-    ].join('\n');
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-  }
-
   return (
     <div className="tc-overlay" onClick={onClose}>
       <div className="tc-wrap" onClick={e => e.stopPropagation()}>
@@ -136,7 +118,6 @@ function TeamShareCard({ member, onClose }) {
               <button className="tc-share-btn" onClick={shareAsImage} disabled={capturing}>
                 {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
               </button>
-              <button className="tc-share-btn tc-share-text" onClick={shareAsText}>💬 Send as WhatsApp Text</button>
               <button className="tc-close-btn" onClick={onClose}>✕ Close</button>
             </div>
           </>

@@ -1924,6 +1924,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [addingPayment, setAddingPayment] = useState(false);
   const [addStatus, setAddStatus] = useState(null); // { ok: bool, text: string } | null
+  const [captureError, setCaptureError] = useState('');
   if (!project) return null;
 
   async function handleAddPayment() {
@@ -1956,43 +1957,21 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
   const pendingTotal = project.pendingAmount || (totalAmount > receivedTotal ? totalAmount - receivedTotal : 0);
   const fullAddress = [client?.society, client?.address].filter(Boolean).join(', ');
 
-  const waText = [
-    `🎨 *The Painter Boys*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `💰 *PAYMENT SUMMARY*`,
-    ``,
-    `👤 *Customer:* ${client?.contactName || '—'}`,
-    fullAddress ? `🏘️ *Address:* ${fullAddress}` : '',
-    client?.phone ? `📞 *Phone:* ${client.phone}` : '',
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `💰 *PAYMENT HISTORY*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    ...(history.length ? history.map(e => `📅 ${e.date}   ₹${(e.amount || 0).toLocaleString('en-IN')}`) : ['No entries yet']),
-    ``,
-    totalAmount > 0
-      ? `📋 *Total Project Amount = ₹${totalAmount.toLocaleString('en-IN')}*\n➖ *Total Received = ₹${receivedTotal.toLocaleString('en-IN')}*\n🟰 *Pending Payment = ₹${pendingTotal.toLocaleString('en-IN')}*`
-      : `✅ *Total Received = ₹${receivedTotal.toLocaleString('en-IN')}*` + (pendingTotal > 0 ? `\n⏳ *Pending Payment = ₹${pendingTotal.toLocaleString('en-IN')}*` : ''),
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `📱 Register at thepainterboys.com — registered customers get priority on touch-ups & after-sale service`,
-    `🌐 www.thepainterboys.com`,
-    `📞 Corporate: 7838888509`,
-  ].filter(Boolean).join('\n');
-
   async function shareAsImage() {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
+    setCaptureError('');
     try {
       const canvas = await captureCard(cardRef.current, '#0d2137');
-      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
-    } catch { setCapturing(false); }
-  }
-
-  function shareOnWhatsApp() {
-    const digits = (client?.phone || '').replace(/\D/g, '');
-    const url = `https://wa.me/${digits}?text=${encodeURIComponent(waText)}`;
-    window.open(url, '_blank', 'noopener');
+      canvas.toBlob(blob => {
+        if (!blob) setCaptureError('Could not generate the image — please try again.');
+        else setPreviewBlob(blob);
+        setCapturing(false);
+      }, 'image/png');
+    } catch (e) {
+      setCaptureError('Could not generate the image — ' + e.message);
+      setCapturing(false);
+    }
   }
 
   return (
@@ -2075,13 +2054,11 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
           </div>
         )}
 
+        {captureError && <p className="ap-warn ap-warn-error" style={{ textAlign: 'center', marginBottom: 4 }}>{captureError}</p>}
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
           </button>
-          {client?.phone && (
-            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
-          )}
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
@@ -2098,34 +2075,24 @@ function ThankYouCardModal({ client, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
+  const [captureError, setCaptureError] = useState('');
   const name = client?.contactName || 'Customer';
-
-  const waText = [
-    `🎨 *The Painter Boys*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `Dear ${name},`,
-    ``,
-    `Thank you for reaching out to *The Painter Boys*.`,
-    `Our team will contact you shortly.`,
-    ``,
-    `📱 Register at thepainterboys.com — registered customers get priority on touch-ups & after-sale service`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `🌐 www.thepainterboys.com`,
-    `📞 Corporate: 7838888509`,
-  ].join('\n');
 
   async function shareAsImage() {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
+    setCaptureError('');
     try {
       const canvas = await captureCard(cardRef.current, null);
-      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
-    } catch { setCapturing(false); }
-  }
-
-  function shareOnWhatsApp() {
-    const digits = (client?.phone || '').replace(/\D/g, '');
-    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener');
+      canvas.toBlob(blob => {
+        if (!blob) setCaptureError('Could not generate the image — please try again.');
+        else setPreviewBlob(blob);
+        setCapturing(false);
+      }, 'image/png');
+    } catch (e) {
+      setCaptureError('Could not generate the image — ' + e.message);
+      setCapturing(false);
+    }
   }
 
   return (
@@ -2151,13 +2118,11 @@ function ThankYouCardModal({ client, onClose }) {
             <div>📞 Corporate: 7838888509</div>
           </div>
         </div>
+        {captureError && <p className="ap-warn ap-warn-error" style={{ textAlign: 'center', marginBottom: 4 }}>{captureError}</p>}
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Thank You Card'}
           </button>
-          {client?.phone && (
-            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
-          )}
           <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
         </div>
       </div>
@@ -2490,6 +2455,7 @@ function QuotationCard({ quotation, onClose }) {
   const cardRef = useRef(null);
   const [capturing, setCapturing] = useState(false);
   const [previewBlob, setPreviewBlob] = useState(null);
+  const [captureError, setCaptureError] = useState('');
   const { society, address, customerName, mobile, bhk, paintType, workProcess, amount, areaSqFt, ratePerSqFt } = quotation;
   const steps = (workProcess || '').split(',').map(s => s.trim()).filter(Boolean);
   const learnLinks = (paintType || '').split(',').map(s => s.trim()).filter(Boolean)
@@ -2500,50 +2466,21 @@ function QuotationCard({ quotation, onClose }) {
   const validUntil = new Date(quoteDate.getTime() + 3 * 24 * 60 * 60 * 1000)
     .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  const waText = [
-    `🎨 *The Painter Boys*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `📋 *QUOTATION*  ·  ${quoteDateStr}`,
-    ``,
-    `👤 *Customer:* ${customerName}`,
-    society ? `🏘️ *Society:* ${society}` : '',
-    address ? `📍 *Address:* ${address}` : '',
-    bhk ? `🏠 *Property Type:* ${bhk}` : '',
-    mobile ? `📞 *Phone:* ${mobile}` : '',
-    paintType ? `🎨 *Paint Type:* ${paintType}` : '',
-    areaSqFt ? `📐 *Est. Painting Area:* ${areaSqFt.toLocaleString('en-IN')} sq ft` : '',
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `🛠️ *SCOPE OF WORK*`,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    ...steps.map(s => `✔️ ${s}`),
-    ``,
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    `💰 *Total Quotation = ₹${amount.toLocaleString('en-IN')}*`,
-    ratePerSqFt ? `📊 *Rate = ₹${ratePerSqFt.toLocaleString('en-IN')}/sq ft*` : '',
-    `━━━━━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `📌 Valid until ${validUntil}`,
-    ...(learnLinks.length ? ['', '📚 *Learn more about your paint:*', ...learnLinks.map(l => `${l.name}: ${l.url}`)] : []),
-    ``,
-    `📱 Register at thepainterboys.com — registered customers get priority on touch-ups & after-sale service`,
-    `🌐 www.thepainterboys.com`,
-    `📞 Corporate: 7838888509`,
-  ].filter(Boolean).join('\n');
-
   async function shareAsImage() {
     if (!cardRef.current || capturing) return;
     setCapturing(true);
+    setCaptureError('');
     try {
       const canvas = await captureCard(cardRef.current, '#0d2137');
-      canvas.toBlob(blob => { setPreviewBlob(blob); setCapturing(false); }, 'image/png');
-    } catch { setCapturing(false); }
-  }
-
-  function shareOnWhatsApp() {
-    const digits = mobile.replace(/\D/g, '');
-    const url = `https://wa.me/${digits}?text=${encodeURIComponent(waText)}`;
-    window.open(url, '_blank', 'noopener');
+      canvas.toBlob(blob => {
+        if (!blob) setCaptureError('Could not generate the image — please try again.');
+        else setPreviewBlob(blob);
+        setCapturing(false);
+      }, 'image/png');
+    } catch (e) {
+      setCaptureError('Could not generate the image — ' + e.message);
+      setCapturing(false);
+    }
   }
 
   return (
@@ -2590,13 +2527,11 @@ function QuotationCard({ quotation, onClose }) {
             <div>📞 Corporate: 7838888509</div>
           </div>
         </div>
+        {captureError && <p className="ap-warn ap-warn-error" style={{ textAlign: 'center', marginBottom: 4 }}>{captureError}</p>}
         <div className="aq-actions">
           <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
             {capturing ? '⏳ Preparing…' : '📤 Share Image on WhatsApp'}
           </button>
-          {mobile && (
-            <button className="aq-share-btn aq-share-text" onClick={shareOnWhatsApp}>💬 Send as WhatsApp Text</button>
-          )}
           {learnLinks.length > 0 && (
             <a className="aq-share-btn aq-share-learn" href={learnLinks[0].url} target="_blank" rel="noopener noreferrer"
               style={{ display: 'block', textAlign: 'center', textDecoration: 'none', background: 'linear-gradient(135deg,#0d4547,#0ea5a8)' }}>

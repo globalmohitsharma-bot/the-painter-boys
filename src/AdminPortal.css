@@ -458,7 +458,7 @@
    to dark ink accordingly, scoped to just this card. */
 .ap-ty-card { background: #ffffff; }
 .ap-ty-card .aq-card-company { color: var(--obsidian); }
-.ap-ty-card .aq-card-tagline { color: var(--ink-faint); }
+.ap-ty-card .aq-card-tagline { color: var(--gold-deep); }
 .ap-ty-card .aq-card-footer { color: var(--ink-soft); }
 .aq-card-header { padding: 32px 24px 22px; text-align: center; }
 .aq-card-logo-img { height: 96px; width: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }

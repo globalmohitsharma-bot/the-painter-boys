@@ -47,8 +47,8 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 /* ── Topbar ── */
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 300;
-  background: linear-gradient(90deg, var(--obsidian-2), var(--obsidian), var(--charcoal-2));
-  border-bottom: 1px solid rgba(242,135,31,.15);
+  background: var(--parchment);
+  border-bottom: 1px solid var(--hairline);
   height: 60px; transition: height .25s;
 }
 .topbar-sm { height: 50px; }
@@ -64,13 +64,13 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .topbar-sm .topbar-logo-img { height: 46px; }
 .topbar-brand-text { display: flex; flex-direction: column; gap: 1px; }
 .topbar-name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; white-space: nowrap; letter-spacing: .02em; }
-.topbar-sub { font-size: .6rem; font-weight: 600; color: var(--gold-soft); letter-spacing: .12em; text-transform: uppercase; }
+.topbar-sub { font-size: .6rem; font-weight: 600; color: var(--gold-deep); letter-spacing: .12em; text-transform: uppercase; }
 /* Refined single-family gold gradient wordmark — no rainbow letters */
-.tn-the { color: var(--ivory); font-weight: 700; font-style: italic; }
-.tn-p, .tn-a, .tn-i, .tn-n, .tn-t, .tn-e, .tn-r, .tn-b, .tn-o, .tn-y, .tn-s { color: var(--ivory); font-weight: 800; }
-.tn-sp { color: var(--ivory); }
+.tn-the { color: var(--ink); font-weight: 700; font-style: italic; }
+.tn-p, .tn-a, .tn-i, .tn-n, .tn-t, .tn-e, .tn-r, .tn-b, .tn-o, .tn-y, .tn-s { color: var(--ink); font-weight: 800; }
+.tn-sp { color: var(--ink); }
 .topbar-phone {
-  font-size: .9rem; font-weight: 700; color: rgba(255,255,255,.9);
+  font-size: .9rem; font-weight: 700; color: var(--ink);
   text-decoration: none; display: flex; align-items: center; gap: 8px; transition: color .2s;
 }
 .topbar-phone:hover { color: var(--gold); }
@@ -87,7 +87,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 }
 .topbar-account {
   flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); color: var(--ivory);
+  background: var(--parchment); border: 1px solid var(--hairline); color: var(--ink);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
   transition: background .2s, border-color .2s;
 }
@@ -102,7 +102,7 @@ body { font-family: var(--font-body); color: var(--ink); background: var(--parch
 .topbar-cta:hover { box-shadow: 0 6px 24px rgba(242,135,31,.5); transform: translateY(-1px); }
 .nav-hamburger {
   display: none; background: none; border: none;
-  color: var(--gold-soft); font-size: 1.5rem; cursor: pointer; padding: 4px; flex-shrink: 0;
+  color: var(--gold-deep); font-size: 1.5rem; cursor: pointer; padding: 4px; flex-shrink: 0;
 }
 
 /* ── Nav bar ── */

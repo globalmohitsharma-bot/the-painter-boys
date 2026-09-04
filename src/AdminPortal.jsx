@@ -838,7 +838,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     <div className="ap-root">
       <header className="ap-header">
         <button className="ap-header-brand ap-header-brand-btn" onClick={() => goto('dashboard')} title="Go to Dashboard">
-          <img src="/logo-header.png" alt="" className="ap-header-logo" />
+          <img src="/logo-card.png" alt="" className="ap-header-logo" />
           <span>Admin Portal</span>
         </button>
         <div className="ap-header-user">

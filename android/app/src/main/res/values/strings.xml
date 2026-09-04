@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ThePainterBoys</string>
-    <string name="title_activity_main">ThePainterBoys</string>
+    <string name="app_name">The Painter Boys</string>
+    <string name="title_activity_main">The Painter Boys</string>
     <string name="package_name">com.thepainterboys.app</string>
     <string name="custom_url_scheme">com.thepainterboys.app</string>
 </resources>

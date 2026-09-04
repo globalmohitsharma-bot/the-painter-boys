@@ -140,11 +140,14 @@ function Stars({ count }) {
 }
 
 const FEATURED_PAINT_SLUGS = ['asian-paints-royale', 'royale-shyne-luxury-emulsion', 'apex-exterior-emulsion', 'apcolite-premium-enamel'];
+// One consistent navy-to-gold brand gradient across every card, varying
+// only the icon — a different accent hue per card (orange/purple/blue/slate)
+// read as an inconsistent, unpolished grid rather than one product catalog.
 const FEATURED_PAINT_STYLE = {
-  'asian-paints-royale':            { icon: 'crown', accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#f2871f)' },
-  'royale-shyne-luxury-emulsion':   { icon: 'star',  accent: '#7c3aed', bg: 'linear-gradient(135deg,#1a0f2e,#3b1f5c,#7c3aed)' },
-  'apex-exterior-emulsion':         { icon: 'construction', accent: '#2563c4', bg: 'linear-gradient(135deg,#081627,#163457,#2563c4)' },
-  'apcolite-premium-enamel':        { icon: 'brush', accent: '#475569', bg: 'linear-gradient(135deg,#0f172a,#334155,#475569)' },
+  'asian-paints-royale':            { icon: 'crown', accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#c96a0f)' },
+  'royale-shyne-luxury-emulsion':   { icon: 'star',  accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#c96a0f)' },
+  'apex-exterior-emulsion':         { icon: 'construction', accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#c96a0f)' },
+  'apcolite-premium-enamel':        { icon: 'brush', accent: '#f2871f', bg: 'linear-gradient(135deg,#0d2137,#1c4068,#c96a0f)' },
 };
 
 function FeaturedPaints() {

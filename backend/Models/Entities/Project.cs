@@ -140,9 +140,16 @@ public class Project
     [JsonPropertyName("pushedToSheet")]
     public bool PushedToSheet { get; set; }
 
+    /// <summary>Explicitly set on create/update (see ProjectsController,
+    /// ProjectRepository) — the fixed 2026-01-01 default below only ever
+    /// surfaces for documents saved before these fields existed, so it
+    /// reads as a stable "before we tracked this" marker rather than
+    /// recomputing to "now" on every fetch (which DateTimeOffset.UtcNow as
+    /// a default would do, since C# property initializers evaluate at
+    /// deserialization time when the JSON field is absent).</summary>
     [JsonPropertyName("createdAt")]
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     [JsonPropertyName("updatedAt")]
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset UpdatedAt { get; set; } = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 }

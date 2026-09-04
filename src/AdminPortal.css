@@ -250,6 +250,7 @@
 .ap-progress-inquiry { background: var(--status-inquiry); }
 .ap-progress-pending-visit { background: var(--status-pending-visit); }
 .ap-progress-inactive { background: #6b7280; }
+.ap-progress-not-set { background: #991b1b; }
 .ap-card-inactive { opacity: .6; }
 
 .ap-client-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -284,7 +285,14 @@
 .ap-card-in-progress { border-left-color: var(--status-in-progress); }
 .ap-card-completed { border-left-color: var(--status-completed); }
 .ap-card-cancelled { border-left-color: var(--status-cancelled); }
+.ap-card-not-set { border-left-color: #991b1b; }
+/* min-width: 0 lets the flex item shrink below its text's natural width —
+   without it, a long client name refuses to shrink and pushes the status
+   badge past the card's edge on narrow screens (clipped by .ap-root's
+   overflow-x: hidden, not wrapped, so it just silently ran off-screen). */
 .ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.ap-card-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-card-top-right { flex-shrink: 0; }
 .ap-card-top-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .ap-card-name { font-size: 1rem; font-weight: 700; color: #111827; line-height: 1.3; }
 .ap-card-row { display: flex; align-items: baseline; gap: 6px; font-size: .83rem; color: #6b7280; margin-bottom: 4px; }
@@ -295,6 +303,7 @@
   border-top: 1px solid #f3f4f6; padding-top: 6px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+.ap-card-updated { margin-top: 6px; font-size: .7rem; color: #9ca3af; }
 .ap-card-wa-btn {
   background: #dcfce7; border: none; border-radius: 50%; width: 30px; height: 30px;
   font-size: .95rem; cursor: pointer; display: flex; align-items: center; justify-content: center;

@@ -1542,12 +1542,12 @@ function UsersView({ users, clients, loading, onImpersonate, onSelectClient }) {
 function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
   const startDate = project.dateStarted || project.dateContacted || '';
   return (
-    <div className={`ap-card ap-card-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')} ${project.isActive === false ? 'ap-card-inactive' : ''}`} onClick={onOpen}>
+    <div className={`ap-card ap-card-${(project.progress || 'not-set').toLowerCase().replace(/\s+/g, '-')} ${project.isActive === false ? 'ap-card-inactive' : ''}`} onClick={onOpen}>
       <div className="ap-card-top">
         <div className="ap-card-name">{client?.contactName || '—'}</div>
         <div className="ap-card-top-right">
           {project.isActive === false && <span className="ap-progress-chip ap-progress-inactive" title="Hidden from normal lists">🗄️ Archived</span>}
-          <span className={`ap-progress-chip ap-progress-${(project.progress || '').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress}</span>
+          <span className={`ap-progress-chip ap-progress-${(project.progress || 'not-set').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress || 'Not Set'}</span>
           <button className="ap-card-wa-btn" onClick={e => { e.stopPropagation(); onShare(); }} title="Share status on WhatsApp">💬</button>
         </div>
       </div>
@@ -1561,6 +1561,9 @@ function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
       {project.pendingAmount > 0 && <div className="ap-card-row">⏳ <span>Pending: ₹{project.pendingAmount.toLocaleString('en-IN')}</span></div>}
       {(project.painterNames || []).length > 0 && <div className="ap-card-row">👷 <span>{formatPainters(project.painterNames)}</span></div>}
       {project.remarks && <div className="ap-card-remarks">{project.remarks}</div>}
+      {project.updatedAt && (
+        <div className="ap-card-updated">Last updated {new Date(project.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+      )}
       {project.tokenReceived > 0 && (
         <button className="ap-card-receipt-btn" onClick={e => { e.stopPropagation(); onViewReceipt(); }}>
           🧾 View Receipt · ₹{project.tokenReceived.toLocaleString('en-IN')}

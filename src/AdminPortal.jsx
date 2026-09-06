@@ -1171,6 +1171,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
       {mediaProjectId && (
         <ProjectMediaModal
           project={projects.find(p => p.id === mediaProjectId)}
+          client={clients.find(c => c.id === projects.find(p => p.id === mediaProjectId)?.clientId)}
           users={users}
           onClose={() => setMediaProjectId(null)}
           onUpload={uploadProjectImage}
@@ -1911,17 +1912,28 @@ function ProjectForm({ project, client, onCancel, onSave, knownPainters = [] }) 
   );
 }
 
-function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, onShare, onToggleShare, onUnshare }) {
+function ProjectMediaModal({ project, client, users, onClose, onUpload, onDeleteImage, onShare, onToggleShare, onUnshare }) {
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption] = useState('');
   const [shareUserId, setShareUserId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [primaryBusy, setPrimaryBusy] = useState(false);
+  const [showAddOther, setShowAddOther] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
   const fileRef = useRef(null);
   if (!project) return null;
 
   const shared = project.sharedWith || [];
-  const shareable = users.filter(u => !shared.some(s => s.userId === u.id));
+  // The client's own linked account is the case that matters 99% of the
+  // time — surfaced as one big, unmissable toggle instead of making every
+  // admin dig through a "select a user" dropdown to find the actual
+  // customer. Anyone else (e.g. a family member also given access) is a
+  // rare case, tucked under "Share with someone else" below.
+  const primaryUser = client?.linkedUserId ? users.find(u => u.id === client.linkedUserId) : null;
+  const primaryShare = primaryUser ? shared.find(s => s.userId === primaryUser.id) : null;
+  const primaryVisible = !!primaryShare?.visible;
+  const otherShares = shared.filter(s => s.userId !== primaryUser?.id);
+  const shareable = users.filter(u => !shared.some(s => s.userId === u.id) && u.id !== primaryUser?.id);
 
   async function handleFileChange(e) {
     const file = e.target.files?.[0];
@@ -1930,6 +1942,14 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
     try { await onUpload(project.id, file, caption); setCaption(''); }
     catch (err) { alert('Upload failed: ' + err.message); }
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+  }
+  async function handleTogglePrimary() {
+    if (!primaryUser) return;
+    setPrimaryBusy(true);
+    try {
+      if (primaryShare) await onToggleShare(project.id, primaryUser.id);
+      else await onShare(project.id, primaryUser.id);
+    } finally { setPrimaryBusy(false); }
   }
   async function handleShare() {
     if (!shareUserId) return;
@@ -1941,10 +1961,11 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
   return (
     <div className="ap-modal-overlay" onClick={onClose}>
       <div className="ap-modal ap-modal-wide" onClick={e => e.stopPropagation()}>
-        <h3>Photos & Sharing — {project.paintType || 'Project'}</h3>
+        <h3>📷 Photos & Sharing — {project.name || project.paintType || 'Project'}</h3>
 
         <div className="ap-media-section">
-          <h4>Work-in-Progress Photos</h4>
+          <h4>Job Photos</h4>
+          <p className="ap-calc-hint">Upload progress photos here — the customer sees them on their dashboard once you turn on visibility below.</p>
           <div className="ap-media-grid">
             {[...(project.images || [])].reverse().map(img => (
               <div key={img.url} className="ap-media-item">
@@ -1956,7 +1977,7 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
             {(!project.images || project.images.length === 0) && <p className="ap-calc-hint">No photos uploaded yet.</p>}
           </div>
           <div className="ap-quote-item-row">
-            <input placeholder="Caption (optional)" value={caption} onChange={e => setCaption(e.target.value)} style={{ flex: 1 }} />
+            <input placeholder="What's in this photo? (optional)" value={caption} onChange={e => setCaption(e.target.value)} style={{ flex: 1 }} />
           </div>
           <label className="ap-btn-primary ap-upload-btn">
             {uploading ? '⏳ Uploading…' : '+ Upload Photo'}
@@ -1965,27 +1986,57 @@ function ProjectMediaModal({ project, users, onClose, onUpload, onDeleteImage, o
         </div>
 
         <div className="ap-media-section">
-          <h4>Shared With</h4>
-          {shared.length === 0 && <p className="ap-calc-hint">Not shared with any account yet — only visible in the Admin Portal.</p>}
-          {shared.map(s => {
-            const u = users.find(x => x.id === s.userId);
-            return (
-              <div key={s.userId} className="ap-card-row" style={{ padding: '6px 0' }}>
-                <span>{u ? `${u.name} (${u.email})` : s.userId} {!s.visible && <span className="ap-calc-formula">(hidden)</span>}</span>
-                <span className="ap-row-actions">
-                  <button onClick={() => onToggleShare(project.id, s.userId)}>{s.visible ? 'Hide' : 'Show'}</button>
-                  <button className="ap-danger" onClick={() => onUnshare(project.id, s.userId)}>Unshare</button>
-                </span>
-              </div>
-            );
-          })}
-          <div className="ap-quote-item-row">
-            <select value={shareUserId} onChange={e => setShareUserId(e.target.value)} style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
-              <option value="">Select a user to share with…</option>
-              {shareable.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-            </select>
-            <button className="ap-btn-primary" disabled={!shareUserId || busy} onClick={handleShare}>Share</button>
-          </div>
+          <h4>👁️ Customer Visibility</h4>
+          {primaryUser ? (
+            <>
+              <p className="ap-calc-hint">
+                {primaryVisible
+                  ? `${primaryUser.name.split(' ')[0]} can currently see these photos on their dashboard.`
+                  : `${primaryUser.name.split(' ')[0]} cannot see these photos yet — turn this on to show them.`}
+              </p>
+              <button
+                className={primaryVisible ? 'ap-visibility-toggle ap-visibility-on' : 'ap-visibility-toggle ap-visibility-off'}
+                disabled={primaryBusy}
+                onClick={handleTogglePrimary}
+              >
+                {primaryBusy ? '⏳ Updating…' : primaryVisible ? `✅ Visible to ${primaryUser.name.split(' ')[0]} — tap to hide` : `🚫 Hidden from ${primaryUser.name.split(' ')[0]} — tap to show`}
+              </button>
+            </>
+          ) : (
+            <p className="ap-calc-hint">This client hasn't linked their account yet, so there's no one to show photos to. Once they sign in and link their project (or you send them a link code), this switch will show up here.</p>
+          )}
+
+          {otherShares.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <p className="ap-calc-hint" style={{ marginBottom: 6 }}>Also shared with:</p>
+              {otherShares.map(s => {
+                const u = users.find(x => x.id === s.userId);
+                return (
+                  <div key={s.userId} className="ap-card-row" style={{ padding: '6px 0' }}>
+                    <span>{u ? `${u.name} (${u.email})` : s.userId} {!s.visible && <span className="ap-calc-formula">(hidden)</span>}</span>
+                    <span className="ap-row-actions">
+                      <button onClick={() => onToggleShare(project.id, s.userId)}>{s.visible ? 'Hide' : 'Show'}</button>
+                      <button className="ap-danger" onClick={() => onUnshare(project.id, s.userId)}>Unshare</button>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {showAddOther ? (
+            <div className="ap-quote-item-row" style={{ marginTop: 10 }}>
+              <select value={shareUserId} onChange={e => setShareUserId(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '9px 12px', border: '1.5px solid var(--hairline)', borderRadius: 6 }}>
+                <option value="">Choose a person…</option>
+                {shareable.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+              </select>
+              <button className="ap-btn-primary" disabled={!shareUserId || busy} onClick={handleShare}>Share</button>
+            </div>
+          ) : (
+            <button type="button" className="ap-link-btn" style={{ marginTop: 10 }} onClick={() => setShowAddOther(true)}>
+              + Share with someone else (e.g. a family member)
+            </button>
+          )}
         </div>
 
         <div className="ap-modal-actions">

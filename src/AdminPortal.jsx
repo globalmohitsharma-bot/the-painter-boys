@@ -44,7 +44,13 @@ async function api(path, idToken, options = {}) {
       ...options.headers,
     },
   });
-  if (!res.ok) throw new Error(`${options.method || 'GET'} ${path} -> ${res.status}`);
+  if (!res.ok) {
+    // Prefer a backend-supplied { message } over the generic fallback —
+    // several endpoints (e.g. coupon redeem) return a specific reason
+    // ("already redeemed", "expired") that's worth showing as-is.
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.message || `${options.method || 'GET'} ${path} -> ${res.status}`);
+  }
   return res.status === 204 ? null : res.json();
 }
 
@@ -362,6 +368,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [projects, setProjects] = useState(dataCache?.projects || []);
   const [users, setUsers] = useState(dataCache?.users || []);
   const [quotations, setQuotations] = useState(dataCache?.quotations || []);
+  const [coupons, setCoupons] = useState(dataCache?.coupons || []);
   const [editingQuotation, setEditingQuotation] = useState(null); // quotation being loaded into the form for edit, or null for a fresh one
   // Users/quotations aren't needed for the default Dashboard/Grid/Clients
   // views, so they're fetched in parallel but tracked separately — the
@@ -388,6 +395,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   const [mediaProjectId, setMediaProjectId] = useState(null);
   const [receiptProjectId, setReceiptProjectId] = useState(null);
   const [thankYouProjectId, setThankYouProjectId] = useState(null);
+  const [couponProjectId, setCouponProjectId] = useState(null);
+  const [redeemOpen, setRedeemOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [projectFilter, setProjectFilter] = useState('Inquiry');
   const [showInactive, setShowInactive] = useState(false);
@@ -422,7 +431,8 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     const extra = Promise.all([
       api('/api/users', idToken),
       api('/api/quotations', idToken),
-    ]).then(([u, q]) => { setUsers(u); setQuotations(q); saveDataCache({ users: u, quotations: q }); })
+      api('/api/discount-coupons', idToken),
+    ]).then(([u, q, dc]) => { setUsers(u); setQuotations(q); setCoupons(dc); saveDataCache({ users: u, quotations: q, coupons: dc }); })
       .catch(e => setError('Could not load data — ' + e.message))
       .finally(() => setLoadingExtra(false));
     await Promise.all([primary, extra]);
@@ -674,6 +684,42 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
     showToast(`✓ Payment of ₹${amount.toLocaleString('en-IN')} recorded`);
   }
 
+  // Same received/pending math as addPayment, but appends a "discount" kind
+  // entry — called right after the coupon redeem API call succeeds, so the
+  // discount shows up in the same payment history/receipt as a real payment
+  // (just labeled distinctly), and reduces pendingAmount the same way.
+  async function applyDiscount(projectId, amount, code, reason) {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    const entry = { date: new Date().toISOString().slice(0, 10), amount, kind: 'discount', couponCode: code };
+    const newHistory = [...(project.tokenHistory || []), entry];
+    const newReceived = (project.tokenReceived || 0) + amount;
+    const newPending = project.amount > 0 ? Math.max(0, project.amount - newReceived) : Math.max(0, (project.pendingAmount || 0) - amount);
+    const payload = { ...project, tokenHistory: newHistory, tokenReceived: newReceived, pendingAmount: newPending };
+    const saved = await api(`/api/projects/${projectId}`, idToken, { method: 'PUT', body: JSON.stringify(payload) });
+    setProjects(ps => ps.map(p => p.id === saved.id ? saved : p));
+    showToast(`✓ ${reason || 'Discount'} of ₹${amount.toLocaleString('en-IN')} applied`);
+  }
+
+  async function generateCoupon(projectId, clientId, discountAmount, reason) {
+    const saved = await api('/api/discount-coupons', idToken, {
+      method: 'POST',
+      body: JSON.stringify({ projectId, clientId, discountAmount, reason }),
+    });
+    setCoupons(cs => [saved, ...cs]);
+    return saved;
+  }
+
+  async function redeemCoupon(code) {
+    const coupon = await api('/api/discount-coupons/redeem', idToken, {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+    setCoupons(cs => cs.map(c => c.id === coupon.id ? coupon : c));
+    await applyDiscount(coupon.projectId, coupon.discountAmount, coupon.code, coupon.reason);
+    return coupon;
+  }
+
   // Removes one payment history entry entirely — the amount only comes back
   // out of the running total if the entry wasn't already archived (an
   // archived entry is already excluded from tokenReceived/pendingAmount).
@@ -918,6 +964,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                       {p.progress === 'Inquiry' && (
                         <button className="ap-act ap-act-thankyou" onClick={() => setThankYouProjectId(p.id)}>💌 Thank You Card</button>
                       )}
+                      <button className="ap-act ap-act-coupon" onClick={() => setCouponProjectId(p.id)}>🎟️ Discount Coupon</button>
                       {p.isActive === false ? (
                         <button className="ap-act ap-act-activate" title="Bring this project back into the normal lists — it's currently hidden" onClick={() => confirm('Restore this project back into the normal lists?') && saveProject({ ...p, isActive: true })}>↩️ Restore</button>
                       ) : (
@@ -944,9 +991,15 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             onEdit={qt => { setEditingQuotation(qt); goto('quotation'); }}
             onDelete={deleteQuotation}
           />
+        ) : view === 'coupons' ? (
+          <CouponHistoryView coupons={coupons} clients={clients} projects={projects} loading={loadingExtra} onSelectClient={setSelectedClientId} />
         ) : view === 'utilities-menu' ? (
           <UtilitiesMenu
-            onNavigate={key => { if (key === 'quotation') setEditingQuotation(null); goto(key); }}
+            onNavigate={key => {
+              if (key === 'redeem-coupon') { setRedeemOpen(true); return; }
+              if (key === 'quotation') setEditingQuotation(null);
+              goto(key);
+            }}
             pendingLinkCount={pendingLinkCount} projectRequestCount={projectRequestCount}
             showInactive={showInactive} onToggleShowInactive={() => setShowInactive(s => !s)} onExportCsv={exportCsv} onSendTestEmail={sendTestEmail} />
         ) : view === 'sync' ? (
@@ -1143,6 +1196,29 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           onClose={() => setThankYouProjectId(null)}
         />
       )}
+      {couponProjectId && (() => {
+        const cProject = projects.find(p => p.id === couponProjectId);
+        const cClient = clients.find(c => c.id === cProject?.clientId);
+        return (
+          <DiscountCouponModal
+            project={cProject}
+            client={cClient}
+            coupons={coupons}
+            clientProjectCount={projects.filter(p => p.clientId === cProject?.clientId).length}
+            onGenerate={generateCoupon}
+            onClose={() => setCouponProjectId(null)}
+          />
+        );
+      })()}
+      {redeemOpen && (
+        <RedeemCouponModal
+          coupons={coupons}
+          clients={clients}
+          projects={projects}
+          onRedeem={redeemCoupon}
+          onClose={() => setRedeemOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -1175,6 +1251,8 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
     { key: 'pending-links', icon: '⏳', label: 'Pending Links', badge: pendingLinkCount, color: '#a855f7' },
     { key: 'requests', icon: '📨', label: 'Requests', badge: projectRequestCount, color: '#f97316' },
     { key: 'sync', icon: '🔄', label: 'Google Sheet Sync', color: '#16a34a' },
+    { key: 'redeem-coupon', icon: '🎟️', label: 'Redeem Coupon', color: '#c2410c' },
+    { key: 'coupons', icon: '📜', label: 'Coupon History', color: '#0e7490' },
   ];
   async function handleExport() {
     setExporting(true);
@@ -2007,7 +2085,10 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
             <div className="aq-card-section-title">Payment History</div>
             {history.length === 0 && <p className="ap-calc-hint">No entries yet</p>}
             {history.map((e, i) => (
-              <div key={i} className="aq-card-row"><span>📅 {e.date}</span><span>₹{(e.amount || 0).toLocaleString('en-IN')}</span></div>
+              <div key={i} className="aq-card-row">
+                <span>{e.kind === 'discount' ? `🎟️ ${e.date} — Discount` : `📅 ${e.date}`}</span>
+                <span>₹{(e.amount || 0).toLocaleString('en-IN')}</span>
+              </div>
             ))}
           </div>
           <div className="aq-card-total">
@@ -2049,7 +2130,7 @@ function PaymentReceiptModal({ project, client, onClose, onAddPayment, onDeleteP
             {allHistory.map((e, i) => (
               <div key={i} className="ap-card-row" style={{ padding: '6px 0' }}>
                 <span>
-                  📅 {e.date} — ₹{(e.amount || 0).toLocaleString('en-IN')}
+                  {e.kind === 'discount' ? `🎟️ ${e.date} — Discount (${e.couponCode})` : `📅 ${e.date}`} — ₹{(e.amount || 0).toLocaleString('en-IN')}
                   {e.archived && <span className="ap-progress-chip ap-progress-inactive" style={{ marginLeft: 8 }}>🗄️ Archived</span>}
                 </span>
                 <span style={{ display: 'flex', gap: 6 }}>
@@ -2142,6 +2223,205 @@ function ThankYouCardModal({ client, onClose }) {
         <SharePreviewModal blob={previewBlob} filename="thankyou-thepainterboys.png"
           shareTitle="The Painter Boys" onClose={() => setPreviewBlob(null)} />
       )}
+    </div>
+  );
+}
+
+const COUPON_REASONS = ['Loyalty Discount', 'Membership Discount', 'Special Discount', 'Season Discount'];
+
+// ── Discount coupon: generate (bound to one project+client, 8-char code,
+// 7-day expiry) and show the shareable card. Redemption happens elsewhere
+// (RedeemCouponModal) since the admin usually isn't on this project's page
+// when the customer reads the code back over the phone. ────────────────
+function DiscountCouponModal({ project, client, coupons, clientProjectCount, onGenerate, onClose }) {
+  const cardRef = useRef(null);
+  const [capturing, setCapturing] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState(null);
+  const [captureError, setCaptureError] = useState('');
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('Special Discount');
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
+
+  // Most recent non-redeemed, non-expired coupon for this project — once
+  // generated, the form is replaced by the card so an admin can't
+  // accidentally spin up a second active coupon for the same project.
+  const active = coupons
+    .filter(c => c.projectId === project.id && !c.isRedeemed && new Date(c.expiresAt) > new Date())
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+
+  const availableReasons = clientProjectCount > 1 ? COUPON_REASONS : COUPON_REASONS.filter(r => r !== 'Loyalty Discount');
+
+  async function handleGenerate() {
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return;
+    setGenerating(true);
+    setGenError('');
+    try {
+      await onGenerate(project.id, client.id, amt, reason);
+    } catch (e) {
+      setGenError('Could not generate coupon — ' + e.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function shareAsImage() {
+    if (!cardRef.current || capturing) return;
+    setCapturing(true);
+    setCaptureError('');
+    try {
+      const canvas = await captureCard(cardRef.current, '#0d2137');
+      canvas.toBlob(blob => {
+        if (!blob) setCaptureError('Could not generate the image — please try again.');
+        else setPreviewBlob(blob);
+        setCapturing(false);
+      }, 'image/png');
+    } catch (e) {
+      setCaptureError('Could not generate the image — ' + e.message);
+      setCapturing(false);
+    }
+  }
+
+  if (!active) {
+    return (
+      <div className="ap-modal-overlay" onClick={onClose}>
+        <div className="ap-modal" onClick={e => e.stopPropagation()}>
+          <h3>🎟️ Generate Discount Coupon</h3>
+          <p className="ap-calc-hint">For {client?.contactName || 'this client'} — bound to this project, valid for 7 days from generation.</p>
+          <label className="ap-field">
+            <span>Discount Amount (₹)</span>
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 1500" />
+          </label>
+          <label className="ap-field">
+            <span>Reason</span>
+            <select value={reason} onChange={e => setReason(e.target.value)}>
+              {availableReasons.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            {clientProjectCount <= 1 && <span className="ap-calc-hint">Loyalty Discount isn't available — this is the client's first project.</span>}
+          </label>
+          {genError && <p className="ap-warn ap-warn-error">{genError}</p>}
+          <div className="ap-modal-actions">
+            <button onClick={onClose}>Cancel</button>
+            <button className="ap-btn-primary" onClick={handleGenerate} disabled={!amount || generating}>
+              {generating ? 'Generating…' : 'Generate Coupon'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const expiresStr = new Date(active.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  return (
+    <div className="aq-overlay" onClick={onClose}>
+      <div className="aq-wrap" onClick={e => e.stopPropagation()}>
+        <div className="aq-card" ref={cardRef}>
+          <div className="aq-card-header">
+            <img className="aq-card-logo-img" src="/logo-card.png" alt="" />
+            <div className="aq-card-company">The Painter Boys</div>
+            <div className="aq-card-tagline">Professional Painting Services</div>
+          </div>
+          <div className="aq-card-badge">{active.reason || 'Discount Coupon'}</div>
+          <div className="aq-card-section">
+            <div className="aq-card-row"><span>Customer</span><span>{client?.contactName || '—'}</span></div>
+            <div className="aq-card-row"><span>Coupon Code</span><span style={{ letterSpacing: '.15em', fontWeight: 800 }}>{active.code}</span></div>
+          </div>
+          <div className="aq-card-total">
+            <span>Discount Amount</span>
+            <span>₹{active.discountAmount.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="aq-card-terms">
+            <div>📌 Valid until {expiresStr} (7 days from generation)</div>
+            <div>📞 Tell this code to The Painter Boys team to redeem</div>
+          </div>
+          <div className="aq-card-footer">
+            <div>🌐 www.thepainterboys.com</div>
+            <div>📞 Corporate: 7838888509</div>
+          </div>
+        </div>
+        {captureError && <p className="ap-warn ap-warn-error" style={{ textAlign: 'center', marginBottom: 4 }}>{captureError}</p>}
+        <div className="aq-actions">
+          <button className="aq-share-btn" onClick={shareAsImage} disabled={capturing}>
+            {capturing ? '⏳ Preparing…' : '📤 Share Coupon'}
+          </button>
+          <button className="aq-close-btn" onClick={onClose}>✕ Close</button>
+        </div>
+      </div>
+      {previewBlob && (
+        <SharePreviewModal blob={previewBlob} filename={`coupon-${active.code}-thepainterboys.png`}
+          shareTitle="The Painter Boys — Discount Coupon" onClose={() => setPreviewBlob(null)} />
+      )}
+    </div>
+  );
+}
+
+// ── Redeem a coupon by code — the admin doesn't need to be on the right
+// client's page first, since the code comes in over the phone; the modal
+// itself confirms which client/project it belongs to before applying it,
+// as a safety check against a mistyped or misheard code. ────────────────
+function RedeemCouponModal({ coupons, clients, projects, onRedeem, onClose }) {
+  const [code, setCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState(null); // the redeemed coupon, once done
+
+  async function handleRedeem() {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setRedeeming(true);
+    setError('');
+    try {
+      const coupon = await onRedeem(trimmed);
+      setResult(coupon);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRedeeming(false);
+    }
+  }
+
+  if (result) {
+    const client = clients.find(c => c.id === result.clientId);
+    const project = projects.find(p => p.id === result.projectId);
+    return (
+      <div className="ap-modal-overlay" onClick={onClose}>
+        <div className="ap-modal" onClick={e => e.stopPropagation()}>
+          <h3>✓ Coupon Redeemed</h3>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Customer</span><span>{client?.contactName || '—'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Project</span><span>{project?.name || '—'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Discount Applied</span><span>₹{result.discountAmount.toLocaleString('en-IN')}</span></div>
+          <p className="ap-add-payment-ok" style={{ marginTop: 10 }}>Added to this project's payment history and pending amount updated.</p>
+          <div className="ap-modal-actions">
+            <button className="ap-btn-primary" onClick={onClose}>Done</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ap-modal-overlay" onClick={onClose}>
+      <div className="ap-modal" onClick={e => e.stopPropagation()}>
+        <h3>🎟️ Redeem Discount Coupon</h3>
+        <p className="ap-calc-hint">Enter the 8-character code the customer read back to you.</p>
+        <label className="ap-field">
+          <span>Coupon Code</span>
+          <input
+            value={code} onChange={e => setCode(e.target.value.toUpperCase())} maxLength={8}
+            placeholder="e.g. 7K4M9QXA" style={{ letterSpacing: '.15em', fontWeight: 700, textTransform: 'uppercase' }}
+            onKeyDown={e => e.key === 'Enter' && handleRedeem()}
+          />
+        </label>
+        {error && <p className="ap-warn ap-warn-error">{error}</p>}
+        <div className="ap-modal-actions">
+          <button onClick={onClose}>Cancel</button>
+          <button className="ap-btn-primary" onClick={handleRedeem} disabled={!code.trim() || redeeming}>
+            {redeeming ? 'Checking…' : 'Validate & Apply'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2326,6 +2606,56 @@ function SavedQuotesView({ quotations, loading, onEdit, onDelete }) {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      )}
+    </>
+  );
+}
+
+function CouponHistoryView({ coupons, clients, projects, loading, onSelectClient }) {
+  const [search, setSearch] = useState('');
+  const q = search.trim().toLowerCase();
+  const rows = coupons
+    .map(c => ({ coupon: c, client: clients.find(cl => cl.id === c.clientId), project: projects.find(p => p.id === c.projectId) }))
+    .filter(({ client }) => !q || (client?.contactName || '').toLowerCase().includes(q) || (client?.phone || '').includes(q));
+
+  function statusOf(c) {
+    if (c.isRedeemed) return { label: 'Redeemed', cls: 'ap-progress-completed' };
+    if (new Date(c.expiresAt) < new Date()) return { label: 'Expired', cls: 'ap-progress-cancelled' };
+    return { label: 'Active', cls: 'ap-progress-in-progress' };
+  }
+
+  return (
+    <>
+      <div className="ap-toolbar">
+        <input className="ap-search" placeholder="Search by customer name or phone…" value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {loading ? (
+        <p className="ap-loading">Loading…</p>
+      ) : coupons.length === 0 ? (
+        <p className="ap-loading">No discount coupons generated yet.</p>
+      ) : rows.length === 0 ? (
+        <p className="ap-loading">No coupons match "{search}".</p>
+      ) : (
+        <table className="ap-table">
+          <thead>
+            <tr><th>Customer</th><th>Code</th><th>Reason</th><th>Amount</th><th>Status</th><th>Expires</th></tr>
+          </thead>
+          <tbody>
+            {rows.map(({ coupon, client, project }) => {
+              const status = statusOf(coupon);
+              return (
+                <tr key={coupon.id}>
+                  <td className="ap-link" data-label="Customer" onClick={() => client && onSelectClient(client.id)}>{client?.contactName || '—'}</td>
+                  <td data-label="Code" style={{ letterSpacing: '.1em', fontWeight: 700 }}>{coupon.code}</td>
+                  <td data-label="Reason">{coupon.reason || '—'}</td>
+                  <td data-label="Amount">₹{coupon.discountAmount.toLocaleString('en-IN')}</td>
+                  <td data-label="Status"><span className={`ap-progress-chip ${status.cls}`}>{status.label}</span></td>
+                  <td data-label="Expires">{new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

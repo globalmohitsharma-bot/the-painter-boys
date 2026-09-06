@@ -15,6 +15,19 @@ public class TokenHistoryEntry
     /// frontend, but kept here (not deleted) so an admin can restore it.</summary>
     [JsonPropertyName("archived")]
     public bool Archived { get; set; }
+
+    /// <summary>"payment" (default, omitted for older entries) or "discount" —
+    /// a redeemed DiscountCoupon appends a "discount" entry here so it counts
+    /// toward tokenReceived/pendingAmount exactly like a real payment, while
+    /// still being labeled distinctly on the receipt/history UI.</summary>
+    [JsonPropertyName("kind")]
+    public string Kind { get; set; } = "payment";
+
+    /// <summary>Set only on "discount" entries — the coupon code that was
+    /// redeemed to create this entry, kept for traceability back to
+    /// DiscountCoupon.</summary>
+    [JsonPropertyName("couponCode")]
+    public string? CouponCode { get; set; }
 }
 
 public class ProjectImage

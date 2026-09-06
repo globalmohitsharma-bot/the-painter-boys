@@ -211,6 +211,7 @@
 .ap-act-receipt { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
 .ap-act-share { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
 .ap-act-thankyou { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+.ap-act-coupon { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
 .ap-act-activate { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
 .ap-act-deactivate { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 .ap-request-picker { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

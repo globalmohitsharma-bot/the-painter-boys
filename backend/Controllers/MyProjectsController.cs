@@ -13,6 +13,7 @@ public record MyProjectDto(
     string? ClientSociety, string? ClientAddress);
 
 public record LinkByCodeRequest(string Code);
+public record RedeemMyCouponRequest(string Code);
 
 /// <summary>
 /// Customer-facing (any signed-in role, not Admin-only) view of a user's own
@@ -25,7 +26,8 @@ public record LinkByCodeRequest(string Code);
 public class MyProjectsController(
     IProjectRepository projectRepository,
     IUserRepository userRepository,
-    IClientRepository clientRepository) : ControllerBase
+    IClientRepository clientRepository,
+    IDiscountCouponRepository couponRepository) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<MyProjectDto>>> GetMine(CancellationToken ct)
@@ -118,5 +120,82 @@ public class MyProjectsController(
         user.ProjectRequestedAt = DateTimeOffset.UtcNow;
         await userRepository.UpsertAsync(user, ct);
         return Ok(new { status = "requested" });
+    }
+
+    /// <summary>Powers the customer dashboard's "You have a discount
+    /// available" banner — the customer never sees/types the raw code
+    /// (that's only ever delivered via the admin's separate WhatsApp
+    /// share), just the amount/reason and a one-tap Redeem button. Only
+    /// returns coupons still active for the duration they're valid; once
+    /// redeemed or expired, this stops returning them and the banner
+    /// disappears on its own.</summary>
+    [HttpGet("coupons")]
+    public async Task<ActionResult<List<DiscountCoupon>>> GetMyActiveCoupons(CancellationToken ct)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId)) return Ok(new List<DiscountCoupon>());
+
+        var user = await userRepository.GetByIdAsync(userId, ct);
+        if (user is null || string.IsNullOrEmpty(user.LinkedClientId)) return Ok(new List<DiscountCoupon>());
+
+        var all = await couponRepository.GetAllAsync(ct);
+        var active = all.Where(c => c.ClientId == user.LinkedClientId && !c.IsRedeemed && c.ExpiresAt > DateTimeOffset.UtcNow).ToList();
+        return Ok(active);
+    }
+
+    /// <summary>Customer self-service redemption — unlike the Admin Portal's
+    /// version (DiscountCouponsController.Redeem, admin-only), this one
+    /// verifies the coupon's ClientId matches the caller's own linked
+    /// client before doing anything, and returns the same generic "invalid
+    /// or expired" message whether the code doesn't exist at all or exists
+    /// but belongs to someone else — a customer shouldn't be able to tell
+    /// those two cases apart. Applies the discount to the project's payment
+    /// history itself (the customer has no general Project write access to
+    /// do that in a second call the way the Admin Portal does).</summary>
+    [HttpPost("redeem-coupon")]
+    public async Task<IActionResult> RedeemCoupon([FromBody] RedeemMyCouponRequest request, CancellationToken ct)
+    {
+        var userId = User.FindFirst("user_id")?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var user = await userRepository.GetByIdAsync(userId, ct);
+        if (user is null || string.IsNullOrEmpty(user.LinkedClientId))
+        {
+            return NotFound(new { message = "Invalid or expired coupon code." });
+        }
+
+        var code = (request.Code ?? string.Empty).Trim().ToUpperInvariant();
+        var coupon = await couponRepository.GetByCodeAsync(code, ct);
+        if (coupon is null || coupon.ClientId != user.LinkedClientId)
+        {
+            return NotFound(new { message = "Invalid or expired coupon code." });
+        }
+        if (coupon.IsRedeemed) return Conflict(new { message = "This coupon has already been redeemed." });
+        if (coupon.ExpiresAt < DateTimeOffset.UtcNow) return Conflict(new { message = "This coupon has expired — coupons are valid for 7 days." });
+
+        var project = await projectRepository.GetByIdAsync(coupon.ProjectId, ct);
+        if (project is null || project.ClientId != user.LinkedClientId)
+        {
+            return NotFound(new { message = "Invalid or expired coupon code." });
+        }
+
+        project.TokenHistory.Add(new TokenHistoryEntry
+        {
+            Date = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
+            Amount = coupon.DiscountAmount,
+            Kind = "discount",
+            CouponCode = coupon.Code,
+        });
+        project.TokenReceived += coupon.DiscountAmount;
+        project.PendingAmount = project.Amount > 0
+            ? Math.Max(0, project.Amount - project.TokenReceived)
+            : Math.Max(0, project.PendingAmount - coupon.DiscountAmount);
+        await projectRepository.UpsertAsync(project, ct);
+
+        coupon.IsRedeemed = true;
+        coupon.RedeemedAt = DateTimeOffset.UtcNow;
+        await couponRepository.UpsertAsync(coupon, ct);
+
+        return Ok(new { discountAmount = coupon.DiscountAmount, projectId = coupon.ProjectId, reason = coupon.Reason });
     }
 }

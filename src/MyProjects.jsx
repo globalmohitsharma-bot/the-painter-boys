@@ -116,6 +116,9 @@ export default function MyProjects() {
   const [requestStatus, setRequestStatus] = useState(null); // { ok: bool, message: string }
   const [requesting, setRequesting] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
+  const [coupons, setCoupons] = useState([]);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemStatus, setRedeemStatus] = useState(null); // { ok: bool, message: string }
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
@@ -136,6 +139,9 @@ export default function MyProjects() {
     try {
       const data = await api('/api/my-projects', token);
       setProjects(data);
+      // Best-effort — a coupon-lookup failure shouldn't block the projects
+      // list from showing, so this doesn't share the outer catch below.
+      api('/api/my-projects/coupons', token).then(setCoupons).catch(() => {});
     } catch (e) {
       if (e.status === 401) {
         // Google ID tokens expire in ~1 hour. On mobile, "closing" a tab
@@ -209,6 +215,20 @@ export default function MyProjects() {
       setRequestStatus({ ok: false, message: e.message });
     } finally {
       setRequesting(false);
+    }
+  }
+
+  async function redeemMyCoupon(code) {
+    setRedeeming(true);
+    setRedeemStatus(null);
+    try {
+      await apiPost('/api/my-projects/redeem-coupon', idToken, { code });
+      setRedeemStatus({ ok: true, message: 'Discount applied — check your project\'s payment details.' });
+      load(idToken);
+    } catch (e) {
+      setRedeemStatus({ ok: false, message: e.message });
+    } finally {
+      setRedeeming(false);
     }
   }
 
@@ -377,6 +397,31 @@ export default function MyProjects() {
             </div>
           )}
           {error && <div className="mp-error">{error}</div>}
+          {coupons.length > 0 && (
+            <div className="mp-coupon-banner">
+              <div className="mp-coupon-banner-icon">🎟️</div>
+              <div className="mp-coupon-banner-body">
+                {coupons.map(c => (
+                  <div key={c.id} className="mp-coupon-row">
+                    <div className="mp-coupon-info">
+                      <span className="mp-coupon-title">{c.reason || 'Special Discount'} available</span>
+                      <span className="mp-coupon-amount">₹{c.discountAmount.toLocaleString('en-IN')} off your project</span>
+                    </div>
+                    <button
+                      className="mp-coupon-redeem-btn"
+                      disabled={redeeming}
+                      onClick={() => redeemMyCoupon(c.code)}
+                    >
+                      {redeeming ? 'Applying…' : 'Redeem Now'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {redeemStatus && (
+            <p className={redeemStatus.ok ? 'mp-link-success' : 'mp-link-error'}>{redeemStatus.message}</p>
+          )}
           {projects === null ? (
             <p className="mp-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p>
           ) : (

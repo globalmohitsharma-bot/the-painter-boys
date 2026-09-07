@@ -555,13 +555,16 @@ function ProjectCard({ project }) {
         {project.paintType && <p className="mp-card-detail">🎨 {project.paintType}</p>}
 
         {images.length > 0 && (
-          <div className="mp-photo-grid">
-            {images.map((img, i) => (
-              <div key={img.url} className="mp-photo-item" onClick={e => { e.stopPropagation(); setLightboxIndex(i); }}>
-                <img src={img.url} alt={img.caption || ''} />
-                {img.caption && <p className="mp-photo-caption">{img.caption}</p>}
-              </div>
-            ))}
+          <div className="mp-photo-album">
+            <h4 className="mp-photo-album-title">📷 Photo Gallery <span className="mp-photo-album-count">({images.length})</span></h4>
+            <div className="mp-photo-grid">
+              {images.map((img, i) => (
+                <div key={img.url} className="mp-photo-item" onClick={e => { e.stopPropagation(); setLightboxIndex(i); }}>
+                  <img src={img.url} alt={img.caption || ''} />
+                  {img.caption && <p className="mp-photo-caption">{img.caption}</p>}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

@@ -2414,20 +2414,42 @@ function DiscountCouponModal({ project, client, coupons, clientProjectCount, onG
 // as a safety check against a mistyped or misheard code. ────────────────
 function RedeemCouponModal({ coupons, clients, projects, onRedeem, onClose }) {
   const [code, setCode] = useState('');
+  const [validating, setValidating] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState(null); // the redeemed coupon, once done
+  const [validated, setValidated] = useState(null); // looked-up coupon, not yet applied
+  const [result, setResult] = useState(null); // the redeemed coupon, once applied
 
-  async function handleRedeem() {
+  // A quick client-side lookup against the coupon list this admin already has
+  // loaded — no server round-trip needed just to show what a code IS before
+  // committing to actually redeeming it.
+  function handleValidate() {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
+    setValidating(true);
+    setError('');
+    const coupon = coupons.find(c => c.code === trimmed);
+    if (!coupon) {
+      setError("No coupon found with that code.");
+    } else if (coupon.isRedeemed) {
+      setError(`Already redeemed on ${new Date(coupon.redeemedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.`);
+    } else if (new Date(coupon.expiresAt) < new Date()) {
+      setError(`Expired on ${new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} — coupons are valid for 7 days.`);
+    } else {
+      setValidated(coupon);
+    }
+    setValidating(false);
+  }
+
+  async function handleApply() {
     setRedeeming(true);
     setError('');
     try {
-      const coupon = await onRedeem(trimmed);
+      const coupon = await onRedeem(validated.code);
       setResult(coupon);
     } catch (e) {
       setError(e.message);
+      setValidated(null);
     } finally {
       setRedeeming(false);
     }
@@ -2452,6 +2474,32 @@ function RedeemCouponModal({ coupons, clients, projects, onRedeem, onClose }) {
     );
   }
 
+  if (validated) {
+    const client = clients.find(c => c.id === validated.clientId);
+    const project = projects.find(p => p.id === validated.projectId);
+    const expiresStr = new Date(validated.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return (
+      <div className="ap-modal-overlay" onClick={onClose}>
+        <div className="ap-modal" onClick={e => e.stopPropagation()}>
+          <h3>🎟️ Coupon Found — Confirm Before Applying</h3>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Customer</span><span>{client?.contactName || '—'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Project</span><span>{project?.name || '—'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Reason</span><span>{validated.reason || 'Discount'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Discount Amount</span><span>₹{validated.discountAmount.toLocaleString('en-IN')}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Valid Until</span><span>{expiresStr}</span></div>
+          <p className="ap-calc-hint" style={{ marginTop: 8 }}>Check this matches the customer on the phone with you before applying — this cannot be undone.</p>
+          {error && <p className="ap-warn ap-warn-error">{error}</p>}
+          <div className="ap-modal-actions">
+            <button onClick={() => { setValidated(null); setCode(''); }}>← Back</button>
+            <button className="ap-btn-primary" onClick={handleApply} disabled={redeeming}>
+              {redeeming ? 'Applying…' : `Apply ₹${validated.discountAmount.toLocaleString('en-IN')} Discount`}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ap-modal-overlay" onClick={onClose}>
       <div className="ap-modal" onClick={e => e.stopPropagation()}>
@@ -2462,14 +2510,14 @@ function RedeemCouponModal({ coupons, clients, projects, onRedeem, onClose }) {
           <input
             value={code} onChange={e => setCode(e.target.value.toUpperCase())} maxLength={8}
             placeholder="e.g. 7K4M9QXA" style={{ letterSpacing: '.15em', fontWeight: 700, textTransform: 'uppercase' }}
-            onKeyDown={e => e.key === 'Enter' && handleRedeem()}
+            onKeyDown={e => e.key === 'Enter' && handleValidate()}
           />
         </label>
         {error && <p className="ap-warn ap-warn-error">{error}</p>}
         <div className="ap-modal-actions">
           <button onClick={onClose}>Cancel</button>
-          <button className="ap-btn-primary" onClick={handleRedeem} disabled={!code.trim() || redeeming}>
-            {redeeming ? 'Checking…' : 'Validate & Apply'}
+          <button className="ap-btn-primary" onClick={handleValidate} disabled={!code.trim() || validating}>
+            {validating ? 'Checking…' : 'Validate'}
           </button>
         </div>
       </div>

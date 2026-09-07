@@ -1130,7 +1130,6 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 {filteredProjectCards.map(pc => (
                   <ProjectCard key={pc.id} project={pc} client={pc.client}
                     onOpen={() => setSelectedClientId(pc.clientId)}
-                    onShare={() => shareProjectUpdate(pc, pc.client)}
                     onViewReceipt={() => setReceiptProjectId(pc.id)} />
                 ))}
               </div>
@@ -1229,11 +1228,11 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
 // the Admin Portal, never a different status depending on which screen.
 const STATUS_ICONS = [
   { status: 'Completed', icon: '✅', color: 'var(--status-completed)' },
-  { status: 'In Progress', icon: '🔄', color: 'var(--status-in-progress)' },
+  { status: 'In Progress', icon: '▶️', color: 'var(--status-in-progress)' },
   { status: 'Inquiry', icon: '❓', color: 'var(--status-inquiry)' },
-  { status: 'Pending Visit', icon: '🗓️', color: 'var(--status-pending-visit)' },
-  { status: 'Not Started', icon: '⏳', color: 'var(--status-not-started)' },
-  { status: 'Cancelled', icon: '✕', color: 'var(--status-cancelled)' },
+  { status: 'Pending Visit', icon: '⏸️', color: 'var(--status-pending-visit)' },
+  { status: 'Not Started', icon: '⏹️', color: 'var(--status-not-started)' },
+  { status: 'Cancelled', icon: '❌', color: 'var(--status-cancelled)' },
 ];
 
 // Everything that isn't a day-to-day client/project action lives behind
@@ -1361,20 +1360,18 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, sl
     .filter(p => p.progress === 'Inquiry' && p.isActive !== false && activeClientIds.has(p.clientId))
     .slice(0, 5);
   const utilityIcons = [
-    { key: 'clients', icon: '👤', label: 'All Clients', badge: stats.clients, title: 'Every client on file', color: '#f97316' },
-    { key: 'linked', icon: '🔗', label: "Client Email Links", title: "Which clients have their email ID associated with a customer-dashboard account", color: '#0d9488' },
-    { key: 'utilities-menu', icon: '🔧', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests', color: 'var(--gold)' },
-    { key: 'quotation', icon: '🧾', label: 'Tools', title: 'Quotation generator & area calculator', color: '#7c3aed' },
+    { key: 'clients', icon: '👥', label: 'All Clients', badge: stats.clients, title: 'Every client on file', color: '#f97316' },
+    { key: 'linked', icon: '📧', label: "Client Email Links", title: "Which clients have their email ID associated with a customer-dashboard account", color: '#0d9488' },
+    { key: 'utilities-menu', icon: '⚙️', label: 'Utility', badge: pendingLinkCount + projectRequestCount, title: 'Users, sheet sync, pending links, requests', color: 'var(--gold)' },
+    { key: 'quotation', icon: '🧮', label: 'Tools', title: 'Quotation generator & area calculator', color: '#7c3aed' },
   ];
   return (
     <div className="ap-dashboard">
       <div className="ap-icon-row ap-icon-row-status">
         {STATUS_ICONS.map(s => (
-          <button key={s.status} className="ap-icon-btn" onClick={() => onFilterStatus(s.status)} title={`See all ${s.status} projects`}>
-            <span className="ap-icon-circle" style={{ background: s.color }}>
-              {s.icon}
-              {(statusCounts[s.status] || 0) > 0 && <span className="ap-icon-badge">{statusCounts[s.status]}</span>}
-            </span>
+          <button key={s.status} className="ap-icon-btn" style={{ '--tile-color': s.color }} onClick={() => onFilterStatus(s.status)} title={`See all ${s.status} projects`}>
+            <span className="ap-icon-circle">{s.icon}</span>
+            <span className="ap-icon-count">{statusCounts[s.status] || 0}</span>
             <span className="ap-icon-label">{s.status}</span>
           </button>
         ))}
@@ -1382,11 +1379,9 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, sl
 
       <div className="ap-icon-row">
         {utilityIcons.map(u => (
-          <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)} title={u.title}>
-            <span className="ap-icon-circle" style={{ background: u.color, color: '#fff' }}>
-              {u.icon}
-              {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
-            </span>
+          <button key={u.key} className="ap-icon-btn" style={{ '--tile-color': u.color }} onClick={() => onNavigate(u.key)} title={u.title}>
+            <span className="ap-icon-circle">{u.icon}</span>
+            {u.badge != null && <span className="ap-icon-count">{u.badge}</span>}
             <span className="ap-icon-label">{u.label}</span>
           </button>
         ))}
@@ -1394,17 +1389,22 @@ function DashboardOverview({ stats, statusCounts, projects, clients, loading, sl
 
       <h3 className="ap-dashboard-subhead">Newest Inquiries</h3>
       {loading ? <p className="ap-loading">{slowLoad ? 'Fetching details…' : 'Loading…'}</p> : recentInquiries.length === 0 ? <p className="ap-loading">No open inquiries right now.</p> : (
-        <div className="ap-cards-grid">
+        <div className="ap-inquiry-list">
           {recentInquiries.map(p => {
             const client = clients.find(c => c.id === p.clientId);
+            const initial = (client?.contactName || '?').trim()[0]?.toUpperCase() || '?';
             return (
-              <div key={p.id} className="ap-card ap-card-inquiry" onClick={() => onSelectClient(p.clientId)}>
-                <div className="ap-card-top">
-                  <div className="ap-card-name">{client?.contactName || '—'}</div>
-                  <span className="ap-progress-chip ap-progress-inquiry">Inquiry</span>
+              <div key={p.id} className="ap-inquiry-card" onClick={() => onSelectClient(p.clientId)}>
+                <div className="ap-inquiry-avatar">{initial}</div>
+                <div className="ap-inquiry-info">
+                  <div className="ap-inquiry-top">
+                    <span className="ap-inquiry-name">{client?.contactName || '—'}</span>
+                    <span className="ap-progress-chip ap-progress-inquiry">Inquiry</span>
+                  </div>
+                  {client?.phone && <div className="ap-inquiry-row">📞 {client.phone}</div>}
+                  {client?.society && <div className="ap-inquiry-row">🏘️ {client.society}</div>}
                 </div>
-                {client?.phone && <div className="ap-card-row">📞 <span>{client.phone}</span></div>}
-                {client?.society && <div className="ap-card-row">🏘️ <span>{client.society}</span></div>}
+                <span className="ap-inquiry-arrow">›</span>
               </div>
             );
           })}
@@ -1618,16 +1618,20 @@ function UsersView({ users, clients, loading, onImpersonate, onSelectClient }) {
 // Project-status card — same "Name / Mobile / Status / Date / Amount / Share"
 // shape as the Staff Portal's RecordCard, adapted to the Cosmos client+project
 // data model (status lives on the project, contact details on its client).
-function ProjectCard({ project, client, onOpen, onShare, onViewReceipt }) {
+function ProjectCard({ project, client, onOpen, onViewReceipt }) {
   const startDate = project.dateStarted || project.dateContacted || '';
+  const statusKey = (project.progress || 'not-set').toLowerCase().replace(/\s+/g, '-');
+  const initial = (client?.contactName || '?').trim()[0]?.toUpperCase() || '?';
   return (
-    <div className={`ap-card ap-card-${(project.progress || 'not-set').toLowerCase().replace(/\s+/g, '-')} ${project.isActive === false ? 'ap-card-inactive' : ''}`} onClick={onOpen}>
+    <div className={`ap-card ap-card-${statusKey} ${project.isActive === false ? 'ap-card-inactive' : ''}`} onClick={onOpen}>
       <div className="ap-card-top">
-        <div className="ap-card-name">{client?.contactName || '—'}</div>
+        <div className="ap-card-top-name">
+          <span className={`ap-card-avatar ap-progress-${statusKey}`}>{initial}</span>
+          <div className="ap-card-name">{client?.contactName || '—'}</div>
+        </div>
         <div className="ap-card-top-right">
           {project.isActive === false && <span className="ap-progress-chip ap-progress-inactive" title="Hidden from normal lists">🗄️ Archived</span>}
-          <span className={`ap-progress-chip ap-progress-${(project.progress || 'not-set').toLowerCase().replace(/\s+/g, '-')}`}>{project.progress || 'Not Set'}</span>
-          <button className="ap-card-wa-btn" onClick={e => { e.stopPropagation(); onShare(); }} title="Share status on WhatsApp">💬</button>
+          <span className={`ap-progress-chip ap-progress-${statusKey}`}>{project.progress || 'Not Set'}</span>
         </div>
       </div>
       {client?.phone && <div className="ap-card-row">📞 <span>{client.phone}</span></div>}

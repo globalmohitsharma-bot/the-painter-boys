@@ -104,35 +104,31 @@
 }
 .ap-quick-pill-accent { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; color: var(--obsidian); }
 
-.ap-icon-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-.ap-icon-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 74px; background: none; border: none; cursor: pointer; }
+/* Colorful stat-card tiles — each tile's own color (passed inline via
+   --tile-color) fills the whole card, not just a small circle, with the
+   icon sitting in a light frosted badge, a big bold count, and the label
+   below in light text. Matches the reference mockup: 6 status tiles in
+   one row, 4 utility-shortcut tiles in a second row, same card treatment. */
+.ap-icon-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.ap-icon-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex: 1 1 0; min-width: 0; padding: 14px 6px 12px; border: none; border-radius: 16px; cursor: pointer;
+  background: var(--tile-color); box-shadow: 0 6px 16px rgba(0,0,0,.18); transition: transform .15s;
+}
+.ap-icon-btn:hover { transform: translateY(-3px); }
 .ap-icon-circle {
-  position: relative; width: 54px; height: 54px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
-  box-shadow: 0 4px 14px rgba(0,0,0,.15); transition: transform .15s;
+  width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb;
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+  margin-bottom: 2px; box-shadow: 0 2px 6px rgba(0,0,0,.2);
 }
-.ap-icon-btn:hover .ap-icon-circle { transform: translateY(-2px) scale(1.05); }
-.ap-icon-circle-utility { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: var(--obsidian); }
-.ap-icon-badge {
-  position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
-  background: #fff; color: #111827; font-size: .68rem; font-weight: 900; border: 2px solid var(--parchment);
-  display: flex; align-items: center; justify-content: center;
-}
-.ap-icon-label { font-size: .72rem; font-weight: 700; color: var(--ink); text-align: center; line-height: 1.2; }
-/* 5 columns instead of 3-4 wrapping oddly at phone widths — shrink to fit. */
+.ap-icon-count { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1.1; }
+.ap-icon-label { font-size: .68rem; font-weight: 700; color: rgba(255,255,255,.92); text-align: center; line-height: 1.2; }
 @media (max-width: 480px) {
-  .ap-icon-row { gap: 6px; justify-content: space-between; }
-  .ap-icon-btn { width: 18.5%; gap: 4px; }
-  .ap-icon-circle { width: 42px; height: 42px; font-size: 1.15rem; }
-  .ap-icon-label { font-size: .62rem; }
-  .ap-icon-badge { min-width: 16px; height: 16px; font-size: .58rem; top: -3px; right: -3px; }
-  /* 6 status icons (Completed/In Progress/Inquiry/Pending Visit/Not Started/
-     Cancelled) need to fit one row too — the 18.5% width above only fits 5,
-     leaving Cancelled stranded alone on its own row. Narrower just for this row. */
-  .ap-icon-row-status { gap: 4px; }
-  .ap-icon-row-status .ap-icon-btn { width: 15%; gap: 3px; }
-  .ap-icon-row-status .ap-icon-circle { width: 36px; height: 36px; font-size: 1rem; }
-  .ap-icon-row-status .ap-icon-label { font-size: .56rem; }
+  .ap-icon-row { gap: 6px; }
+  .ap-icon-btn { padding: 10px 4px 8px; border-radius: 12px; gap: 3px; }
+  .ap-icon-circle { width: 32px; height: 32px; font-size: .95rem; margin-bottom: 1px; }
+  .ap-icon-count { font-size: 1.15rem; }
+  .ap-icon-label { font-size: .56rem; }
 }
 
 .ap-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
@@ -269,29 +265,56 @@
 .ap-filter-count { background: rgba(0,0,0,.08); border-radius: 10px; padding: 1px 7px; font-size: .72rem; }
 .ap-filter-chip.active .ap-filter-count { background: rgba(0,0,0,.18); }
 
+/* Newest Inquiries — its own modern treatment (avatar chip, icon rows,
+   a tap arrow) distinct from .ap-card's deliberately plain style used for
+   the full Grid View project list, so this dashboard preview reads as a
+   quick-glance feed rather than another data table. */
+.ap-inquiry-list { display: flex; flex-direction: column; gap: 10px; }
+.ap-inquiry-card {
+  display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 14px;
+  padding: 12px 16px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,35,61,.1), 0 1px 3px rgba(16,35,61,.06);
+  transition: transform .15s, box-shadow .15s; -webkit-tap-highlight-color: transparent;
+}
+.ap-inquiry-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.16); }
+.ap-inquiry-card:active { transform: scale(0.99); }
+.ap-inquiry-avatar {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--status-inquiry), #b91c1c); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem;
+}
+.ap-inquiry-info { min-width: 0; flex: 1; }
+.ap-inquiry-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.ap-inquiry-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .96rem; font-weight: 700; color: #111827; }
+.ap-inquiry-row { font-size: .8rem; color: #6b7280; margin-top: 2px; }
+.ap-inquiry-arrow { flex-shrink: 0; font-size: 1.4rem; color: #d1d5db; font-weight: 700; }
+
 .ap-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .ap-card {
   background: #fff; border-radius: 14px; padding: 14px 16px; cursor: pointer;
   color: #111827; box-shadow: 0 4px 14px rgba(16,35,61,.1), 0 1px 3px rgba(16,35,61,.06);
-  border-left: 5px solid #e5e7eb; transition: transform .15s, box-shadow .15s;
+  transition: transform .15s, box-shadow .15s;
   -webkit-tap-highlight-color: transparent;
 }
 .ap-card:active { transform: scale(0.99); }
 .ap-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.16); }
-/* Plain white cards, color-coded only by the left border + status badge —
-   reads as a professional dashboard instead of a pastel candy grid. */
-.ap-card-inquiry { border-left-color: var(--status-inquiry); }
-.ap-card-pending-visit { border-left-color: var(--status-pending-visit); }
-.ap-card-not-started { border-left-color: var(--status-not-started); }
-.ap-card-in-progress { border-left-color: var(--status-in-progress); }
-.ap-card-completed { border-left-color: var(--status-completed); }
-.ap-card-cancelled { border-left-color: var(--status-cancelled); }
-.ap-card-not-set { border-left-color: #991b1b; }
+/* Color-coded by the avatar + status chip now (same visual language as the
+   Dashboard's Newest Inquiries cards) instead of a left border accent. */
 /* min-width: 0 lets the flex item shrink below its text's natural width —
    without it, a long client name refuses to shrink and pushes the status
    badge past the card's edge on narrow screens (clipped by .ap-root's
    overflow-x: hidden, not wrapped, so it just silently ran off-screen). */
-.ap-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+/* flex-wrap lets the status chip drop to its own line rather than ever
+   being squeezed/clipped against the card edge — font-metric differences
+   across browsers/WebViews can tip a near-fit into an actual overflow, so
+   wrapping is the guaranteed-safe fallback instead of a fixed pixel budget. */
+.ap-card-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 6px 8px; margin-bottom: 8px; }
+.ap-card-top-right { flex-wrap: wrap; }
+.ap-card-top-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ap-card-avatar {
+  flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; color: #fff;
+  background-image: linear-gradient(135deg, rgba(255,255,255,.3), rgba(0,0,0,.15));
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem;
+}
 .ap-card-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ap-card-top-right { flex-shrink: 0; }
 .ap-card-top-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }

@@ -976,6 +976,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
               </tbody>
             </table>
             <LinkedAccountBox client={selectedClient} users={users} onLink={linkUser} onUnlink={unlinkUser} onGenerateInvite={generateInvite} />
+            <button className="ap-back" style={{ marginTop: 8 }} onClick={() => setSelectedClientId(null)}>← Back</button>
           </>
         ) : view === 'quotation' ? (
           <QuotationTool

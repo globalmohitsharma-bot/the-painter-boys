@@ -197,19 +197,19 @@
 .ap-row-actions button:not(.ap-act) { background: none; border: 1px solid var(--hairline); border-radius: 6px; padding: 4px 10px; font-size: .76rem; cursor: pointer; color: var(--ink-soft); }
 .ap-row-actions .ap-danger:not(.ap-act) { color: #b91c1c; border-color: #fecaca; }
 .ap-act {
-  border: 1.5px solid transparent; border-radius: 8px; padding: 9px 16px;
+  border: none; border-radius: 8px; padding: 9px 16px; color: #fff;
   font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap;
-  transition: transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18); transition: transform .1s, box-shadow .15s;
 }
-.ap-act:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
-.ap-act-edit { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
-.ap-act-photos { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
-.ap-act-receipt { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.ap-act-share { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-.ap-act-thankyou { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
-.ap-act-coupon { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-.ap-act-activate { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.ap-act-deactivate { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.ap-act:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,0,0,.24); }
+.ap-act-edit { background: linear-gradient(135deg, #4f46e5, #6366f1); }
+.ap-act-photos { background: linear-gradient(135deg, #0891b2, #06b6d4); }
+.ap-act-receipt { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.ap-act-share { background: linear-gradient(135deg, #ea580c, #f97316); }
+.ap-act-thankyou { background: linear-gradient(135deg, #db2777, #ec4899); }
+.ap-act-coupon { background: linear-gradient(135deg, #d97706, #fbbf24); color: #3f2d00; }
+.ap-act-activate { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.ap-act-deactivate { background: linear-gradient(135deg, #dc2626, #ef4444); }
 .ap-request-picker { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ap-request-picker select {
   padding: 7px 10px; border: 1.5px solid var(--hairline); border-radius: 6px;

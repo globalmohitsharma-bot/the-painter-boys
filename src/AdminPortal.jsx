@@ -2293,6 +2293,7 @@ function DiscountCouponModal({ project, client, coupons, clientProjectCount, onG
   const [reason, setReason] = useState('Special Discount');
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState('');
+  const [confirming, setConfirming] = useState(false);
 
   // Most recent non-redeemed, non-expired coupon for this project — once
   // generated, the form is replaced by the card so an admin can't
@@ -2334,6 +2335,29 @@ function DiscountCouponModal({ project, client, coupons, clientProjectCount, onG
     }
   }
 
+  if (!active && confirming) {
+    return (
+      <div className="ap-modal-overlay" onClick={onClose}>
+        <div className="ap-modal" onClick={e => e.stopPropagation()}>
+          <h3>Confirm Coupon Generation</h3>
+          <p className="ap-calc-hint">You're about to generate a coupon worth:</p>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Amount</span><span>₹{Number(amount).toLocaleString('en-IN')}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Reason</span><span>{reason}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Client</span><span>{client?.contactName || '—'}</span></div>
+          <div className="ap-card-row" style={{ padding: '4px 0' }}><span>Project</span><span>{project?.name || project?.paintType || '—'}</span></div>
+          <p className="ap-calc-hint" style={{ marginTop: 8 }}>Valid for 7 days from generation. Proceed?</p>
+          {genError && <p className="ap-warn ap-warn-error">{genError}</p>}
+          <div className="ap-modal-actions">
+            <button onClick={() => setConfirming(false)}>← Back</button>
+            <button className="ap-btn-primary" onClick={handleGenerate} disabled={generating}>
+              {generating ? 'Generating…' : 'Proceed'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!active) {
     return (
       <div className="ap-modal-overlay" onClick={onClose}>
@@ -2354,8 +2378,8 @@ function DiscountCouponModal({ project, client, coupons, clientProjectCount, onG
           {genError && <p className="ap-warn ap-warn-error">{genError}</p>}
           <div className="ap-modal-actions">
             <button onClick={onClose}>Cancel</button>
-            <button className="ap-btn-primary" onClick={handleGenerate} disabled={!amount || generating}>
-              {generating ? 'Generating…' : 'Generate Coupon'}
+            <button className="ap-btn-primary" onClick={() => { setGenError(''); setConfirming(true); }} disabled={!amount || Number(amount) <= 0}>
+              Generate Coupon
             </button>
           </div>
         </div>

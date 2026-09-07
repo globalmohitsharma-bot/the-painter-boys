@@ -224,7 +224,7 @@
 }
 .ap-back:hover { border-color: var(--gold); color: var(--gold-deep); transform: translateX(-2px); }
 .ap-client-detail { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.ap-client-detail h2 { font-family: var(--font-display); color: var(--ink); margin-bottom: 4px; }
+.ap-client-detail h2 { font-family: var(--font-display); color: #1d4ed8; margin-bottom: 4px; }
 .ap-client-detail p { color: var(--ink-soft); font-size: .88rem; }
 
 /* One color per status, used consistently everywhere it appears — chips,
@@ -260,6 +260,10 @@
 .ap-client-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .ap-client-detail-actions button { background: var(--ivory); border: 1.5px solid var(--hairline); border-radius: 8px; padding: 8px 16px; font-size: .82rem; font-weight: 700; cursor: pointer; color: var(--ink); }
 .ap-client-detail-actions .ap-danger { color: #b91c1c; border-color: #fecaca; }
+.ap-client-detail-actions .ap-act-edit-client {
+  background: linear-gradient(135deg, #2563eb, #3b82f6); border-color: transparent; color: #fff;
+  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+}
 
 .ap-filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
 .ap-filter-chip {

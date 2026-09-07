@@ -920,7 +920,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
                 <p>{selectedClient?.phone} · {selectedClient?.address} {selectedClient?.society && `(${selectedClient.society})`}</p>
               </div>
               <div className="ap-client-detail-actions">
-                <button onClick={() => setEditingClient(selectedClient)}>Edit Client</button>
+                <button className="ap-act-edit-client" onClick={() => setEditingClient(selectedClient)}>Edit Client</button>
                 <button className="ap-btn-primary" onClick={() => setEditingProject({ ...EMPTY_PROJECT, clientId: selectedClientId, dateContacted: new Date().toISOString().slice(0, 10) })}>+ New Project</button>
               </div>
             </div>

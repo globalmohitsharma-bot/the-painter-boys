@@ -110,6 +110,11 @@
    below in light text. Matches the reference mockup: 6 status tiles in
    one row, 4 utility-shortcut tiles in a second row, same card treatment. */
 .ap-icon-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+/* Utility menu (8 items) — a real grid guarantees exactly 4 per row
+   regardless of screen width, unlike flex-wrap which only wraps once
+   items run out of room and can leave an odd item stranded alone. */
+.ap-icon-row-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); }
+.ap-icon-row-grid4 .ap-icon-btn { width: auto; }
 .ap-icon-btn {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   flex: 1 1 0; min-width: 0; padding: 14px 6px 12px; border: none; border-radius: 16px; cursor: pointer;

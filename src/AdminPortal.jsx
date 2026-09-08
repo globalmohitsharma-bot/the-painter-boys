@@ -854,6 +854,15 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
 
   const clientProjects = selectedClientId ? projects.filter(p => p.clientId === selectedClientId) : [];
   const selectedClient = clients.find(c => c.id === selectedClientId);
+  // Name color reflects the client's most recently updated project's status
+  // (same palette as the status chips/dashboard tiles) — a quick visual cue
+  // of where this client currently stands without reading the table below.
+  const latestClientProject = clientProjects.length > 0
+    ? [...clientProjects].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))[0]
+    : null;
+  const clientNameColor = latestClientProject
+    ? STATUS_ICONS.find(s => s.status === latestClientProject.progress)?.color
+    : undefined;
 
   // Cards are project-centric (status lives on the project, not the client),
   // each paired with its client for name/phone/society display and search.
@@ -916,7 +925,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
             <button className="ap-back" onClick={() => setSelectedClientId(null)}>← Back</button>
             <div className="ap-client-detail">
               <div>
-                <h2>{selectedClient?.contactName}</h2>
+                <h2 style={clientNameColor ? { color: clientNameColor } : undefined}>{selectedClient?.contactName}</h2>
                 <p>{selectedClient?.phone} · {selectedClient?.address} {selectedClient?.society && `(${selectedClient.society})`}</p>
               </div>
               <div className="ap-client-detail-actions">
@@ -1281,13 +1290,11 @@ function UtilitiesMenu({ onNavigate, pendingLinkCount, projectRequestCount, show
   return (
     <div className="ap-dashboard">
       <h3 className="ap-dashboard-subhead">🔧 Utility</h3>
-      <div className="ap-icon-row">
+      <div className="ap-icon-row ap-icon-row-grid4">
         {items.map(u => (
-          <button key={u.key} className="ap-icon-btn" onClick={() => onNavigate(u.key)}>
-            <span className="ap-icon-circle" style={{ background: u.color, color: '#fff' }}>
-              {u.icon}
-              {u.badge > 0 && <span className="ap-icon-badge">{u.badge}</span>}
-            </span>
+          <button key={u.key} className="ap-icon-btn" style={{ '--tile-color': u.color }} onClick={() => onNavigate(u.key)}>
+            <span className="ap-icon-circle">{u.icon}</span>
+            {u.badge > 0 && <span className="ap-icon-count">{u.badge}</span>}
             <span className="ap-icon-label">{u.label}</span>
           </button>
         ))}

@@ -484,22 +484,32 @@
 .aq-wrap { width: 100%; max-width: 400px; max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 /* Dark navy + gold invoice look throughout, not just the header — bordered
    gold-outline boxes on a deep navy field, matching the reference design. */
-/* Every rule below uses literal colors/fonts, deliberately NOT var(--x) —
-   these nodes get rasterized by html2canvas for the WhatsApp share image,
-   and html2canvas running inside the Android app's WebView has been
-   observed to silently fail to resolve CSS custom properties (especially
-   inside linear-gradient()), producing a plain unstyled capture even
-   though the on-screen render looks correct. Keep this block
-   self-contained — no var() — even if it duplicates a token value. */
+/* GUARDRAIL — read before touching anything below this point, through the
+   next "── Project media" section header.
+   These nodes get rasterized by html2canvas for the WhatsApp share image
+   (Payment Receipt / Quotation / Thank You / Discount Coupon), and
+   html2canvas running inside the Android app's WebView has repeatedly
+   produced a plain unstyled capture (no background, default black text)
+   even though the exact same code renders perfectly on desktop Chrome —
+   confirmed twice in this project's history. Two rules to keep it working:
+     1. No var(--x) custom properties anywhere in this block — literal
+        hex/rgba only, even if it duplicates a design-token value.
+     2. No gradients (linear-gradient/radial-gradient) as a background —
+        solid colors only. A gradient is one more thing for html2canvas to
+        parse correctly, and a plain background-color is the most reliably
+        supported case across engines.
+   Also see the "Share-card capture reliability" section in deployment.md
+   before assuming a "card looks unstyled" report is a fresh regression —
+   check for stale app cache first. */
 .aq-card {
-  background: linear-gradient(180deg, #0d2137 0%, #10233d 100%);
+  background: #10233d;
   border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.6);
   padding-bottom: 18px;
 }
 /* Receipt keeps the base navy above; Quote and Thank You get their own tint
    so an admin flicking between saved cards can tell which is which at a
    glance, without hunting for the badge text. */
-.aq-card-quote { background: linear-gradient(180deg, #0f2e2b 0%, #0a1f1d 100%); }
+.aq-card-quote { background: #0a1f1d; }
 /* Thank You card reads better warm and light (cream) than the dark navy/
    maroon look the Receipt/Quote cards use — text colors below are flipped
    to dark ink accordingly, scoped to just this card. */

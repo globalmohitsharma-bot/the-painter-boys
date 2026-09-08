@@ -6,10 +6,15 @@ issues" below) that will happen again if skipped.**
 
 ## Android app (added 2026-08-26)
 
-Wrapped with **Capacitor** — the app bundles the same `dist/` web build the
-site itself ships, running in a native WebView (`appId`
-`com.thepainterboys.app`). Same UI/functionality as the website by
-construction, not a separate codebase.
+Wrapped with **Capacitor** — the WebView loads the **live production site
+remotely** (`server.url: "https://www.thepainterboys.com"` in
+`capacitor.config.json`), it does **not** bundle a local `dist/` build.
+Same UI/functionality as the website by construction, not a separate
+codebase — a web-only deploy to prod reaches the app too, no APK rebuild
+needed, though the WebView's own cache/service-worker can lag behind by
+a few minutes to hours (see "Share-card capture reliability" below).
+An APK/AAB rebuild is only needed for native-shell changes (icon, splash,
+Capacitor plugin config, versionCode/versionName).
 
 - **Toolchain** (installed locally, not portable — reinstall if moving
   machines): JDK 21 (`C:\Program Files\Microsoft\jdk-21.0.12.101-hotspot` —
@@ -77,6 +82,54 @@ construction, not a separate codebase.
   (color-distance threshold against the off-white source background; sharp
   has no built-in chroma-key). Regenerate all densities after changing a
   source file: `npx capacitor-assets generate --android`.
+
+## Share-card capture reliability (added 2026-09-08 — read before touching card CSS)
+
+The Payment Receipt / Quotation / Thank You / Discount Coupon share cards
+(`AdminPortal.jsx`, captured via `html2canvas` into a WhatsApp image) have
+broken on the native Android app **twice** — rendering as plain unstyled
+text (no background, default black text) — while the exact same code
+rendered perfectly on desktop Chrome every time it was checked.
+
+**Root cause**: html2canvas running inside the Android app's WebView
+unreliably resolves CSS custom properties (`var(--x)`) and gradients
+(`linear-gradient()`) on the captured element, even though the on-screen
+render is correct. Fixed by rewriting that entire CSS block (see the
+`GUARDRAIL` comment right above `.aq-card` in `AdminPortal.css`) to use
+only literal hex/rgba colors and solid backgrounds — no `var()`, no
+gradients, anywhere in the captured card's styles.
+
+**This is now enforced automatically**: `testing/check-share-card-css.mjs`
+parses that CSS block and fails the build (`npm run build` runs it first)
+if either pattern creeps back in. Run it standalone with
+`npm run check:sharecards`. If it ever needs to allow a new exception
+(e.g. a genuinely UI-only button added inside the marker range), extend
+`EXCLUDED_SELECTOR_PATTERNS` in that script — don't just delete the check.
+
+**When a "share card looks unstyled" report comes in from the Android
+app**, don't assume it's a fresh regression — check in this order:
+1. Confirm the guard still passes: `npm run check:sharecards`.
+2. Reproduce locally against current code (sign in via the `DEV_TEST_ADMIN_TOKEN`
+   dev-bypass, generate the same card type, capture it, inspect the actual
+   blob — see this project's session history for the Playwright pattern:
+   `page.addInitScript` to seed `localStorage.pb_admin_id_token`, open the
+   relevant modal, click its Share button, then screenshot
+   `.ap-share-preview img` directly rather than the surrounding page).
+3. If that reproduction renders correctly (it has, both times), the report
+   is almost certainly a **stale cached version of the app on that specific
+   device** — the WebView loads the live site remotely but caches
+   aggressively (PWA service worker, `registerType: 'autoUpdate'`). Ask for,
+   in order of thoroughness: force-close the app → Android Settings → Apps →
+   The Painter Boys → Storage → Clear Cache → reopen and retry → if still
+   broken, Clear Data (signs the user out) or a full uninstall/reinstall
+   from Play Store, which is the most conclusive way to rule out caching
+   entirely, before spending more time investigating "the bug" itself.
+4. Only if a genuinely fresh install still reproduces it is this a real,
+   new issue — at that point it's likely a different html2canvas/WebView
+   incompatibility than the two already fixed, and needs fresh
+   investigation (there's no way to test on real Android hardware from
+   this dev machine — no emulator available either, see above — so this
+   step depends on the user's own device).
 
 ## Current hosting (updated 2026-08-20 — Netlify fully retired)
 

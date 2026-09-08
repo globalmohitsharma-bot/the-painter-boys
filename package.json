@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node testing/check-share-card-css.mjs && vite build",
     "preview": "vite preview",
     "smoke:prod": "node testing/prod-smoke-test.mjs",
-    "verify:features": "node testing/feature-checks.mjs"
+    "verify:features": "node testing/feature-checks.mjs",
+    "check:sharecards": "node testing/check-share-card-css.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

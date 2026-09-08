@@ -48,9 +48,12 @@ export default function SiteHeader() {
             <span className="tp-num">+91 78388 88509</span>
           </a>
           <button type="button" className="topbar-account" onClick={() => setAccountOpen(true)} aria-label="Sign in / My account">
-            {user?.picture
-              ? <img src={user.picture} alt="" className="topbar-account-avatar" referrerPolicy="no-referrer" />
-              : <Icon name="user" size={17} />}
+            <span className="topbar-account-icon">
+              {user?.picture
+                ? <img src={user.picture} alt="" className="topbar-account-avatar" referrerPolicy="no-referrer" />
+                : <Icon name="user" size={15} />}
+            </span>
+            <span className="topbar-account-label">{user ? 'My Account' : 'Sign In'}</span>
           </button>
           <a className="topbar-cta" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer">BOOK FREE ESTIMATE</a>
           <button className="nav-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">

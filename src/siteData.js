@@ -43,6 +43,13 @@ export const SERVICES = [
       'The step most repaints skip — and the one that determines whether the final coat looks flawless or shows every bump underneath. We fill cracks, level uneven patches with wall putty (usually white cement-based putty for interiors), sand it smooth, and apply the right primer for the surface and paint type before any finish coat goes on.',
       'It adds roughly a day to the timeline for an average room, and it\'s the difference between an average repaint and one that actually looks premium — paint (however good the brand) only ever looks as smooth as the surface underneath it. Skipping primer specifically also means the finish coat absorbs unevenly into bare or previously-distempered walls, leading to patchy colour that needs an extra coat to fix anyway — so it rarely actually saves time in practice.',
     ] },
+  { slug: 'carpentry-woodwork', bg: 'linear-gradient(135deg,#231607,#4a2e12,#b5772c)', icon: 'carpentry', accent: '#b5772c', title: 'Carpentry & Woodwork',
+    bullets: ['Modular kitchens, wardrobes & wood furniture — design to install', 'Plywood, laminate & veneer work with a clean factory-grade finish'],
+    detail: [
+      'Beyond painting, our carpentry team handles the full range of home woodwork — modular kitchens, sliding and hinged wardrobes, TV units, study tables, shoe racks, and loft storage, built to the room\'s actual measurements rather than fitted from a standard size. We work in plywood (BWP/BWR marine ply for kitchens and wet-area units, commercial ply elsewhere), finished in laminate, veneer, or PU/membrane depending on budget and the look you\'re after.',
+      'A wardrobe or kitchen job starts with an on-site measurement and material discussion — ply grade, hardware brand (soft-close hinges, drawer channels, kitchen baskets), and finish — before anything is cut, so there are no surprises between the quote and the delivered unit. Kitchen work covers the full carcass, shutters, countertop fitting, and hardware; wardrobe work covers loft-to-floor units with your choice of shutter finish and internal layout (shelves, drawers, hanging space).',
+      'Once the woodwork is installed, we handle the matching paint or polish finish on-site too — enamel or PU on shutters and frames, colour-matched to the rest of the room — so it\'s one team for the full room rather than coordinating a separate carpenter and painter. Structural carpentry (doors, door frames, false ceiling woodwork) is taken on case by case — ask us and we\'ll tell you straight if it\'s something we handle.',
+    ] },
 ];
 
 export const TEAM = [

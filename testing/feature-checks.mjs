@@ -179,10 +179,42 @@ async function checkDiscountCoupon(browser) {
   }
 }
 
+// ── Feature: Carpentry & Woodwork service line (added 2026-09-28) ──
+// Added a new service (plywood work, modular kitchens, wardrobe making, home
+// wood work) alongside painting, for both SEO (new indexable service page,
+// updated titles/descriptions/keywords/JSON-LD) and lead capture (LeadBot
+// project-type option, footer services list, homepage quick-nav tile).
+async function checkCarpentryService(browser) {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${SITE}/services`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(600);
+    const servicesText = await page.evaluate(() => document.body.innerText);
+    log('Carpentry service: listed on /services grid', servicesText.includes('Carpentry & Woodwork'));
+
+    await page.goto(`${SITE}/services/carpentry-woodwork`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(600);
+    const detailText = await page.evaluate(() => document.body.innerText);
+    log('Carpentry service: detail page renders title', detailText.includes('Carpentry & Woodwork'));
+    log('Carpentry service: detail page mentions plywood/kitchen/wardrobe', /plywood/i.test(detailText) && /kitchen/i.test(detailText) && /wardrobe/i.test(detailText));
+    const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '');
+    log('Carpentry service: page has a non-empty meta description', !!metaDesc && metaDesc.length > 20);
+    const metaKeywords = await page.locator('meta[name="keywords"]').getAttribute('content').catch(() => '');
+    log('Carpentry service: page has a keywords meta tag mentioning carpentry', /carpentry/i.test(metaKeywords || ''));
+
+    const sitemapRes = await fetch(`${SITE}/sitemap.xml`);
+    const sitemapText = await sitemapRes.text();
+    log('Carpentry service: sitemap.xml includes the new service URL', sitemapText.includes('/services/carpentry-woodwork'));
+  } finally {
+    await page.close();
+  }
+}
+
 const FEATURE_CHECKS = [
   checkTeamShareCard,
   checkTeamPartnerCopy,
   checkDiscountCoupon,
+  checkCarpentryService,
 ];
 
 const browser = await chromium.launch();

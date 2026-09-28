@@ -139,6 +139,10 @@ const ICONS = {
     vb: '0 0 24 24', mode: 'stroke',
     body: (<><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></>),
   },
+  carpentry: {
+    vb: '0 0 24 24', mode: 'stroke',
+    body: (<><path d="M3 21 13.5 10.5" /><path d="M11.5 8.5 15.5 4.5a1.4 1.4 0 0 1 2 0l2 2a1.4 1.4 0 0 1 0 2l-4 4Z" /><path d="M9.5 6.5l2 2M6 20l-2-2" /></>),
+  },
 };
 
 export default function Icon({ name, size = 24, className, style }) {

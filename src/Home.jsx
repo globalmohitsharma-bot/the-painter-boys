@@ -13,6 +13,7 @@ const QUICK_NAV = [
   { icon:'construction', label:'Exterior Painting',       sub:'Buildings & Societies',     accent:'#2563c4', to:'/services/exterior-painting' },
   { icon:'water',        label:'Waterproofing',            sub:'Leakage & Dampness',        accent:'#0ea5a8', to:'/services/waterproofing' },
   { icon:'crown',        label:'Premium Finishes',         sub:'Royale & Luxury Paints',    accent:'#7c3aed', to:'/services/royale-emulsion' },
+  { icon:'carpentry',    label:'Carpentry & Woodwork',      sub:'Kitchens, Wardrobes & Plywood Work', accent:'#b5772c', to:'/services/carpentry-woodwork' },
   { icon:'office',       label:'Commercial Spaces',        sub:'Offices & Hospitals',       accent:'#475569', to:'/services' },
   { icon:'temple',       label:'Temples & Institutions',   sub:'All Property Types',        accent:'#b91c1c', to:'/services' },
 ];
@@ -245,6 +246,7 @@ export default function Home() {
       <Helmet>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
+        {meta.keywords && <meta name="keywords" content={meta.keywords} />}
         <link rel="canonical" href={`${SITE_URL}${meta.path}`} />
         <meta property="og:title" content={meta.title} />
         <meta property="og:description" content={meta.description} />
@@ -259,6 +261,7 @@ export default function Home() {
             telephone: '+917838888509',
             priceRange: '$$',
             url: SITE_URL,
+            knowsAbout: ['House Painting', 'Interior Painting', 'Exterior Painting', 'Waterproofing', 'Carpentry', 'Plywood Work', 'Modular Kitchen', 'Wardrobe Making', 'Home Wood Work'],
             areaServed: [
               ...GHAZIABAD_AREAS.map(a => ({ '@type': 'Place', name: `${a}, Ghaziabad` })),
               ...AREAS.map(a => ({ '@type': 'City', name: a })),
@@ -290,7 +293,7 @@ export default function Home() {
               <div className="hero-bg-pattern" />
               <div className="hero-content">
                 <h1 className="hero-title">
-                  <span className="hero-title-colorful">Home Painting Professionals</span>
+                  <span className="hero-title-colorful">Home Painting & Carpentry Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
                 <div className="hero-badge">
@@ -298,9 +301,9 @@ export default function Home() {
                   4.9 Rating · 2000+ Happy Homeowners
                 </div>
                 <p className="hero-desc hero-desc-full">
-                  Expert painting with colour advice, advanced tools and a hassle-free experience — from start to finish.
+                  Expert painting and carpentry — plywood work, modular kitchens, wardrobe making — with colour advice, advanced tools and a hassle-free experience from start to finish.
                 </p>
-                <p className="hero-desc hero-desc-short">Expert painting, honest advice, zero hassle.</p>
+                <p className="hero-desc hero-desc-short">Expert painting & carpentry, honest advice, zero hassle.</p>
                 <div className="hero-stats">
                   <div className="hero-stat-card"><Icon name="home" size={20} className="hero-stat-icon" /><strong>2000+</strong><span>Homes Painted</span></div>
                   <div className="hero-stat-card"><Icon name="clock" size={20} className="hero-stat-icon" /><strong>10+</strong><span>Years Trusted</span></div>
@@ -390,8 +393,8 @@ export default function Home() {
             <div className="page-hero page-hero-blue">
               <div className="ph-content">
                 <span className="sec-tag light">What We Do</span>
-                <h1 className="ph-title">Professional Home Painting Services</h1>
-                <p className="ph-sub">Premium products. Expert hands. Guaranteed results across all property types.</p>
+                <h1 className="ph-title">Professional Home Painting & Carpentry Services</h1>
+                <p className="ph-sub">Premium products. Expert hands. Painting, plywood work, modular kitchens & wardrobe making — guaranteed results across all property types.</p>
               </div>
             </div>
             <div className="page-content-white">

@@ -33,12 +33,14 @@ export default function ServiceDetail() {
 
   const title = `${service.title} — The Painter Boys`;
   const description = service.detail[0].slice(0, 155);
+  const keywords = `${service.title}, ${service.bullets.join(', ')}, Ghaziabad, Noida, Delhi NCR`;
 
   return (
     <div className="home">
       <Helmet>
         <title>{title}</title>
         <meta name="description" content={description} />
+        <meta name="keywords" content={keywords} />
         <link rel="canonical" href={`${SITE_URL}/services/${service.slug}`} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />

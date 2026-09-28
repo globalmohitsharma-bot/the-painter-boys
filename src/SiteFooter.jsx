@@ -26,7 +26,7 @@ export default function SiteFooter() {
           <div className="footer-col">
             <div className="footer-col-title">Our Services</div>
             <div className="footer-col-links">
-              {['Interior Painting','Exterior Painting','Waterproofing','Royale Emulsion','Texture & Designer','Putty & Primer'].map(s => (
+              {['Interior Painting','Exterior Painting','Waterproofing','Royale Emulsion','Texture & Designer','Putty & Primer','Carpentry & Woodwork'].map(s => (
                 <Link key={s} to="/services" className="footer-link">{s}</Link>
               ))}
             </div>

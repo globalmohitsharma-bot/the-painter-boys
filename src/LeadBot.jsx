@@ -17,7 +17,7 @@ const STEPS = [
     placeholder: '10-digit phone number', validate: v => /^\d{10}$/.test(v.replace(/\D/g, '')) },
   { key: 'project',  type: 'choice',
     bot: () => 'What kind of project is this?',
-    options: ['Interior Painting', 'Exterior Painting', 'Waterproofing', 'Premium Finishes', 'Commercial Space', 'Not sure yet'] },
+    options: ['Interior Painting', 'Exterior Painting', 'Waterproofing', 'Premium Finishes', 'Carpentry & Woodwork', 'Commercial Space', 'Not sure yet'] },
   { key: 'area',     type: 'choice',
     bot: () => 'Which area are you in?',
     options: AREAS },
@@ -27,7 +27,7 @@ const STEPS = [
 ];
 
 function buildWaMessage(a) {
-  return `Hi! I'd like a free painting estimate.\nName: ${a.name}\nPhone: ${a.phone}\nProject: ${a.project}\nArea: ${a.area}\nTimeline: ${a.timeline}`;
+  return `Hi! I'd like a free estimate.\nName: ${a.name}\nPhone: ${a.phone}\nProject: ${a.project}\nArea: ${a.area}\nTimeline: ${a.timeline}`;
 }
 
 export default function LeadBot() {

@@ -22,13 +22,15 @@ export const GHAZIABAD_AREAS = ['Raj Nagar Extension', 'Raj Nagar', 'Kavi Nagar'
 export const PAGE_META = {
   home: {
     path: '/',
-    title: 'The Painter Boys — Home Painting Services in Raj Nagar Extension, Indirapuram, Kavi Nagar, Ghaziabad',
-    description: 'Expert home painting in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram & Vasundhara (Ghaziabad), plus Noida & Delhi NCR. Interior, exterior, waterproofing & premium finishes. Free on-site estimate — trusted since 2010.',
+    title: 'The Painter Boys — Painting & Carpentry Services in Raj Nagar Extension, Indirapuram, Kavi Nagar, Ghaziabad',
+    description: 'Expert home painting and carpentry in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram & Vasundhara (Ghaziabad), plus Noida & Delhi NCR. Interior, exterior, waterproofing & premium finishes — plus plywood work, modular kitchens & wardrobe making. Free on-site estimate — trusted since 2010.',
+    keywords: 'painter in Ghaziabad, house painting Ghaziabad, carpenter in Ghaziabad, plywood work, modular kitchen, wardrobe making, home wood work, carpentry work, painting and carpentry services Delhi NCR',
   },
   services: {
     path: '/services',
-    title: 'Interior, Exterior & Waterproofing Painting Services | The Painter Boys',
-    description: 'Interior painting, exterior painting, waterproofing, royal emulsion, texture & designer finishes, putty & primer — professional painting services across Ghaziabad, Noida & Delhi NCR.',
+    title: 'Painting, Carpentry, Modular Kitchen & Wardrobe Services | The Painter Boys',
+    description: 'Interior painting, exterior painting, waterproofing, royal emulsion, texture & designer finishes, putty & primer, plus carpentry & woodwork — plywood work, modular kitchen making, wardrobe making & home wood work — across Ghaziabad, Noida & Delhi NCR.',
+    keywords: 'carpenter work, plywood work, wood kitchen making, modular kitchen, wardrobe making, home wood work, carpentry services, interior painting, exterior painting, waterproofing',
   },
   about: {
     path: '/about',
@@ -59,6 +61,7 @@ export const PAGE_META = {
     path: '/contact',
     title: 'Contact Us — Free Painting Estimate in Raj Nagar Ext, Indirapuram & Ghaziabad | The Painter Boys',
     description: 'Get a free, no-obligation painting estimate in Raj Nagar Extension, Raj Nagar, Kavi Nagar, RDC, Indirapuram, Vasundhara, Noida, Delhi NCR, Haridwar or Dehradun. Call, WhatsApp, or request a callback — we respond fast.',
+    keywords: 'free painting estimate, carpenter quote, painter contact Ghaziabad, carpentry quote Delhi NCR',
   },
 };
 

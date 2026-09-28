@@ -6,6 +6,7 @@ import { BlogList, BlogPost } from './Blog.jsx'
 import ServiceDetail from './ServiceDetail.jsx'
 import TeamDetail from './TeamDetail.jsx'
 import PaintDetail from './PaintDetail.jsx'
+import CarpentryMaterialDetail from './CarpentryMaterialDetail.jsx'
 import PBDashboard from './PBDashboard.jsx'
 import PainterBoard from './PainterBoard.jsx'
 import CustomerView from './CustomerView.jsx'
@@ -41,6 +42,8 @@ export default function App() {
           <Route path="/team/:slug" element={<TeamDetail />} />
           <Route path="/paint-types" element={<Home />} />
           <Route path="/paint-types/:slug" element={<PaintDetail />} />
+          <Route path="/carpentry-materials" element={<Home />} />
+          <Route path="/carpentry-materials/:slug" element={<CarpentryMaterialDetail />} />
           <Route path="/contact" element={<Home />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

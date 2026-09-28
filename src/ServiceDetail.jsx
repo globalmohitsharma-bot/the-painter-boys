@@ -83,6 +83,9 @@ export default function ServiceDetail() {
                 {service.detail.map((para, i) => <p key={i} className="svc-detail-text">{para}</p>)}
                 <div className="sec-cta" style={{ justifyContent: 'flex-start' }}>
                   <Link to="/services" className="btn-secondary">← All Services</Link>
+                  {service.slug === 'carpentry-woodwork' && (
+                    <Link to="/carpentry-materials" className="btn-secondary">Plywood, Mica & Adhesive Material Guide →</Link>
+                  )}
                 </div>
               </div>
             </div>

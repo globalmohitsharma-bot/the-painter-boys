@@ -5,7 +5,7 @@ import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
 import { SITE_URL, PHONE, WA_LINK, WA_LINK_DEFAULT, AREAS, GHAZIABAD_AREAS, PAGE_META } from './siteConfig.js';
-import { SERVICES, TEAM, PAINT_TYPES, PAINT_BASE_GUIDE } from './siteData.js';
+import { SERVICES, TEAM, PAINT_TYPES, PAINT_BASE_GUIDE, CARPENTRY_MATERIALS } from './siteData.js';
 import './Home.css';
 
 const QUICK_NAV = [
@@ -652,6 +652,55 @@ export default function Home() {
                 <div className="sec-cta">
                   <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Ask Us Which Paint Is Right For You</a>
                   <Link to="/contact" className="btn-secondary">Get Free Quote →</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CARPENTRY MATERIALS ── */}
+        {currentPage === 'carpentry-materials' && (
+          <div className="inner-page">
+            <div className="page-hero page-hero-blue">
+              <div className="ph-content">
+                <span className="sec-tag light">Material Guide</span>
+                <h1 className="ph-title">Plywood, Laminate & Adhesive Materials We Use</h1>
+                <p className="ph-sub">Century Sainik 710, Club Prime, Greenply, Kitply, mica sheet thickness and Fevicol grades — what each material is, and which job it's actually right for.</p>
+                <a
+                  className="btn-wa"
+                  style={{ marginTop: 16 }}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Have a look at The Painter Boys' carpentry material guide — plywood, laminate & adhesive grades explained: ${SITE_URL}/carpentry-materials`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                >
+                  <Icon name="whatsapp" size={16} style={{ marginRight: 6, verticalAlign: '-3px' }} />
+                  Share This Page on WhatsApp
+                </a>
+              </div>
+            </div>
+            <div className="page-content-white">
+              <div className="container section">
+                <div className="paint-grid">
+                  {CARPENTRY_MATERIALS.map(m => (
+                    <Link key={m.slug} to={`/carpentry-materials/${m.slug}`} className="paint-card">
+                      <div className="paint-card-top">
+                        <h3 className="paint-name">{m.name}</h3>
+                        <span className={`paint-tier paint-tier-${m.tier.toLowerCase()}`}>{m.tier}</span>
+                      </div>
+                      <div className="paint-finish">{m.grade}</div>
+                      <p className="paint-desc">{m.desc}</p>
+                      <span className={`paint-base-chip paint-base-chip-${m.badgeVariant}`}>{m.badgeLabel}</span>
+                      <span className="paint-learn">Learn more →</span>
+                    </Link>
+                  ))}
+                </div>
+
+                <p className="paint-note">
+                  Not sure which plywood grade or finish is right for your project? We'll recommend the right
+                  material honestly during your free on-site consultation — not just the priciest option.
+                </p>
+                <div className="sec-cta">
+                  <a className="btn-primary" href={WA_LINK_DEFAULT} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={17} />Ask Us Which Material Is Right For You</a>
+                  <Link to="/services/carpentry-woodwork" className="btn-secondary">Carpentry & Woodwork Service →</Link>
                 </div>
               </div>
             </div>

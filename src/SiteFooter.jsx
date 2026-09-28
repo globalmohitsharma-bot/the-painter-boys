@@ -37,6 +37,7 @@ export default function SiteFooter() {
               {NAV_PAGES.map(([id,label]) => (
                 <Link key={id} to={PAGE_META[id].path} className="footer-link">{label}</Link>
               ))}
+              <Link to="/carpentry-materials" className="footer-link">Carpentry Materials</Link>
             </div>
           </div>
           <div className="footer-col">

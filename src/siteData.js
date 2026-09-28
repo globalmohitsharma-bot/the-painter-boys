@@ -46,8 +46,11 @@ export const SERVICES = [
   { slug: 'carpentry-woodwork', bg: 'linear-gradient(135deg,#231607,#4a2e12,#b5772c)', icon: 'carpentry', accent: '#b5772c', title: 'Carpentry & Woodwork',
     bullets: ['Modular kitchens, wardrobes & wood furniture — design to install', 'Plywood, laminate & veneer work with a clean factory-grade finish'],
     detail: [
-      'Beyond painting, our carpentry team handles the full range of home woodwork — modular kitchens, sliding and hinged wardrobes, TV units, study tables, shoe racks, and loft storage, built to the room\'s actual measurements rather than fitted from a standard size. We work in plywood (BWP/BWR marine ply for kitchens and wet-area units, commercial ply elsewhere), finished in laminate, veneer, or PU/membrane depending on budget and the look you\'re after.',
-      'A wardrobe or kitchen job starts with an on-site measurement and material discussion — ply grade, hardware brand (soft-close hinges, drawer channels, kitchen baskets), and finish — before anything is cut, so there are no surprises between the quote and the delivered unit. Kitchen work covers the full carcass, shutters, countertop fitting, and hardware; wardrobe work covers loft-to-floor units with your choice of shutter finish and internal layout (shelves, drawers, hanging space).',
+      'Beyond painting, our carpentry team handles the full range of home woodwork — modular kitchens, sliding and hinged wardrobes, TV units, study tables, shoe racks, and loft storage, built to the room\'s actual measurements rather than fitted from a standard size.',
+      'Ply grade is chosen by where it\'s going, not a single default across the job. For kitchens and any wet-area unit, we use Century Sainik 710 — IS:710-certified BWP (boiling waterproof) marine plywood, bonded with phenol-formaldehyde resin so the layers hold together under direct water contact, humidity, and routine splashing without delaminating, and resistant to termite and borer attack. It\'s the grade we default to under a kitchen sink, in a utility unit, or anywhere water exposure is a real, regular possibility rather than a one-off.',
+      'For dry-area work — wardrobes, TV units, study tables, shoe racks — Century Club Prime is our usual pick: an MR-grade (moisture-resistant, not boiling-waterproof) plywood, a genuine step down from Sainik 710\'s water rating but still built to resist everyday humidity, termites, and borers, at a noticeably lower cost for work that never sees standing water. Greenply and Kitply are the other two brands we bring in for dry-area jobs, mainly on client preference or a specific budget point neither Century line quite matches — both are established, IS-certified plywood manufacturers, so the choice between them and Club Prime comes down to price and what\'s available for a given job, not a quality gap. All of it is finished in laminate, veneer, or PU/membrane depending on the look and budget you\'re after — we\'ll recommend a grade honestly rather than upsell marine ply where it isn\'t needed.',
+      'For laminate (mica) finish specifically, sheet thickness is matched to how much wear that surface actually takes: 0.7mm for internal panels and lower-wear surfaces, 0.8mm as the standard for wardrobe and kitchen shutter faces, and 1mm where the edge takes the most daily handling — kitchen shutters and countertop edges — since a thicker sheet resists chipping and lifting at the edge far longer than a thin one. Bonding is done with Fevicol Marine — a waterproof-grade adhesive — for kitchen and wet-area units, so the glue joint holds up to the same moisture exposure the marine ply itself is rated for; standard Fevicol SR is used for dry-area work where that extra water resistance isn\'t needed.',
+      'The process runs the same sequence on every job: an on-site measurement and material discussion first — ply grade, laminate/veneer choice, and hardware brand (soft-close hinges, drawer channels, kitchen baskets) — so the quote matches exactly what gets delivered; then ply cutting to the room\'s actual measurements (not a standard size); edge banding or laminate pressing on the cut panels for a sealed, factory-grade edge; hardware fitting; and on-site assembly and installation. Kitchen work covers the full carcass, shutters, countertop fitting, and hardware; wardrobe work covers loft-to-floor units with your choice of shutter finish and internal layout (shelves, drawers, hanging space).',
       'Once the woodwork is installed, we handle the matching paint or polish finish on-site too — enamel or PU on shutters and frames, colour-matched to the rest of the room — so it\'s one team for the full room rather than coordinating a separate carpenter and painter. Structural carpentry (doors, door frames, false ceiling woodwork) is taken on case by case — ask us and we\'ll tell you straight if it\'s something we handle.',
     ] },
 ];
@@ -427,6 +430,80 @@ export const PAINT_TYPES = [
         `Surface prep is held to the same rigorous standard as Royale Shyne, and for the same underlying reason — a metallic or pearlescent finish reflects light directly, so it shows every dent, uneven patch, or poorly sanded putty line at least as clearly as a high-sheen emulsion would. That means full crack-filling, putty levelling, and sanding to a smooth finish before a deco coat ever goes on, plus a primer matched to the substrate — a wall primer for walls, a wood primer for furniture, a rust-inhibitive metal primer for ornamental ironwork.`,
         `Application technique varies by the specific effect — some metallic and pearlescent finishes go on with a sponge or specialty roller in multiple thin layers to build the right depth of shimmer, others need a brush for controlled edge work on trim or furniture detail. We always run a small test patch first, since the exact effect depends on layering technique as much as the product itself, and it's far easier to adjust technique on a test patch than on a finished feature wall. During application, surrounding furniture and flooring need real protection from drips and overspray — specialty pigments can mark adjacent surfaces more stubbornly than a standard wall emulsion would.`,
         `Once applied, most deco finishes need a genuine cure period — commonly a couple of weeks, similar to the texture finishes on this site — before the first clean, and cleaning after that should stay to sponge-application with a mild soap solution rather than any abrasive scrubbing, which can dull the reflective pigment in a way that's difficult to disguise afterward. Handled this way, a deco finish holds its shimmer and colour well for years, precisely the kind of durability that makes it worth treating as a genuine design investment rather than a quick decorative flourish.`,
+      ] },
+    ] },
+];
+
+// Same pattern as PAINT_TYPES above — each entry gets its own detail page
+// (CarpentryMaterialDetail.jsx) at /carpentry-materials/:slug, listed from
+// /carpentry-materials, so each plywood grade/brand/material can be found
+// and indexed on its own rather than buried inside the Carpentry & Woodwork
+// service page's general copy.
+export const CARPENTRY_MATERIALS = [
+  { slug: 'century-sainik-710', name: 'Century Sainik 710', tier: 'Premium',
+    grade: 'IS:710 Certified — BWP Marine Grade Plywood', badgeVariant: 'water', badgeLabel: 'Wet-Area / Marine Grade',
+    bestFor: 'Kitchen carcasses, bathroom units, any wet-area woodwork',
+    desc: 'Century Plyboards\' marine-grade plywood, certified to IS:710 — the Indian Standard for boiling waterproof (BWP) plywood. Bonded with phenol-formaldehyde resin so the layers hold together under direct water contact and humidity without delaminating, and resistant to termite and borer attack. Our default choice for kitchens and any unit that will see regular moisture.',
+    longRead: [
+      { heading: 'What IS:710 (BWP) Actually Means', paragraphs: [
+        'Not every plywood labelled "waterproof" has been tested to the same standard, which is exactly the confusion IS:710 exists to remove. It\'s the Bureau of Indian Standards specification for boiling waterproof (BWP) plywood — meaning a sample has to survive a boiling water test (repeated cycles of boiling, drying, and re-testing) without the layers separating, before it can legally carry the IS:710 mark. That\'s a meaningfully higher bar than MR (moisture-resistant) grade plywood, which is built to handle everyday humidity but isn\'t rated to survive sustained or direct water contact.',
+        'Sainik 710 is bonded with phenol-formaldehyde (PF) resin, the same adhesive chemistry used in exterior-grade construction plywood, rather than the urea-formaldehyde (UF) resin used in MR-grade ply — PF resin is what actually gives BWP plywood its water resistance, since UF-bonded layers soften and separate with sustained moisture exposure in a way PF-bonded layers don\'t.',
+      ] },
+      { heading: 'Where We Use It, and Where We Don\'t', paragraphs: [
+        'We use Sainik 710 for kitchen carcasses (the box structure behind the shutters, which sits closest to sink splashing and dishwasher/RO unit leaks), bathroom vanity units, and any wardrobe or unit in a genuinely humid or splash-prone spot. It\'s also naturally termite- and borer-resistant, which matters over the life of the unit independent of the water exposure question.',
+        'It\'s not the right call everywhere, and we won\'t quote it where it isn\'t needed — a bedroom wardrobe or a study table in a normal dry room doesn\'t need boiling-waterproof-rated ply, and paying the premium for it there doesn\'t buy you anything a Club Prime or equivalent MR-grade board wouldn\'t already cover. See our Club Prime page for the dry-area alternative.',
+      ] },
+    ] },
+  { slug: 'century-club-prime', name: 'Century Club Prime', tier: 'Economy',
+    grade: 'MR Grade — Moisture Resistant Plywood', badgeVariant: 'oil', badgeLabel: 'Dry-Area Grade',
+    bestFor: 'Wardrobes, TV units, study tables, shoe racks, loft storage',
+    desc: 'Century\'s MR-grade (moisture-resistant) plywood — built to handle everyday household humidity, termites, and borers, but not rated for direct or sustained water contact the way Sainik 710 is. A genuine step down in water rating at a noticeably lower cost, and the right choice for the majority of a home\'s woodwork that never sees standing water.',
+    longRead: [
+      { heading: 'MR Grade vs BWP: A Real Difference, Not Just a Price Tag', paragraphs: [
+        'Club Prime is urea-formaldehyde (UF) bonded rather than phenol-formaldehyde bonded, which is the actual, honest reason it costs less than Sainik 710 — not a quality shortcut, a different resin suited to a different job. UF-bonded plywood handles the humidity swings of an Indian home fine over its lifetime, but it isn\'t built to survive direct water contact the way BWP-grade ply is, so it\'s not the board we\'d put under a kitchen sink.',
+        'For wardrobes, TV units, study tables, and loft storage — none of which see anything more than ambient room humidity — that distinction doesn\'t cost you anything in practice. It\'s still termite- and borer-resistant, still a genuine IS-certified plywood, and holds up for the same kind of decade-plus lifespan Sainik 710 does in the rooms it\'s actually meant for.',
+      ] },
+      { heading: 'Why We Don\'t Default to Marine Ply Everywhere', paragraphs: [
+        'It would be simpler for us to quote every job in Sainik 710 and call it "premium" across the board, but that\'s not an honest recommendation — it just moves budget away from what actually improves the job, like hardware quality or finish, toward a water rating a bedroom wardrobe will never test. We\'ll tell you plainly which of your rooms genuinely need marine-grade ply and which don\'t, rather than upselling the higher grade by default.',
+      ] },
+    ] },
+  { slug: 'greenply-kitply', name: 'Greenply & Kitply', tier: 'Budget',
+    grade: 'IS-Certified Commercial & MR-Grade Plywood', badgeVariant: 'oil', badgeLabel: 'Dry-Area Grade',
+    bestFor: 'Budget-conscious dry-area furniture where a specific brand isn\'t required',
+    desc: 'Two other established, IS-certified Indian plywood manufacturers we bring in for dry-area jobs — mainly on client preference or a specific budget point that neither Century line quite matches. The choice between these and Century Club Prime comes down to price and availability on a given job, not a quality gap.',
+    longRead: [
+      { heading: 'Why We Work With More Than One Ply Brand', paragraphs: [
+        'Century isn\'t the only credible plywood manufacturer in India, and we don\'t pretend otherwise — Greenply and Kitply are both long-established, IS-certified brands with their own MR-grade and commercial-grade product lines. Some clients already have a brand preference from a previous job or a recommendation; others are working to a tight budget where the exact per-sheet cost on the day matters more than the brand printed on the sheet.',
+        'For dry-area work — the same category Club Prime covers — any of these three brands does the job to a comparable standard. We\'ll quote whichever fits the budget and is available for your timeline, and say so plainly rather than pushing one brand as inherently superior when the honest answer is "comparable, pick on price."',
+      ] },
+      { heading: 'What We Won\'t Substitute', paragraphs: [
+        'The one place we don\'t treat brands as interchangeable is wet-area, boiling-waterproof work — that stays on Century Sainik 710 (IS:710 BWP) specifically, since that\'s the grade and certification we\'ve verified and stand behind for kitchen and wet-area units. If a client wants a different brand\'s marine-grade equivalent, we\'ll discuss it, but our default recommendation for anything water-exposed stays Sainik 710.',
+      ] },
+    ] },
+  { slug: 'mica-laminate-sheets', name: 'Mica / Laminate Sheets', tier: 'Premium',
+    grade: '0.7mm, 0.8mm & 1mm Laminate Thickness Guide', badgeVariant: 'water', badgeLabel: 'Finish Material',
+    bestFor: 'Shutter faces, countertop edges, internal wardrobe/kitchen panels',
+    desc: 'Laminate — commonly called "mica" on-site — is the decorative surface layer pressed onto plywood for kitchen and wardrobe shutters. Sheet thickness (0.7mm, 0.8mm, or 1mm) is matched to how much daily wear and edge handling a given surface actually takes, not applied uniformly across a job.',
+    longRead: [
+      { heading: 'Why Thickness Is a Real Spec, Not Just a Price Lever', paragraphs: [
+        'A thicker laminate sheet resists chipping and lifting at the edge for longer, because there\'s more material for the edge-banding process to seal against and more sheet to absorb everyday knocks before the substrate underneath is exposed. That matters most exactly where hands and objects make contact most often — a kitchen shutter that gets opened dozens of times a day, or a countertop edge that takes the brunt of daily use.',
+        'We use 1mm laminate specifically on kitchen shutters and countertop edges for that reason. 0.8mm is our standard for wardrobe shutter faces and general kitchen panels — enough durability for normal handling without the extra cost of 1mm everywhere. 0.7mm goes on internal panels and lower-wear surfaces — the inside face of a wardrobe door, shelf undersides — where the surface is rarely touched directly and the thinner sheet is a sensible cost saving rather than a compromise.',
+      ] },
+      { heading: 'Laminate vs Veneer vs PU/Membrane', paragraphs: [
+        'Laminate is one of three finish options we work with — the others being real wood veneer (a thin layer of actual wood, for a natural grain look at a higher cost) and PU or membrane finishes (typically used on shutter fronts for a smooth, often glossy, factory-paint-like look). Laminate is the most practical, cost-effective, and widely used of the three for everyday kitchen and wardrobe work, which is why thickness — not just colour and texture — is worth getting right.',
+      ] },
+    ] },
+  { slug: 'fevicol-marine-adhesive', name: 'Fevicol Marine & Fevicol SR', tier: 'Premium',
+    grade: 'Waterproof & Standard-Grade Wood Adhesive', badgeVariant: 'water', badgeLabel: 'Bonding Adhesive',
+    bestFor: 'Bonding plywood joints, laminate pressing, and hardware fixing',
+    desc: 'Pidilite\'s Fevicol range is what actually bonds every joint in a woodwork job — the plywood itself is only as durable as the glue holding it together. We match the adhesive to the same wet/dry-area logic as the ply: Fevicol Marine for kitchen and wet-area units, Fevicol SR for standard dry-area work.',
+    longRead: [
+      { heading: 'Why the Adhesive Grade Has to Match the Ply Grade', paragraphs: [
+        'There\'s no point specifying IS:710 marine plywood for a kitchen and then bonding it with a standard-grade adhesive that fails under the exact moisture exposure the plywood was chosen to survive — the joint becomes the weak point instead of the board. Fevicol Marine is a waterproof-grade synthetic resin adhesive built to hold up under sustained moisture, so it\'s the one we pair with Sainik 710 for kitchen carcasses, bathroom units, and any wet-area bonding.',
+        'For dry-area work — wardrobes, TV units, and anything bonded with Club Prime, Greenply, or Kitply — Fevicol SR (a standard synthetic resin adhesive) is the right, cost-appropriate match. It bonds just as strongly for everyday use; it simply isn\'t rated for the sustained water exposure Marine grade is built for, which is exactly why we don\'t use it where that exposure is a real possibility.',
+      ] },
+      { heading: 'Where It\'s Used On a Job', paragraphs: [
+        'Adhesive comes into play at two points on most jobs: bonding structural joints in the carcass itself, and pressing laminate (mica) sheets onto the cut ply panels before edge banding. Both use the same grade logic — marine-rated adhesive wherever the finished unit will see moisture, standard-grade everywhere else — so the whole assembly, not just the plywood, is rated for the environment it\'s going into.',
       ] },
     ] },
 ];

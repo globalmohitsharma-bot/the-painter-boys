@@ -30,7 +30,7 @@ export const PAGE_META = {
     path: '/services',
     title: 'Painting, Carpentry, Modular Kitchen & Wardrobe Services | The Painter Boys',
     description: 'Interior painting, exterior painting, waterproofing, royal emulsion, texture & designer finishes, putty & primer, plus carpentry & woodwork — plywood work, modular kitchen making, wardrobe making & home wood work — across Ghaziabad, Noida & Delhi NCR.',
-    keywords: 'carpenter work, plywood work, wood kitchen making, modular kitchen, wardrobe making, home wood work, carpentry services, interior painting, exterior painting, waterproofing',
+    keywords: 'carpenter work, plywood work, mica work, laminate sheet, wood kitchen making, modular kitchen, wardrobe making, home wood work, carpentry services, interior painting, exterior painting, waterproofing',
   },
   about: {
     path: '/about',
@@ -51,6 +51,12 @@ export const PAGE_META = {
     path: '/paint-types',
     title: 'Education Center — Paint Types, Benefits & Drawbacks | The Painter Boys',
     description: 'Our Education Center — in-depth guides to every paint type we work with (Asian Paints Royale, Tractor Emulsion, Apex exterior, Royale Shyne, distemper, textures, enamel), covering real benefits, honest drawbacks, and which suits your home.',
+  },
+  'carpentry-materials': {
+    path: '/carpentry-materials',
+    title: 'Carpentry Materials — Plywood, Laminate & Adhesive Guide | The Painter Boys',
+    description: 'A real guide to the plywood, laminate and adhesive materials we use for carpentry work — Century Sainik 710 marine plywood, Century Club Prime, Greenply, Kitply, 0.7mm/0.8mm/1mm mica sheets, and Fevicol Marine & SR adhesive — what each is rated for and which job it suits.',
+    keywords: 'Sainik 710, Century Club Prime, Greenply, Kitply, mica sheet thickness, laminate sheet 0.7mm 0.8mm 1mm, Fevicol Marine, marine plywood Ghaziabad, plywood carpenter Ghaziabad',
   },
   blog: {
     path: '/blog',

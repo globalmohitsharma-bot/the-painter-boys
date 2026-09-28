@@ -210,11 +210,58 @@ async function checkCarpentryService(browser) {
   }
 }
 
+// ── Feature: Carpentry material guide pages (added 2026-09-28) ──
+// One dedicated, SEO'd detail page per carpentry material (Century Sainik
+// 710, Century Club Prime, Greenply & Kitply, Mica/Laminate sheets, Fevicol
+// Marine & SR) at /carpentry-materials/:slug, listed from
+// /carpentry-materials — mirrors the existing Paint Types pattern. Linked
+// from the Carpentry & Woodwork service page, the footer, and sitemap.xml.
+async function checkCarpentryMaterials(browser) {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${SITE}/carpentry-materials`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(600);
+    const listText = await page.evaluate(() => document.body.innerText);
+    log('Carpentry materials: list page renders heading', /Plywood, Laminate & Adhesive Materials/i.test(listText));
+    for (const name of ['Century Sainik 710', 'Century Club Prime', 'Greenply & Kitply', 'Mica / Laminate Sheets', 'Fevicol Marine & Fevicol SR']) {
+      log(`Carpentry materials: list page shows "${name}"`, listText.includes(name));
+    }
+
+    await page.goto(`${SITE}/carpentry-materials/century-sainik-710`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(600);
+    const detailText = await page.evaluate(() => document.body.innerText);
+    log('Carpentry materials: detail page renders material name', detailText.includes('Century Sainik 710'));
+    log('Carpentry materials: detail page mentions IS:710/marine grade', /IS:710/.test(detailText) && /marine/i.test(detailText));
+    const metaDesc = await page.locator('meta[name="description"]').getAttribute('content').catch(() => '');
+    log('Carpentry materials: detail page has a non-empty meta description', !!metaDesc && metaDesc.length > 20);
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href').catch(() => '');
+    log('Carpentry materials: detail page has a per-slug canonical URL', canonical === `${SITE}/carpentry-materials/century-sainik-710`);
+
+    await page.goto(`${SITE}/services/carpentry-woodwork`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(600);
+    const svcHasLink = await page.getByRole('link', { name: /Material Guide/i }).count();
+    log('Carpentry materials: linked from the Carpentry & Woodwork service page', svcHasLink > 0);
+
+    const sitemapRes = await fetch(`${SITE}/sitemap.xml`);
+    const sitemapText = await sitemapRes.text();
+    log('Carpentry materials: sitemap.xml includes the list page and all 5 detail pages',
+      sitemapText.includes('/carpentry-materials</loc>')
+      && sitemapText.includes('/carpentry-materials/century-sainik-710')
+      && sitemapText.includes('/carpentry-materials/century-club-prime')
+      && sitemapText.includes('/carpentry-materials/greenply-kitply')
+      && sitemapText.includes('/carpentry-materials/mica-laminate-sheets')
+      && sitemapText.includes('/carpentry-materials/fevicol-marine-adhesive'));
+  } finally {
+    await page.close();
+  }
+}
+
 const FEATURE_CHECKS = [
   checkTeamShareCard,
   checkTeamPartnerCopy,
   checkDiscountCoupon,
   checkCarpentryService,
+  checkCarpentryMaterials,
 ];
 
 const browser = await chromium.launch();

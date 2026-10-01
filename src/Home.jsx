@@ -293,7 +293,7 @@ export default function Home() {
               <div className="hero-bg-pattern" />
               <div className="hero-content">
                 <h1 className="hero-title">
-                  <span className="hero-title-colorful">Home Painting & Carpentry Professionals</span>
+                  <span className="hero-title-colorful">Home Painting Professionals</span>
                   <span className="hero-accent">With Decades of Experience</span>
                 </h1>
                 <div className="hero-badge">
@@ -553,7 +553,7 @@ export default function Home() {
               <div className="ph-content">
                 <span className="sec-tag light">Leadership Partners</span>
                 <h1 className="ph-title">Meet Our Partners</h1>
-                <p className="ph-sub">The leadership team who built The Painter Boys from the ground up — backed by a full crew of painters, supervisors, and project coordinators who execute every job on the ground.</p>
+                <p className="ph-sub">We're a small team of 40+ members — this is the leadership behind The Painter Boys, backed by a full crew of painters, supervisors, and project coordinators who execute every job on the ground.</p>
               </div>
             </div>
             <div className="page-content-white">
@@ -576,10 +576,10 @@ export default function Home() {
                     <h2>Backed by a Full Operational Team</h2>
                   </div>
                   <p className="svc-detail-text" style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
-                    The three of us above lead the company and set the standard every job is held to — but we're not the ones alone on a ladder. Every project runs through a dedicated crew of trained painters, on-site supervisors, and project coordinators who handle the day-to-day execution under our direct oversight, so the quality and accountability you see in this team carries through to every job, on every site, whether or not we're personally there that day.
+                    The two of us above lead the company and set the standard every job is held to — but we're not the ones alone on a ladder. Every project runs through a dedicated crew of trained painters, on-site supervisors, and project coordinators who handle the day-to-day execution under our direct oversight, so the quality and accountability you see in this team carries through to every job, on every site, whether or not we're personally there that day.
                   </p>
                   <p className="svc-detail-text" style={{ maxWidth: 760, margin: '16px auto 0', textAlign: 'center' }}>
-                    That extends across the whole team, not just the three of us — every painter, supervisor, and coordinator on a job works as a partner in the organization, sharing the same responsibility toward a client's commitment rather than treating it as someone else's job up the chain. Whichever of us you're speaking with, the same standard and the same accountability applies.
+                    That extends across the whole team, not just the two of us — every painter, supervisor, and coordinator on a job works as a partner in the organization, sharing the same responsibility toward a client's commitment rather than treating it as someone else's job up the chain. Whichever of us you're speaking with, the same standard and the same accountability applies.
                   </p>
                   <p className="svc-detail-text" style={{ maxWidth: 760, margin: '16px auto 0', textAlign: 'center' }}>
                     The Painter Boys is an equal opportunity company — every partner on our team is judged on the work, not on anything else.

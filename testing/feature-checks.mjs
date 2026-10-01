@@ -57,7 +57,7 @@ async function apiCall(method, path, token, body) {
 async function checkTeamShareCard(browser) {
   const page = await browser.newPage();
   try {
-    await page.goto(`${SITE}/team/rajeev-kumar`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(`${SITE}/team/sonia-gupta`, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(600);
 
     const shareBtn = page.getByRole('button', { name: '📤 Share My Card' });
@@ -66,7 +66,7 @@ async function checkTeamShareCard(browser) {
     await page.waitForTimeout(500);
 
     const cardText = await page.locator('.tc-card').innerText().catch(() => '');
-    log('Team share-card: modal shows name', cardText.includes('Rajeev Kumar'));
+    log('Team share-card: modal shows name', cardText.includes('Sonia Gupta'));
     log('Team share-card: modal shows corporate number', /\d{10}/.test(cardText));
     log('Team share-card: modal shows site URL', cardText.includes('thepainterboys.com'));
     log('Team share-card: modal shows the registration nudge', cardText.includes('priority on touch-ups') && cardText.includes('after-sale service'));

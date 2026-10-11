@@ -256,12 +256,37 @@ async function checkCarpentryMaterials(browser) {
   }
 }
 
+// ── Feature: API wake-up / server status (added 2026-10-11) ──
+// /api/health (anonymous, also touches Cosmos) is what the frontend's
+// "Wake server" pill and the keep-warm GitHub Action poll — see
+// src/apiWake.js. Verifies it answers, that protected routes are still
+// protected, and that the Admin Portal sign-in screen shows the pill
+// reaching "Server ready" against a live backend.
+async function checkApiWake(browser) {
+  const health = await fetch(`${API}/api/health`).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })).catch(e => ({ status: 0, body: e.message }));
+  log('API wake: /api/health answers ok', health.status === 200 && health.body?.status === 'ok', `${health.status} ${JSON.stringify(health.body)}`);
+  const guarded = await fetch(`${API}/api/clients`).then(r => r.status).catch(() => 0);
+  log('API wake: protected routes still require sign-in', guarded === 401, `got ${guarded}`);
+
+  const page = await browser.newPage();
+  try {
+    await page.goto(`${SITE}/admin`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.locator('.srv-status-ready').waitFor({ timeout: 90000 });
+    log('API wake: Admin Portal shows "Server ready"', true);
+  } catch (e) {
+    log('API wake: Admin Portal shows "Server ready"', false, e.message.split('\n')[0]);
+  } finally {
+    await page.close();
+  }
+}
+
 const FEATURE_CHECKS = [
   checkTeamShareCard,
   checkTeamPartnerCopy,
   checkDiscountCoupon,
   checkCarpentryService,
   checkCarpentryMaterials,
+  checkApiWake,
 ];
 
 const browser = await chromium.launch();

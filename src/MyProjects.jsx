@@ -3,15 +3,41 @@ import { useNavigate } from 'react-router-dom';
 import SiteHeader from './SiteHeader.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import Icon from './Icon.jsx';
-import { decodeIdToken, USER_KEY } from './useGoogleAccount.js';
+import { decodeIdToken, USER_KEY, MY_PROJECTS_CACHE_KEY } from './useGoogleAccount.js';
+import { apiFetch, useWakeApiOnOpen } from './apiWake.js';
+import ServerStatus from './ServerStatus.jsx';
 import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 import { PHONE, WA_LINK_DEFAULT } from './siteConfig.js';
 import './Home.css';
 import './MyProjects.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 const TOKEN_KEY = 'pb_mine_id_token';
+
+// Last-known copy of the customer's own projects/coupons, so the dashboard
+// paints instantly (and still shows something) while the server is slow or
+// waking up — the real fetch in load() always runs and replaces it. Tied to
+// the signed-in email so a shared device never shows one customer another's
+// projects, never used while an admin is impersonating, and cleared on sign-out.
+function cacheOwner(token) {
+  if (!token || token.startsWith('IMPERSONATE_')) return null;
+  return decodeIdToken(token)?.email || null;
+}
+function loadProjectsCache(token) {
+  const owner = cacheOwner(token);
+  if (!owner) return null;
+  try {
+    const cache = JSON.parse(localStorage.getItem(MY_PROJECTS_CACHE_KEY) || 'null');
+    return cache?.owner === owner ? cache : null;
+  } catch { return null; }
+}
+function saveProjectsCache(token, patch) {
+  const owner = cacheOwner(token);
+  if (!owner) return;
+  try {
+    localStorage.setItem(MY_PROJECTS_CACHE_KEY, JSON.stringify({ ...(loadProjectsCache(token) || {}), ...patch, owner }));
+  } catch { /* storage full/unavailable — the cache is a nice-to-have */ }
+}
 
 // Linear happy-path order — Cancelled is a terminal state outside this flow,
 // shown as its own banner instead of a step. Same colors as the Admin
@@ -57,7 +83,7 @@ function ProgressTimeline({ progress }) {
 }
 
 async function api(path, idToken) {
-  const res = await fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${idToken}` } });
+  const res = await apiFetch(path, { headers: { Authorization: `Bearer ${idToken}` } });
   if (!res.ok) {
     const err = new Error(`GET ${path} -> ${res.status}`);
     err.status = res.status;
@@ -67,7 +93,7 @@ async function api(path, idToken) {
 }
 
 async function apiPost(path, idToken, body) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await apiFetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body: JSON.stringify(body),
@@ -96,7 +122,7 @@ export default function MyProjects() {
     if (fromUrl) { sessionStorage.setItem(TOKEN_KEY, fromUrl); return fromUrl; }
     return sessionStorage.getItem(TOKEN_KEY);
   });
-  const [projects, setProjects] = useState(null);
+  const [projects, setProjects] = useState(() => loadProjectsCache(idToken)?.projects ?? null);
   const [error, setError] = useState('');
   // Plain "Loading…" is fine for a normal-speed fetch, but with nothing else
   // on screen a slow one can look stuck — after a couple seconds, say what's
@@ -116,7 +142,7 @@ export default function MyProjects() {
   const [requestStatus, setRequestStatus] = useState(null); // { ok: bool, message: string }
   const [requesting, setRequesting] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const [coupons, setCoupons] = useState([]);
+  const [coupons, setCoupons] = useState(() => loadProjectsCache(idToken)?.coupons ?? []);
   const [redeeming, setRedeeming] = useState(false);
   const [redeemStatus, setRedeemStatus] = useState(null); // { ok: bool, message: string }
   const buttonRef = useRef(null);
@@ -124,6 +150,7 @@ export default function MyProjects() {
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
   const [nativeError, setNativeError] = useState('');
   const [sessionExpired, setSessionExpired] = useState(false);
+  useWakeApiOnOpen();
 
   const isImpersonating = !!idToken && idToken.startsWith('IMPERSONATE_');
   // Impersonation tokens carry no client-readable payload, so fall back to
@@ -139,9 +166,10 @@ export default function MyProjects() {
     try {
       const data = await api('/api/my-projects', token);
       setProjects(data);
+      saveProjectsCache(token, { projects: data });
       // Best-effort — a coupon-lookup failure shouldn't block the projects
       // list from showing, so this doesn't share the outer catch below.
-      api('/api/my-projects/coupons', token).then(setCoupons).catch(() => {});
+      api('/api/my-projects/coupons', token).then(c => { setCoupons(c); saveProjectsCache(token, { coupons: c }); }).catch(() => {});
     } catch (e) {
       if (e.status === 401) {
         // Google ID tokens expire in ~1 hour. On mobile, "closing" a tab
@@ -156,7 +184,7 @@ export default function MyProjects() {
         return;
       }
       setError('Could not load your projects — ' + e.message);
-      setProjects([]);
+      setProjects(prev => prev ?? []); // keep the cached copy on screen if there is one
     }
     // This page is customer-facing by default and has no concept of role —
     // an admin/staff account landing here directly (bookmark, shared link,
@@ -305,6 +333,7 @@ export default function MyProjects() {
   function signOut() {
     sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(MY_PROJECTS_CACHE_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
     nativeGoogleSignOut();
     window.location.href = '/';
@@ -330,6 +359,7 @@ export default function MyProjects() {
                   <h3>Sign in to view your dashboard</h3>
                   <p>Use the same Google account you shared with The Painter Boys team.</p>
                   {sessionExpired && <p className="mp-warn">Your session expired — please sign in again.</p>}
+                  <ServerStatus quiet />
                   {isNativeApp() ? (
                     <>
                       <button className="mp-native-gsi-btn" onClick={handleNativeSignIn} disabled={nativeSigningIn}>
@@ -396,6 +426,7 @@ export default function MyProjects() {
               </div>
             </div>
           )}
+          <ServerStatus quiet className="mp-server-status" />
           {error && <div className="mp-error">{error}</div>}
           {coupons.length > 0 && (
             <div className="mp-coupon-banner">

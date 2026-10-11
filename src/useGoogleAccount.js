@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nativeGoogleSignOut } from './nativeGoogleSignIn.js';
+import { apiFetch } from './apiWake.js';
 
 // Shared Google sign-in state, used independently by both SiteHeader (desktop
 // account icon) and BottomNav (mobile My Projects/Profile tabs) — each keeps
@@ -12,8 +13,10 @@ export const USER_KEY = 'pb_google_user';
 // means signing in once from the header carries over to the dashboard
 // instead of prompting a second, separate Google sign-in for the same user.
 const DASHBOARD_TOKEN_KEY = 'pb_mine_id_token';
+// MyProjects.jsx's offline copy of the customer's projects — cleared here too
+// so signing out from the header doesn't leave it behind on a shared device.
+export const MY_PROJECTS_CACHE_KEY = 'pb_mine_projects_cache';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 
 function loadStoredUser() {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
@@ -67,7 +70,7 @@ export default function useGoogleAccount() {
     sessionStorage.setItem(DASHBOARD_TOKEN_KEY, response.credential);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/google`, {
+      const res = await apiFetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential }),
@@ -104,6 +107,7 @@ export default function useGoogleAccount() {
   const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(MY_PROJECTS_CACHE_KEY);
     sessionStorage.removeItem(DASHBOARD_TOKEN_KEY);
     window.google?.accounts?.id?.disableAutoSelect?.();
     nativeGoogleSignOut();

@@ -6,10 +6,11 @@ import useInstallPrompt from './useInstallPrompt.js';
 import { isNativeApp, nativeGoogleSignIn, nativeGoogleSignOut } from './nativeGoogleSignIn.js';
 import { shareImage } from './nativeShare.js';
 import { DEV_TEST_ADMIN_TOKEN } from './useGoogleAccount.js';
+import { apiFetch, useWakeApiOnOpen } from './apiWake.js';
+import ServerStatus from './ServerStatus.jsx';
 import './AdminPortal.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5223';
 const TOKEN_KEY = 'pb_admin_id_token';
 const WHOAMI_KEY = 'pb_admin_whoami';
 // Data volume here is small enough to cache the whole thing — lets the
@@ -36,7 +37,7 @@ async function api(path, idToken, options = {}) {
   // browser handle that, rather than forcing application/json, is required for
   // the image-upload endpoint to parse correctly.
   const isFormData = options.body instanceof FormData;
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await apiFetch(path, {
     ...options,
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -49,7 +50,9 @@ async function api(path, idToken, options = {}) {
     // several endpoints (e.g. coupon redeem) return a specific reason
     // ("already redeemed", "expired") that's worth showing as-is.
     const detail = await res.json().catch(() => null);
-    throw new Error(detail?.message || `${options.method || 'GET'} ${path} -> ${res.status}`);
+    const err = new Error(detail?.message || `${options.method || 'GET'} ${path} -> ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
   return res.status === 204 ? null : res.json();
 }
@@ -197,6 +200,7 @@ export default function AdminPortal() {
   const buttonRef = useRef(null);
   const [gsiReady, setGsiReady] = useState(false);
   const [nativeSigningIn, setNativeSigningIn] = useState(false);
+  useWakeApiOnOpen();
 
   // The site's one shared manifest points its home-screen shortcut at "/" —
   // right for a customer, but for an admin it meant every launch from the
@@ -228,7 +232,7 @@ export default function AdminPortal() {
     setChecking(true);
     setAuthError('');
     try {
-      const res = await fetch(`${API_BASE}/api/auth/google`, {
+      const res = await apiFetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential }),
@@ -264,9 +268,16 @@ export default function AdminPortal() {
     api('/api/auth/whoami', idToken).then(data => {
       localStorage.setItem(WHOAMI_KEY, JSON.stringify(data));
       setWhoami(data);
-    }).catch(() => {
-      localStorage.removeItem(TOKEN_KEY);
-      setIdToken(null);
+    }).catch(e => {
+      // Only a real auth rejection signs the admin out — a server that's
+      // still waking up (or briefly unreachable) used to land here too and
+      // wipe a perfectly valid session.
+      if (e.status === 401 || e.status === 403) {
+        localStorage.removeItem(TOKEN_KEY);
+        setIdToken(null);
+      } else {
+        setAuthError(e.message);
+      }
     }).finally(() => setChecking(false));
   }, [idToken, whoami]);
 
@@ -313,7 +324,7 @@ export default function AdminPortal() {
   }
 
   if (checking) {
-    return <div className="ap-gate"><p>Checking access…</p></div>;
+    return <div className="ap-gate"><p>Checking access…</p><ServerStatus /></div>;
   }
 
   if (!idToken || !whoami) {
@@ -335,6 +346,7 @@ export default function AdminPortal() {
             </>
           )}
           {authError && <p className="ap-warn ap-warn-error">{authError}</p>}
+          <ServerStatus className="ap-gate-server-status" />
           {import.meta.env.DEV && (
             <button type="button" className="ap-dev-login" onClick={() => handleCredential({ credential: DEV_TEST_ADMIN_TOKEN })}>
               🧪 Sign in as testadmin@test.com (local only)
@@ -506,7 +518,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // not JSON, and needs the Authorization header a plain <a href> download
   // link couldn't send. Triggers a save via a throwaway <a download> element.
   async function exportCsv() {
-    const res = await fetch(`${API_BASE}/api/admin/export/csv`, {
+    const res = await apiFetch('/api/admin/export/csv', {
       headers: { Authorization: `Bearer ${idToken}` },
     });
     if (!res.ok) throw new Error(`Export failed (${res.status})`);
@@ -529,7 +541,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
   // error message would hide the actual reason (unconfigured SMTP vs. a real
   // send failure), which is the whole point of this health check.
   async function sendTestEmail() {
-    const res = await fetch(`${API_BASE}/api/auth/test-email`, {
+    const res = await apiFetch('/api/auth/test-email', {
       method: 'POST',
       headers: { Authorization: `Bearer ${idToken}` },
     });
@@ -906,6 +918,7 @@ function AdminDashboard({ idToken, whoami, onSignOut }) {
           <span>Admin Portal</span>
         </button>
         <div className="ap-header-user">
+          <ServerStatus />
           <span>{whoami.name}</span>
           <button className="ap-signout-icon" onClick={onSignOut} title="Sign out" aria-label="Sign out">!</button>
         </div>
@@ -1714,9 +1727,28 @@ function SuggestField({ label, value, onChange, options, placeholder, required, 
   );
 }
 
+// Shared by the Client/Project modals: locks Save while a save is in flight
+// (it can now wait up to ~2 min for a waking server — a second tap would
+// otherwise send a duplicate create), and shows why it failed instead of a
+// silent no-op. The modal stays open with everything typed on failure.
+function useSaveGuard() {
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  async function runSave(fn) {
+    if (saving) return;
+    setSaving(true);
+    setSaveError('');
+    try { await fn(); }
+    catch (e) { setSaveError(`Could not save — ${e.message.replace(/\.?$/, '.')} Your entries are still here; tap Save to try again.`); }
+    finally { setSaving(false); }
+  }
+  return { saving, saveError, runSave };
+}
+
 function ClientForm({ client, onCancel, onSave, societies = [] }) {
   const [form, setForm] = useState(client);
   const canSave = REQUIRED_CLIENT_FIELDS.every(f => (form[f] || '').trim());
+  const { saving, saveError, runSave } = useSaveGuard();
   return (
     <div className="ap-modal-overlay" onClick={onCancel}>
       <div className="ap-modal" onClick={e => e.stopPropagation()}>
@@ -1751,9 +1783,10 @@ function ClientForm({ client, onCancel, onSave, societies = [] }) {
           </label>
         )}
         {!canSave && <p className="ap-warn">Name and Phone are required — everything else can be filled in later.</p>}
+        {saveError && <p className="ap-warn ap-warn-error">{saveError}</p>}
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>
-          <button className="ap-btn-primary" onClick={() => onSave(form)} disabled={!canSave}>Save</button>
+          <button className="ap-btn-primary" onClick={() => runSave(() => onSave(form))} disabled={!canSave || saving}>{saving ? 'Saving…' : 'Save'}</button>
         </div>
       </div>
     </div>
@@ -1778,7 +1811,8 @@ function ProjectForm({ project, client, onCancel, onSave, knownPainters = [] }) 
     const tokenReceived = Number(value);
     setForm(f => ({ ...f, tokenReceived, pendingAmount: Math.max(0, (f.amount || 0) - tokenReceived) }));
   }
-  function submit() { onSave(form, { contactName: clientName, phone: clientPhone }); }
+  const { saving, saveError, runSave } = useSaveGuard();
+  function submit() { runSave(() => onSave(form, { contactName: clientName, phone: clientPhone })); }
   const painterOptions = [...new Set([...DEFAULT_PAINTERS, ...knownPainters])].sort();
   const selectedPainters = form.painterNames || [];
   // paintType stays a plain string on the backend (no schema change) — tiles
@@ -1915,9 +1949,10 @@ function ProjectForm({ project, client, onCancel, onSave, knownPainters = [] }) 
           </div>
         )}
         <label className="ap-field"><span>Remarks</span><textarea rows={2} value={form.remarks} onChange={e => field('remarks', e.target.value)} /></label>
+        {saveError && <p className="ap-warn ap-warn-error">{saveError}</p>}
         <div className="ap-modal-actions">
           <button onClick={onCancel}>Cancel</button>
-          <button className="ap-btn-primary" onClick={submit}>Save</button>
+          <button className="ap-btn-primary" onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
         </div>
       </div>
     </div>

@@ -1,0 +1,32 @@
+.srv-status {
+  display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: .74rem; font-weight: 700; line-height: 1.2;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid transparent;
+  white-space: nowrap;
+}
+.srv-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+.srv-status-ready { color: #15803d; background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.25); }
+.srv-status-waking { color: #b45309; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.30); }
+.srv-status-waking .srv-dot { animation: srv-pulse 1s ease-in-out infinite; }
+.srv-status-unreachable { color: #b91c1c; background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.30); }
+.srv-status-unknown { color: #475569; background: rgba(100,116,139,.10); border-color: rgba(100,116,139,.25); }
+
+.srv-wake-btn {
+  font: inherit; font-size: .72rem; font-weight: 800; cursor: pointer;
+  color: #fff; background: #f2871f; border: none; border-radius: 14px; padding: 3px 10px;
+}
+.srv-wake-btn:hover { background: #d9730f; }
+
+@keyframes srv-pulse { 50% { opacity: .3; } }
+
+/* On phones, "ready" collapses to just the dot — the other states keep their
+   text because they're the ones the user needs to read and act on. */
+@media (max-width: 600px) {
+  .srv-status-ready { font-size: 0; gap: 0; padding: 5px; }
+}
+
+/* Page-specific placement */
+.ap-gate-server-status, .ap-gate .srv-status { margin-top: 12px; }
+.mp-server-status { margin-bottom: 12px; }
+.mp-gate .srv-status { margin-top: 10px; }

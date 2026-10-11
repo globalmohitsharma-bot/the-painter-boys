@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Options;
 using ThePainterBoys.Api.Auth;
 using ThePainterBoys.Api.Configuration;
 using ThePainterBoys.Api.Repositories;
@@ -83,5 +85,24 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Anonymous readiness probe — the frontend's "Wake server" indicator (see
+// src/apiWake.js) and the keep-warm GitHub Action hit this so an instance
+// that idled out or is mid-restart spins up *and* opens its Cosmos
+// connection before a real save needs it. Reads only the database's own
+// metadata (~1 RU), never any customer data. 503 (not 500) on a Cosmos
+// failure so callers treat it as "not ready yet, keep waiting".
+app.MapGet("/api/health", async (CosmosClient cosmos, IOptions<CosmosDbOptions> options, CancellationToken ct) =>
+{
+    try
+    {
+        await cosmos.GetDatabase(options.Value.DatabaseName).ReadAsync(cancellationToken: ct);
+        return Results.Ok(new { status = "ok" });
+    }
+    catch (Exception) when (!ct.IsCancellationRequested)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.Run();

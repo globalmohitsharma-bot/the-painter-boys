@@ -158,6 +158,175 @@ app**, don't assume it's a fresh regression — check in this order:
   (`the-painter-boys`, `silver-druid-06c38c`) can be considered stale/
   unused going forward.
 
+## Azure cost cut — other projects put to sleep (2026-10-11)
+
+**Why:** the September 2026 bill was ₹3,758 (incl. 18% GST) for the whole
+subscription (`Azure subscription 1`, `a950163f-ffec-4bdb-9800-61044a2f6c84`),
+but most of it came from **other projects** sharing it, not The Painter Boys:
+
+| Resource | Used by | Sep cost (₹, pre-GST) |
+|---|---|---|
+| `ASP-aiinterviewbotPilotgroup-9918` (B1 Linux plan) | AIInterviewBotPilot + FindBuyRentProtectPilot | 1,169 |
+| `ThePainterBoys-plan` (B1 Linux plan) | ThePainterBoys-api | 989 |
+| `pilotai` Cosmos DB (4 databases × 400 RU/s = 1600 RU/s, free tier covers 1000) | all projects | 1,027 |
+| Static Web Apps, Blob Storage, Key Vault, logs | — | ~0 |
+
+**Goal:** only The Painter Boys runs; everything else sleeps at ₹0.
+**Target bill: ≈ ₹1,167/month** (just `ThePainterBoys-plan` B1 + GST).
+Moving the API to F1 Free would make it ₹0 but F1 caps CPU at 60 min/day and
+idles the app (multi-second cold start on first visit) — **deliberately kept
+on B1** for the 2 daily users.
+
+### API wake-up / cold-start protection (built 2026-10-11, on `develop`)
+
+So the API can sleep (Free tier, or just a restart after a deploy) without
+users losing anything or feeling it much:
+- **`GET /api/health`** (anonymous, [backend/Program.cs](backend/Program.cs))
+  — reads only the database metadata (~1 RU) so "ready" means the Cosmos
+  connection is warm too; 503 when Cosmos isn't reachable.
+- **[src/apiWake.js](src/apiWake.js)** — every API call in the Admin
+  Portal, My Projects and header sign-in goes through `apiFetch`:
+  reads retry once after waking the server; **writes never leave until
+  /api/health answers and are never auto-retried** (no duplicates); the
+  Admin Portal / My Projects start waking the server the moment they open
+  (and whenever the app returns to the foreground).
+- **[src/ServerStatus.jsx](src/ServerStatus.jsx)** — "Server ready /
+  Waking server… / Server not responding + **Wake server**" pill in the
+  Admin Portal header and sign-in screen; on My Projects it's `quiet` (only
+  shows when there's something to wait for).
+- **Local copy**: Admin Portal already cached its data; My Projects now
+  caches the customer's own projects/coupons (`pb_mine_projects_cache`,
+  tied to their email, skipped while impersonating, cleared on sign-out).
+- Client/Project modals lock Save ("Saving…") and show the error, keeping
+  everything typed, if a save fails.
+- Admin no longer gets signed out when the session check fails because the
+  server is unreachable — only on a real 401/403.
+- **[.github/workflows/keep-api-warm.yml](.github/workflows/keep-api-warm.yml)**
+  pings `/api/health` every 10 min (runs only from `master`; free since the
+  repo is public; GitHub disables it after 60 days without commits).
+
+**Moving the API to F1 Free is NOT done, and is blocked by the domain:**
+the API is served at `api.thepainterboys.com` (custom domain + SNI cert),
+and **F1 doesn't support custom domains**. The user wants to keep that
+domain (decided 2026-10-11), so the API stays on `ThePainterBoys-plan` B1
+(≈ ₹1,167/month incl. GST). The website (`www.thepainterboys.com`, Static
+Web Apps Free) is unaffected either way. If ₹0 is wanted later while
+keeping the domain, the option is a free proxy in front of the
+`azurewebsites.net` host (e.g. Cloudflare DNS + Worker) — a DNS move,
+needs its own decision. Also note `WeeklySheetSyncBackgroundService`
+relies on Always On (B1) — on F1 it would only run while the app is awake
+(it runs once at every startup, which is safe: import-only, never overwrites).
+
+### What was done
+
+**Hosting — DONE 2026-10-11:**
+- Stopped `AIInterviewBotPilot`, `FindBuyRentProtectPilot` (both in
+  `aiinterviewbotPilot_group`) and `aiinterviewbot-test` (`TestHarness`, was
+  already on the free `aiinterviewbot-test-plan` F1).
+- Removed custom-domain bindings `aiinterviewbot.com` +
+  `www.aiinterviewbot.com` from `AIInterviewBotPilot` (F1 doesn't allow custom
+  domains). **GoDaddy/DNS records were not touched.** No SSL certs were bound.
+- Set Always On → off on both, then scaled `ASP-aiinterviewbotPilotgroup-9918`
+  **B1 → F1 (Free)**.
+- Static Web Apps are all Free tier and were left as-is
+  (`FindBuyRentProtectPilot-web`, `ThePainterBoys-web`, `ThePainterBoys-web-prod`).
+  Storage accounts `teasharnessresumes` / `thepainterboysimg` left as-is (≈₹0).
+
+**Cosmos DB — backup DONE, deletion PENDING (user to run):**
+- All 3 non-Painter-Boys databases fully exported, document counts verified
+  against the server (all matched). No stored procedures/triggers/UDFs existed.
+- Deletion of those 3 databases was blocked by Claude Code's safety check and
+  is left for the user. To finish, run in **PowerShell**:
+  ```powershell
+  foreach ($d in 'InterviewBotAuth','FBPR_SocietyEstateDb','TeasHarnessCosmos') { az cosmosdb sql database delete -a pilotai -g aiinterviewbotPilot_group -n $d --yes; "deleted $d" }
+  ```
+  Afterwards only `PB_ThePainterBoysDb` (400 RU/s, the minimum for a
+  shared-throughput database) remains → within the 1000 RU/s free tier → ₹0.
+  Verify: `az cosmosdb sql database list -a pilotai -g aiinterviewbotPilot_group --query "[].name" -o tsv`.
+  **Never delete `PB_ThePainterBoysDb`** — it's this project's live data.
+- Read-only data role (`…0001`, Built-in Data Reader) was granted to the
+  user's own login (`112984dd-7373-48d1-b8b0-48813a212e01`) on the 3 databases
+  to make the export possible.
+
+### Backup location
+
+**`F:\Projects\Azure-sleeping-projects-backup-2026-10-11\`** (outside git,
+3.3 MB). **Contains secrets** (app settings) — keep private, never commit,
+copy somewhere durable (it's only on this machine).
+
+| File(s) | What |
+|---|---|
+| `webapp-<app>.json` | Full app definition (`az webapp show`) |
+| `webapp-<app>-appsettings.json` | All app settings / connection strings |
+| `webapp-<app>-config.json` | Site config (runtime, startup command, Always On…) |
+| `plan-ASP-9918.json` | The shared plan as it was on B1 |
+| `cosmos-<db>-containers.json` | Container definitions (partition keys, indexing policy) |
+| `cosmos-<db>-<container>.json` | Every document in that container |
+| `cosmos-role-assignments.json` | Cosmos data-plane RBAC as it was |
+| `export-cosmos.mjs` | Script used to export (read-only) |
+| `import-cosmos.mjs` | Restore script — **written but never run/tested** |
+
+Documents backed up:
+
+| Database | Containers (partition key) → doc count |
+|---|---|
+| `InterviewBotAuth` | RedeemCodes (`/code`) 0 · QaEntries (`/userId`) 1 · Users (`/id`) 2 |
+| `FBPR_SocietyEstateDb` | FBPR_Users (`/id`) 6 · FBPR_Invitations (`/id`) 4 · FBPR_Societies (`/id`) 1 · FBPR_Conversations (`/societyId`) 2 · FBPR_Residents (`/societyId`) 958 · FBPR_Properties (`/societyId`) 20 |
+| `TeasHarnessCosmos` | Users (`/id`) 71 · QaEntries (`/userId`) 1249 · Resumes (`/userId`) 1 · Feedback (`/userId`) 11 · Invites (`/token`) 20 · Tokens (`/code`) 801 |
+
+### Sleeping apps — reference details
+
+| App | Resource group / plan | Default host | Runtime / startup | Managed identity (principalId) | Before sleep |
+|---|---|---|---|---|---|
+| `AIInterviewBotPilot` | `aiinterviewbotPilot_group` / `ASP-aiinterviewbotPilotgroup-9918` | `aiinterviewbotpilot-cqaefkgmcugyczf7.westus2-01.azurewebsites.net` | `DOTNETCORE\|10.0`, `dotnet TeasHarness.dll` | `5dca2479-2379-4304-a545-aca6dff39108` | Always On **on**, domains `aiinterviewbot.com` + `www.` |
+| `FindBuyRentProtectPilot` | same | `findbuyrentprotectpilot.azurewebsites.net` | `DOTNETCORE\|10.0` | `6b48761e-b7f9-494d-a701-ef7d47f721d4` | Always On off; frontend SWA `FindBuyRentProtectPilot-web` (`calm-ocean-0e115e21e.7.azurestaticapps.net`) |
+| `aiinterviewbot-test` | `TestHarness` / `aiinterviewbot-test-plan` (F1) | `aiinterviewbot-test.azurewebsites.net` | `DOTNETCORE\|10.0`, `dotnet TeasHarness.dll` | `236cb3a1-82e7-457a-91aa-285ceda646b1` | Always On off |
+
+Cosmos RBAC that existed (data-plane, `…0002` = Data Contributor):
+`FindBuyRentProtectPilot` MI → `/dbs/FBPR_SocietyEstateDb` (`…0002`). No
+Cosmos role was found for the `AIInterviewBotPilot` MI — check its app-settings
+backup for how it connects before restoring. `ThePainterBoys-api` MI
+(`88f76e30-fc71-4215-9280-3ad56e64c9e2`) → `/dbs/PB_ThePainterBoysDb`
+(`…0002`) — untouched.
+
+### How to wake a project back up
+
+Run `az` from **PowerShell** (Git Bash mangles `/dbs/...` and `/id` args).
+Waking anything on the shared plan costs ~₹1,169/month again (B1), and a
+second database pushes Cosmos over the free 1000 RU/s (≈ ₹500/month per extra
+400 RU/s database at Sep rates — consider `--throughput 400` on just one, or
+moving its containers into an existing database).
+
+1. **Plan back to B1** (only if it needs Always On / custom domain / more than
+   60 CPU-min/day):
+   `az appservice plan update -n ASP-aiinterviewbotPilotgroup-9918 -g aiinterviewbotPilot_group --sku B1`
+2. **Recreate the database** (shared throughput first, then containers *without*
+   throughput — see the gotcha in "Lessons pulled from a sibling project" below):
+   ```powershell
+   az cosmosdb sql database create -a pilotai -g aiinterviewbotPilot_group -n FBPR_SocietyEstateDb --throughput 400
+   az cosmosdb sql container create -a pilotai -g aiinterviewbotPilot_group -d FBPR_SocietyEstateDb -n FBPR_Residents --partition-key-path "/societyId"
+   # …one per container, partition keys from the table above / cosmos-<db>-containers.json
+   ```
+3. **Grant the app's managed identity data access** (and your own login
+   `…0002` if you'll run the import):
+   ```powershell
+   az cosmosdb sql role assignment create -a pilotai -g aiinterviewbotPilot_group --role-definition-id 00000000-0000-0000-0000-000000000002 --principal-id 6b48761e-b7f9-494d-a701-ef7d47f721d4 --scope "/dbs/FBPR_SocietyEstateDb"
+   ```
+4. **Restore data** (run from this repo folder so `node_modules` resolves —
+   test on one container first, the script has never been run):
+   `node F:/Projects/Azure-sleeping-projects-backup-2026-10-11/import-cosmos.mjs FBPR_SocietyEstateDb`
+5. **Re-enable and start the app:**
+   ```powershell
+   az webapp config set -n AIInterviewBotPilot -g aiinterviewbotPilot_group --always-on true   # B1 only
+   az webapp start -n AIInterviewBotPilot -g aiinterviewbotPilot_group
+   ```
+6. **Custom domain (AIInterviewBotPilot only, B1 required):** re-add both
+   hostnames — the DNS `asuid` TXT/CNAME records should still be at the
+   registrar — then re-create the managed certificate + SNI binding in the
+   portal (App Service → Custom domains → Add binding).
+   `az webapp config hostname add --webapp-name AIInterviewBotPilot -g aiinterviewbotPilot_group --hostname www.aiinterviewbot.com`
+7. If an app setting was lost, compare against `webapp-<app>-appsettings.json`.
+
 ## Known deployment issues (read before every deploy)
 
 Real failures hit while setting this up — all reproducible, all avoidable
@@ -446,7 +615,9 @@ the hard way:
   token has to come from the user** (Azure Portal → the Static Web App →
   Overview → Manage deployment token), or the user runs the deploy
   themselves. Don't spend time trying to work around this.
-- **Decided (2026-08-19): this project shares the `pilotai` Cosmos account
+- *(Superseded 2026-10-11: the other three tenants were backed up and put
+  to sleep — see "Azure cost cut — other projects put to sleep" above.)*
+  **Decided (2026-08-19): this project shares the `pilotai` Cosmos account
   / `aiinterviewbotPilot_group` resource group**, rather than getting its
   own — same account already used by `FindBuyRentProtect`
   (`FBPR_*`), `InterviewBotAuth`, and `TeasHarnessCosmos`. Two things

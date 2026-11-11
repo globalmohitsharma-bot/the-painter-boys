@@ -216,6 +216,14 @@ The user asked for no more monthly Azure charges, keeping the site running:
   `build-and-promote.yml` (not a secret; the old `VITE_API_BASE_URL` repo
   secret is no longer read). The `api.thepainterboys.com` binding was removed
   from the app and `ThePainterBoys-plan` scaled **B1 → F1 (Free)**, Always On off.
+- **Hard caps so nothing can bill again:** Cosmos account `pilotai` total
+  throughput limited to **1000 RU/s** (= the free tier — creating any further
+  database/container with its own throughput will now *fail* instead of
+  billing; raise `capacity.totalThroughputLimit` first if that's ever wanted).
+  Log Analytics `DefaultWorkspace-…-WUS2` daily cap **0.1 GB**. Budget
+  **`zero-bill-alert`** (₹100/month, emails the owner once actual cost > 1%).
+- Audit 2026-11-11: no SQL, VMs, disks or public IPs exist; only Free-tier
+  SWAs/F1 plans plus near-₹0 pay-per-use storage/Key Vault remain.
 - To go back to B1 + the custom domain: scale the plan to B1, re-add the
   hostname + managed cert binding, and change the URL in the workflow back.
 - All GitHub repos were also cloned locally to `F:\Projects\GitHub-backup-2026-11-11`.

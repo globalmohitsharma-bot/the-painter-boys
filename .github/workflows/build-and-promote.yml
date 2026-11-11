@@ -24,7 +24,9 @@ jobs:
       - run: npm run build
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          # Default *.azurewebsites.net host, not api.thepainterboys.com: the
+          # API runs on the Free F1 plan (₹0), which can't bind custom domains.
+          VITE_API_BASE_URL: https://thepainterboys-api.azurewebsites.net
       - uses: actions/upload-artifact@v4
         with:
           name: site-dist

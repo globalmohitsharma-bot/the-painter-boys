@@ -205,7 +205,22 @@ users losing anything or feeling it much:
   pings `/api/health` every 10 min (runs only from `master`; free since the
   repo is public; GitHub disables it after 60 days without commits).
 
-**Moving the API to F1 Free is NOT done, and is blocked by the domain:**
+### ₹0 bill — DONE 2026-11-11 (supersedes the "kept on B1" decision below)
+
+The user asked for no more monthly Azure charges, keeping the site running:
+- The 3 backed-up Cosmos databases (`InterviewBotAuth`, `FBPR_SocietyEstateDb`,
+  `TeasHarnessCosmos`) were **deleted** — only `PB_ThePainterBoysDb` (400 RU/s)
+  remains, inside the free 1000 RU/s → Cosmos ₹0.
+- The frontend now calls the API at
+  **`https://thepainterboys-api.azurewebsites.net`**, hard-coded in
+  `build-and-promote.yml` (not a secret; the old `VITE_API_BASE_URL` repo
+  secret is no longer read). The `api.thepainterboys.com` binding was removed
+  from the app and `ThePainterBoys-plan` scaled **B1 → F1 (Free)**, Always On off.
+- To go back to B1 + the custom domain: scale the plan to B1, re-add the
+  hostname + managed cert binding, and change the URL in the workflow back.
+- All GitHub repos were also cloned locally to `F:\Projects\GitHub-backup-2026-11-11`.
+
+**(Historical, 2026-10-11) Moving the API to F1 Free is NOT done, and is blocked by the domain:**
 the API is served at `api.thepainterboys.com` (custom domain + SNI cert),
 and **F1 doesn't support custom domains**. The user wants to keep that
 domain (decided 2026-10-11), so the API stays on `ThePainterBoys-plan` B1

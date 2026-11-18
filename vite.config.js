@@ -41,7 +41,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,webp,ico}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        // /tempproject is a standalone static demo page (not part of the SPA):
+        // never answer it with the SPA shell, and don't precache it.
+        navigateFallbackDenylist: [/^\/api\//, /^\/tempproject/],
+        globIgnores: ['tempproject/**'],
         // A newly-installed service worker used to sit "waiting" until every
         // open tab/PWA instance was fully closed and relaunched before it took
         // over — on a phone that keeps the app backgrounded for days, that

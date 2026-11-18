@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>TOT — Truth Over Trends (Demo Prototype)</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231B7A43'/%3E%3Cg fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3Cpath d='M8.6 12.3l2.4 2.4L15.8 9.6'/%3E%3Ccircle cx='20' cy='20' r='4.6'/%3E%3Cpath d='M23.5 23.5l3.8 3.8' stroke-width='2.6'/%3E%3C/g%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --dark: #0B3D2E;
+            --dark2: #0E4A38;
+            --green: #1B7A43;
+            --green-light: #E9F5EC;
+            --bg: #F6F5F0;
+            --text: #17241C;
+            --muted: #6C7C72;
+            --border: #E4E1D8;
+            --risk-high: #D64545;
+            --risk-high-bg: #FDEAEA;
+            --risk-mod: #C8861B;
+            --risk-mod-bg: #FBF1DF;
+            --risk-low: #2F8F44;
+            --risk-low-bg: #EAF6EA;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+            background: #EDEBE3; color: var(--text); margin: 0;
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            padding: 2rem 1rem 3rem;
+        }
+        /* ---- Phone frame ---- */
+        .phone {
+            width: 380px; max-width: 92vw; height: 780px; max-height: 88vh;
+            background: #000; border-radius: 46px; padding: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.35), 0 0 0 2px #222;
+            position: relative;
+        }
+        .phone-screen {
+            width: 100%; height: 100%; background: var(--bg); border-radius: 36px;
+            overflow: hidden; position: relative; display: flex; flex-direction: column;
+        }
+        .notch {
+            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 22px; background: #000; border-radius: 14px; z-index: 50;
+        }
+        .status-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.55rem 1.3rem 0.3rem; font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+        }
+        .status-bar .icons { display: flex; align-items: center; gap: 0.3rem; }
+        .status-bar svg { width: 16px; height: 16px; }
+
+        /* ---- Screens ---- */
+        .screen {
+            display: none; flex-direction: column; flex: 1; min-height: 0;
+        }
+        .screen.active { display: flex; }
+        .screen-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .screen-body::-webkit-scrollbar { width: 0; }
+
+        /* ---- Top bar (in-app) ---- */
+        .topbar {
+            display: flex; align-items: center; gap: 0.7rem; padding: 0.4rem 1.1rem 0.9rem;
+            flex-shrink: 0;
+        }
+        .topbar h1 { font-size: 1.05rem; font-weight: 700; margin: 0; flex: 1; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+            color: var(--text);
+        }
+        .icon-btn svg { width: 18px; height: 18px; }
+        .topbar.on-dark { color: #fff; }
+        .topbar.on-dark .icon-btn { background: rgba(255,255,255,0.15); color: #fff; }
+
+        /* ---- Bottom nav ---- */
+        .bottom-nav {
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 0.55rem 0.4rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+            background: #fff; border-top: 1px solid var(--border); flex-shrink: 0;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+            background: none; border: none; color: var(--muted); font-size: 0.62rem; font-weight: 600;
+            cursor: pointer; padding: 0.2rem 0.4rem;
+        }
+        .nav-item svg { width: 20px; height: 20px; }
+        .nav-item.is-active { color: var(--green); }
+        .nav-item.nav-scan {
+            width: 46px; height: 46px; border-radius: 50%; background: var(--dark);
+            color: #fff; margin-top: -20px; box-shadow: 0 6px 14px rgba(11,61,46,0.4);
+            justify-content: center;
+        }
+        .nav-item.nav-scan svg { width: 20px; height: 20px; }
+
+        /* ---- Buttons ---- */
+        .btn-primary {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; background: var(--green); color: #fff; border: none; border-radius: 12px;
+            padding: 0.85rem; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary svg { width: 17px; height: 17px; }
+        .btn-primary:active { background: #166638; }
+        .btn-outline {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; background: #fff; color: var(--dark); border: 1.5px solid var(--dark);
+            border-radius: 12px; padding: 0.8rem; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+            font-family: inherit;
+        }
+        .link-btn {
+            background: none; border: none; color: var(--green); font-weight: 700; font-size: 0.82rem;
+            cursor: pointer; font-family: inherit; text-decoration: underline;
+        }
+
+        /* ===== SPLASH ===== */
+        #screen-splash .screen-body {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 2rem 1.8rem;
+        }
+        .tot-logo-mark {
+            width: 74px; height: 74px; border-radius: 20px; background: var(--green-light);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 0.9rem;
+            position: relative;
+        }
+        .tot-logo-mark svg { width: 40px; height: 40px; color: var(--green); }
+        .tot-logo-mini {
+            width: 22px; height: 22px; border-radius: 7px; background: var(--green-light);
+            color: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .tot-logo-mini svg { width: 13px; height: 13px; }
+        .tot-wordmark { font-size: 2.1rem; font-weight: 800; color: var(--dark); letter-spacing: 0.02em; margin: 0; }
+        .tot-o-lens { display: inline-flex; width: 0.82em; height: 0.82em; vertical-align: -0.1em; margin: 0 -0.07em; }
+        .tot-o-lens svg { width: 100%; height: 100%; color: var(--green); }
+        .tot-tagline-small { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em; color: var(--muted); margin: 0.15rem 0 1.6rem; }
+        .splash-slogan { font-size: 1.15rem; font-weight: 700; line-height: 1.5; margin: 0 0 0.4rem; }
+        .splash-slogan .accent { color: var(--green); }
+        .splash-sub { font-size: 0.85rem; color: var(--muted); margin: 0 0 2rem; }
+        #screen-splash .btn-primary { max-width: 240px; }
+        .splash-features { width: 100%; max-width: 300px; margin-top: 2.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
+        .splash-feature-row { display: flex; align-items: center; gap: 0.7rem; text-align: left; }
+        .splash-feature-row .ic {
+            width: 36px; height: 36px; border-radius: 10px; background: var(--green-light); color: var(--green);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .splash-feature-row .ic svg { width: 17px; height: 17px; }
+        .splash-feature-row .txt { display: flex; flex-direction: column; font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+        .splash-feature-row .txt strong { color: var(--text); font-size: 0.86rem; font-weight: 700; }
+        .splash-impact {
+            margin-top: 1.8rem; font-size: 0.72rem; color: var(--muted); background: var(--green-light);
+            border-radius: 999px; padding: 0.5rem 1rem;
+        }
+        .splash-impact strong { color: var(--dark); }
+
+        /* ===== HOME ===== */
+        .home-hero {
+            margin: 0 1.1rem 1.1rem; background: linear-gradient(135deg, var(--dark), var(--dark2));
+            border-radius: 18px; padding: 1.4rem 1.3rem; color: #fff; position: relative; overflow: hidden;
+        }
+        .home-hero h2 { font-size: 1.2rem; font-weight: 800; margin: 0 0 0.3rem; }
+        .home-hero p { font-size: 0.8rem; opacity: 0.85; margin: 0 0 1rem; line-height: 1.5; }
+        .home-hero .btn-primary { background: #fff; color: var(--dark); }
+        .home-hero .leaf-deco { position: absolute; right: -10px; top: -10px; font-size: 4.5rem; opacity: 0.15; }
+        .section-label { font-size: 0.85rem; font-weight: 700; margin: 0 1.1rem 0.6rem; color: var(--text); }
+        .how-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55rem; margin: 0 1.1rem 1.3rem;
+        }
+        .how-step {
+            background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 0.7rem 0.4rem;
+            display: flex; flex-direction: column; align-items: center; gap: 0.35rem; text-align: center;
+        }
+        .how-step .ic {
+            width: 32px; height: 32px; border-radius: 9px; background: var(--green-light);
+            display: flex; align-items: center; justify-content: center; color: var(--green);
+        }
+        .how-step .ic svg { width: 16px; height: 16px; }
+        .how-step span { font-size: 0.62rem; font-weight: 700; color: var(--text); }
+        .impact-card {
+            margin: 0 1.1rem 1.3rem; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+            padding: 1rem 1.1rem; display: flex; align-items: center; justify-content: space-between;
+        }
+        .impact-card .num { font-size: 1.5rem; font-weight: 800; color: var(--dark); }
+        .impact-card .lbl { font-size: 0.72rem; color: var(--muted); }
+        .impact-card .globe {
+            width: 42px; height: 42px; border-radius: 50%; background: var(--green-light);
+            display: flex; align-items: center; justify-content: center; color: var(--green); flex-shrink: 0;
+        }
+        .impact-card .globe svg { width: 22px; height: 22px; }
+        .about-link-row {
+            margin: 0 1.1rem 1.3rem; text-align: center;
+        }
+
+        /* ===== SCANNER ===== */
+        #screen-scanner .screen-body {
+            background: #14231b; display: flex; flex-direction: column; color: #fff;
+        }
+        .scan-viewport {
+            flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: radial-gradient(circle at 50% 40%, #24382c, #0f1c15 75%);
+        }
+        .scan-hint { position: absolute; top: 1.4rem; left: 0; right: 0; text-align: center; font-size: 0.82rem; font-weight: 600; opacity: 0.9; padding: 0 2rem; }
+        .scan-frame {
+            width: 220px; height: 220px; position: relative;
+        }
+        .scan-frame .corner { position: absolute; width: 30px; height: 30px; border: 3px solid #fff; }
+        .scan-frame .tl { top: 0; left: 0; border-right: none; border-bottom: none; border-top-left-radius: 8px; }
+        .scan-frame .tr { top: 0; right: 0; border-left: none; border-bottom: none; border-top-right-radius: 8px; }
+        .scan-frame .bl { bottom: 0; left: 0; border-right: none; border-top: none; border-bottom-left-radius: 8px; }
+        .scan-frame .br { bottom: 0; right: 0; border-left: none; border-top: none; border-bottom-right-radius: 8px; }
+        .scan-product {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90px; height: 150px; background: linear-gradient(160deg, #9fc2ac, #7ba98e);
+            border-radius: 14px 14px 30px 30px; box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+        }
+        .scan-product::before {
+            content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 34px; height: 16px; background: #6f9b81; border-radius: 4px;
+        }
+        .scan-barcode {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 66px; height: 30px; background: repeating-linear-gradient(90deg, #111 0 2px, #fff 2px 4px);
+            border-radius: 2px; box-shadow: 0 0 0 4px rgba(255,255,255,0.85);
+        }
+        .scan-line {
+            position: absolute; left: 12%; right: 12%; height: 2px; background: #4ade80;
+            box-shadow: 0 0 8px #4ade80; animation: scanmove 2.1s ease-in-out infinite;
+        }
+        @keyframes scanmove { 0% { top: 15%; } 50% { top: 82%; } 100% { top: 15%; } }
+        .scan-controls {
+            display: flex; align-items: center; justify-content: space-around; padding: 1.2rem 1.5rem 1.5rem;
+        }
+        .scan-controls .side-btn {
+            width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12);
+            border: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .scan-controls .side-btn svg { width: 18px; height: 18px; }
+        .shutter-btn {
+            width: 62px; height: 62px; border-radius: 50%; background: #fff; border: 4px solid rgba(255,255,255,0.35);
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--dark);
+        }
+        .shutter-btn svg { width: 24px; height: 24px; }
+        .scan-done-label {
+            position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%) scale(0.9);
+            background: #22c55e; color: #fff; font-size: 0.82rem; font-weight: 800;
+            padding: 0.5rem 1.1rem; border-radius: 999px; box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .scan-done-label.show { opacity: 1; transform: translateX(-50%) scale(1); }
+        .manual-entry { text-align: center; padding-bottom: 1rem; }
+        .manual-entry button { background: none; border: none; color: #cfe8da; font-size: 0.78rem; font-weight: 600; text-decoration: underline; cursor: pointer; font-family: inherit; }
+
+        /* ===== ANALYZING ===== */
+        #screen-analyzing .screen-body {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem;
+            padding: 2rem;
+        }
+        .spinner-ring {
+            width: 62px; height: 62px; border-radius: 50%; border: 5px solid var(--green-light);
+            border-top-color: var(--green); animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .analyzing-title { font-weight: 700; font-size: 1rem; margin: 0; }
+        .analyzing-steps { font-size: 0.78rem; color: var(--muted); text-align: center; line-height: 1.9; }
+        .analyzing-steps .done { color: var(--green); font-weight: 700; }
+
+        /* ===== RESULT ===== */
+        .product-card {
+            margin: 0 1.1rem 1rem; background: #fff; border: 1px solid var(--border); border-radius: 16px;
+            padding: 1rem; display: flex; gap: 0.9rem; align-items: center;
+        }
+        .product-thumb {
+            width: 54px; height: 68px; border-radius: 10px 10px 20px 20px;
+            background: linear-gradient(160deg, #d9d5c8, #b9b3a0); flex-shrink: 0;
+        }
+        .product-card h3 { margin: 0 0 0.2rem; font-size: 0.95rem; font-weight: 700; }
+        .product-card .meta { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+        .rating-card {
+            margin: 0 1.1rem 1rem; background: var(--risk-high-bg); border: 1px solid #f3caca; border-radius: 16px;
+            padding: 1.1rem; display: flex; align-items: center; gap: 1rem;
+        }
+        .rating-badge {
+            width: 56px; height: 56px; border-radius: 50%; background: var(--risk-high); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;
+            flex-shrink: 0;
+        }
+        .rating-card .rlabel { font-weight: 800; font-size: 1rem; color: var(--risk-high); }
+        .rating-card .rsub { font-size: 0.72rem; color: #9a4b4b; font-weight: 600; }
+        .rating-card.moderate { background: var(--risk-mod-bg); border-color: #f1ddb2; }
+        .rating-card.low { background: var(--risk-low-bg); border-color: #cfe9cf; }
+        .rating-badge.moderate { background: var(--risk-mod); }
+        .rating-badge.low { background: var(--risk-low); }
+        .rating-card.moderate .rlabel { color: var(--risk-mod); }
+        .rating-card.low .rlabel { color: var(--risk-low); }
+        .rating-card.moderate .rsub { color: #8a6a2f; }
+        .rating-card.low .rsub { color: #2f6b3f; }
+        .rating-note { margin: 0 1.1rem 1rem; font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+        .stat-rows { margin: 0 1.1rem 1.1rem; background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .stat-row {
+            display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border); font-size: 0.78rem; cursor: default;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row.clickable { cursor: pointer; }
+        .stat-row .k { color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+        .stat-row .v { font-weight: 700; }
+        .tag-pill { padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; }
+        .tag-pill.high { background: var(--risk-high-bg); color: var(--risk-high); }
+        .tag-pill.moderate, .tag-pill.detected { background: var(--risk-mod-bg); color: var(--risk-mod); }
+        .tag-pill.low, .tag-pill.clear { background: var(--risk-low-bg); color: var(--risk-low); }
+        .tag-pill.poor { background: var(--risk-high-bg); color: var(--risk-high); }
+        .result-actions { margin: 0 1.1rem 1.2rem; }
+
+        /* ===== INGREDIENTS ===== */
+        .tabs-row { display: flex; gap: 1.4rem; margin: 0 1.1rem 0.9rem; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            background: none; border: none; font-family: inherit; font-size: 0.82rem; font-weight: 700;
+            color: var(--muted); padding: 0 0 0.6rem; cursor: pointer; border-bottom: 2px solid transparent;
+        }
+        .tab-btn.is-active { color: var(--dark); border-bottom-color: var(--green); }
+        .tab-pane { display: none; }
+        .tab-pane.is-active { display: block; }
+        .ing-section-title { display: flex; align-items: center; gap: 0.4rem; margin: 0 1.1rem 0.7rem; font-weight: 700; font-size: 0.85rem; color: var(--risk-high); }
+        .ing-section-title.low { color: var(--text); }
+        .ing-card {
+            margin: 0 1.1rem 0.6rem; border-radius: 12px; padding: 0.75rem 0.9rem;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem;
+        }
+        .ing-card.high { background: var(--risk-high-bg); border: 1px solid #f3caca; }
+        .ing-card.moderate { background: var(--risk-mod-bg); border: 1px solid #f1ddb2; }
+        .ing-card.low { background: #fff; border: 1px solid var(--border); }
+        .ing-card .name { font-weight: 700; font-size: 0.85rem; margin: 0 0 0.2rem; }
+        .ing-card .desc { font-size: 0.72rem; color: var(--muted); line-height: 1.5; margin: 0; }
+        .ing-card .badge { font-size: 0.65rem; font-weight: 800; white-space: nowrap; flex-shrink: 0; padding-top: 0.1rem; }
+        .ing-card.high .badge { color: var(--risk-high); }
+        .ing-card.moderate .badge { color: var(--risk-mod); }
+        .ing-card.low .badge { color: var(--risk-low); }
+        .ing-clear-card {
+            margin: 0 1.1rem 0.9rem; background: var(--risk-low-bg); border: 1px solid #cfe9cf; border-radius: 12px;
+            padding: 0.85rem 1rem; font-size: 0.82rem; font-weight: 700; color: var(--risk-low);
+        }
+        .whatmean-item { margin: 0 1.1rem 0.9rem; }
+        .whatmean-item .t { font-weight: 700; font-size: 0.82rem; margin: 0 0 0.2rem; }
+        .whatmean-item .d { font-size: 0.76rem; color: var(--muted); line-height: 1.6; margin: 0; }
+
+        /* ===== ALTERNATIVES ===== */
+        .alt-intro { margin: 0 1.1rem 1rem; font-size: 0.8rem; color: var(--muted); }
+        .alt-card {
+            margin: 0 1.1rem 0.8rem; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+            padding: 0.8rem; display: flex; align-items: center; gap: 0.8rem;
+        }
+        .alt-thumb {
+            width: 44px; height: 54px; border-radius: 8px 8px 16px 16px; flex-shrink: 0;
+        }
+        .alt-thumb.c1 { background: linear-gradient(160deg, #cfe3d6, #a8c9b3); }
+        .alt-thumb.c2 { background: linear-gradient(160deg, #d8c9e6, #b79fd0); }
+        .alt-thumb.c3 { background: linear-gradient(160deg, #f0dcb8, #dcb877); }
+        .alt-card .info { flex: 1; min-width: 0; }
+        .alt-card .info h4 { margin: 0 0 0.15rem; font-size: 0.82rem; font-weight: 700; }
+        .alt-card .info .rating { font-size: 0.72rem; color: var(--muted); }
+        .alt-card .info .tag { font-size: 0.68rem; color: var(--green); font-weight: 600; }
+        .alt-badge-a {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        /* ===== HISTORY ===== */
+        .hist-row {
+            margin: 0 1.1rem 0.7rem; background: #fff; border: 1px solid var(--border); border-radius: 14px;
+            padding: 0.7rem 0.8rem; display: flex; align-items: center; gap: 0.7rem; cursor: pointer;
+        }
+        .hist-thumb { width: 40px; height: 50px; border-radius: 8px 8px 16px 16px; flex-shrink: 0; }
+        .hist-row .info { flex: 1; min-width: 0; }
+        .hist-row .info h4 { margin: 0 0 0.15rem; font-size: 0.82rem; font-weight: 700; }
+        .hist-row .info .sub { font-size: 0.68rem; color: var(--muted); }
+        .rating-mini {
+            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 800; color: #fff; flex-shrink: 0;
+        }
+        .rating-mini.high { background: var(--risk-high); }
+        .rating-mini.moderate { background: var(--risk-mod); }
+        .rating-mini.low { background: var(--risk-low); }
+
+        /* ===== PROFILE ===== */
+        .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.2rem 1.1rem 0.6rem; }
+        .avatar-circle {
+            width: 64px; height: 64px; border-radius: 50%; background: var(--dark); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800;
+            margin-bottom: 0.6rem;
+        }
+        .profile-header h3 { margin: 0 0 0.15rem; font-size: 1.05rem; font-weight: 800; }
+        .profile-header p { margin: 0; font-size: 0.76rem; color: var(--muted); }
+        .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; margin: 1rem 1.1rem 1.2rem; }
+        .stat-tile { background: var(--green-light); border-radius: 12px; padding: 0.7rem 0.4rem; text-align: center; }
+        .stat-tile .n { font-size: 1.15rem; font-weight: 800; color: var(--dark); }
+        .stat-tile .l { font-size: 0.6rem; font-weight: 600; color: var(--muted); margin-top: 0.15rem; line-height: 1.3; }
+        .profile-menu { margin: 0 1.1rem; background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .profile-menu-item {
+            width: 100%; display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem 1rem;
+            border: none; border-bottom: 1px solid var(--border); background: none; font-family: inherit;
+            font-size: 0.82rem; font-weight: 600; color: var(--text); cursor: pointer;
+        }
+        .profile-menu-item:last-child { border-bottom: none; }
+        .profile-menu-item svg:first-child { width: 18px; height: 18px; color: var(--green); flex-shrink: 0; }
+        .profile-menu-item span { flex: 1; text-align: left; }
+        .profile-menu-item .chev { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
+
+        /* ===== MARKETING ALERT ===== */
+        .alert-hero {
+            margin: 0 1.1rem 1rem; background: var(--risk-high-bg); border: 1px solid #f3caca; border-radius: 16px;
+            padding: 1.1rem; display: flex; gap: 0.8rem; align-items: flex-start;
+        }
+        .alert-hero .ic { width: 38px; height: 38px; border-radius: 50%; background: var(--risk-high); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .alert-hero .ic svg { width: 19px; height: 19px; }
+        .alert-hero h3 { margin: 0 0 0.2rem; font-size: 0.92rem; font-weight: 800; color: var(--risk-high); }
+        .alert-hero p { margin: 0; font-size: 0.76rem; color: #8a4444; line-height: 1.5; }
+        .alert-hero.clear { background: var(--risk-low-bg); border-color: #cfe9cf; }
+        .alert-hero.clear .ic { background: var(--risk-low); }
+        .alert-hero.clear h3 { color: var(--risk-low); }
+        .alert-hero.clear p { color: #2f6b3f; }
+        .claim-card { margin: 0 1.1rem 0.7rem; background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 0.9rem; }
+        .claim-card .claim { font-weight: 700; font-size: 0.82rem; margin: 0 0 0.25rem; display: flex; align-items: center; gap: 0.4rem; }
+        .claim-card .claim::before { content: '⚠'; color: var(--risk-mod); }
+        .claim-card .rebut { font-size: 0.74rem; color: var(--muted); margin: 0; line-height: 1.5; }
+
+        /* ===== ABOUT ===== */
+        .about-body { padding: 0.3rem 1.1rem 1rem; font-size: 0.82rem; color: var(--text); line-height: 1.7; }
+        .about-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 1rem 0 1.2rem; }
+        .about-pill { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem 0.5rem; text-align: center; }
+        .about-pill .ic { width: 30px; height: 30px; border-radius: 9px; background: var(--green-light); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.4rem; }
+        .about-pill .ic svg { width: 15px; height: 15px; }
+        .about-pill span { font-size: 0.65rem; font-weight: 700; line-height: 1.4; display: block; }
+        .about-footer-band {
+            margin-top: auto; background: var(--dark); color: #fff; padding: 1rem 1.1rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.78rem; font-weight: 700;
+        }
+        .about-copyright { text-align: center; font-size: 0.68rem; color: var(--muted); padding: 0.7rem 1rem; margin: 0; }
+
+        /* ===== CLOSING ===== */
+        #screen-closing .screen-body {
+            background: linear-gradient(160deg, var(--dark), #06251b); color: #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 2.4rem 1.8rem; gap: 1rem;
+        }
+        .closing-icon { font-size: 3rem; }
+        #screen-closing h2 { font-size: 1.3rem; font-weight: 800; margin: 0; line-height: 1.4; }
+        #screen-closing p { font-size: 0.85rem; opacity: 0.85; margin: 0; }
+        #screen-closing .btn-primary { max-width: 220px; background: #fff; color: var(--dark); margin-top: 0.6rem; }
+
+        /* ---- Presenter controls (outside phone, for the live demo) ---- */
+        .presenter-panel {
+            max-width: 420px; width: 100%; margin-top: 1.4rem; background: #fff; border: 1px solid #ddd;
+            border-radius: 14px; padding: 1rem 1.1rem;
+        }
+        .presenter-panel h4 { margin: 0 0 0.6rem; font-size: 0.8rem; color: #444; }
+        .presenter-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .presenter-grid button {
+            font-family: inherit; font-size: 0.7rem; font-weight: 600; padding: 0.4rem 0.7rem;
+            border-radius: 8px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; color: #333;
+        }
+        .presenter-grid button:hover { background: #eee; }
+        .offline-download-link {
+            display: block; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #eee;
+            font-size: 0.75rem; font-weight: 700; color: var(--green); text-decoration: none;
+        }
+        .offline-download-link:hover { text-decoration: underline; }
+
+        /* ================================================================
+           MOBILE VERSION — on an actual phone (or narrow browser window)
+           the "phone frame" IS the real screen: full-bleed, no bezel/notch/
+           demo chrome, so it feels like the real app rather than a mockup
+           of a mockup. Desktop/tablet keeps the framed presenter view above.
+           ================================================================ */
+        @media (max-width: 640px) {
+            body { padding: 0; background: var(--bg); align-items: stretch; }
+            .presenter-panel, .notch { display: none; }
+            .phone {
+                width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh;
+                border-radius: 0; padding: 0; box-shadow: none; background: var(--bg);
+            }
+            .phone-screen { border-radius: 0; height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone">
+        <div class="notch"></div>
+        <div class="phone-screen">
+            <div class="status-bar" id="statusBar">
+                <span>9:41</span>
+                <span class="icons">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v3H2zM6 13h2v7H6zM10 9h2v11h-2zM14 5h2v15h-2zM18 2h2v18h-2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c4.2 0 8 1.7 10.6 4.5l-1.4 1.4C18.9 6.5 15.6 5 12 5S5.1 6.5 2.8 8.9L1.4 7.5C4 4.7 7.8 3 12 3zm0 5c2.7 0 5.2 1.1 7 2.9l-1.4 1.4C16.1 10.8 14.1 10 12 10s-4.1.8-5.6 2.3L5 10.9C6.8 9.1 9.3 8 12 8zm0 5c1.3 0 2.5.5 3.4 1.4L12 18l-3.4-3.6c.9-.9 2.1-1.4 3.4-1.4z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4" stroke-width="2"/></svg>
+                </span>
+            </div>
+
+            <!-- ============ SPLASH ============ -->
+            <div class="screen active" id="screen-splash">
+                <div class="screen-body">
+                    <div class="tot-logo-mark">
+                        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="8"/>
+                            <path d="M8.3 12.4l2.6 2.6L16.2 9.3"/>
+                            <circle cx="20.5" cy="20.5" r="5.3"/>
+                            <path d="M24.5 24.5l4.6 4.6" stroke-width="2.4"/>
+                        </svg>
+                    </div>
+                    <p class="tot-wordmark" style="letter-spacing:0;">T<span class="tot-o-lens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="9" cy="9" r="7" stroke-width="2.6"/><path d="M14.2 14.2l6 6" stroke-width="3"/></svg></span>T</p>
+                    <p class="tot-tagline-small">TRUTH OVER TRENDS</p>
+                    <p class="splash-slogan">Don't Trust the Trends.<br /><span class="accent">Trust the Facts.</span></p>
+                    <p class="splash-sub">A smarter way to make informed choices.</p>
+                    <button class="btn-primary" onclick="showScreen('home')">Get Started</button>
+
+                    <div class="splash-features">
+                        <div class="splash-feature-row">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
+                            <span class="txt"><strong>Scan</strong>Any product barcode</span>
+                        </div>
+                        <div class="splash-feature-row">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+                            <span class="txt"><strong>Analyze</strong>Ingredients &amp; claims</span>
+                        </div>
+                        <div class="splash-feature-row">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 13v-2z"/><path d="M11 17l1 4"/></svg></span>
+                            <span class="txt"><strong>Alert</strong>Toxic ingredients &amp; marketing tricks</span>
+                        </div>
+                        <div class="splash-feature-row">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+                            <span class="txt"><strong>Suggest</strong>Safer alternatives</span>
+                        </div>
+                    </div>
+
+                    <p class="splash-impact">🌍 Together, we've scanned <strong>12,845+</strong> products</p>
+                </div>
+            </div>
+
+            <!-- ============ HOME ============ -->
+            <div class="screen" id="screen-home">
+                <div class="topbar">
+                    <h1 style="display:flex;align-items:center;justify-content:flex-start;gap:0.5rem;">
+                        <span class="tot-logo-mini">
+                            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="8"/>
+                                <path d="M8.3 12.4l2.6 2.6L16.2 9.3"/>
+                                <circle cx="20.5" cy="20.5" r="5.3"/>
+                                <path d="M24.5 24.5l4.6 4.6" stroke-width="2.8"/>
+                            </svg>
+                        </span>
+                        T<span class="tot-o-lens" style="width:0.9em;height:0.9em;vertical-align:-0.14em;margin:0 -0.06em;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="9" cy="9" r="7" stroke-width="2.6"/><path d="M14.2 14.2l6 6" stroke-width="3"/></svg></span>T <span style="font-weight:500;font-size:0.7rem;color:var(--muted);">TRUTH OVER TRENDS</span>
+                    </h1>
+                    <button class="icon-btn" onclick="alert('No new notifications in this demo.')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                    </button>
+                </div>
+                <div class="screen-body">
+                    <div class="home-hero">
+                        <span class="leaf-deco">🌿</span>
+                        <h2>Welcome to TOT</h2>
+                        <p>Your smart choice for a safer tomorrow.</p>
+                        <button class="btn-primary" onclick="showScreen('scanner')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M17 20h4"/></svg>
+                            Scan a Product
+                        </button>
+                    </div>
+
+                    <p class="section-label">How it works</p>
+                    <div class="how-grid">
+                        <div class="how-step">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>
+                            <span>Scan the barcode</span>
+                        </div>
+                        <div class="how-step">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                            <span>Get the facts</span>
+                        </div>
+                        <div class="how-step">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+                            <span>Check the rating</span>
+                        </div>
+                        <div class="how-step">
+                            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+                            <span>Choose better</span>
+                        </div>
+                    </div>
+
+                    <p class="section-label">Your impact</p>
+                    <div class="impact-card">
+                        <div>
+                            <div class="lbl">Together, we've scanned</div>
+                            <div class="num">12,845+</div>
+                            <div class="lbl">products</div>
+                        </div>
+                        <div class="globe">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="about-link-row">
+                        <button class="link-btn" onclick="showScreen('about')">ℹ️ About TOT</button>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item is-active" onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item " onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item " onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item " onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ SCANNER ============ -->
+            <div class="screen" id="screen-scanner">
+                <div class="topbar" style="background:#14231b;">
+                    <button class="icon-btn" style="background:rgba(255,255,255,0.15);color:#fff;" onclick="showScreen('home')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1 style="color:#fff;">Scan Product</h1>
+                    <button class="icon-btn" style="background:rgba(255,255,255,0.15);color:#fff;" onclick="alert('This is a demo — camera/barcode scanning is simulated.')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    </button>
+                </div>
+                <div class="screen-body">
+                    <div class="scan-viewport">
+                        <div class="scan-hint">Align the barcode within the frame</div>
+                        <div class="scan-frame">
+                            <div class="corner tl"></div><div class="corner tr"></div>
+                            <div class="corner bl"></div><div class="corner br"></div>
+                            <div class="scan-product"></div>
+                            <div class="scan-barcode"></div>
+                            <div class="scan-line"></div>
+                        </div>
+                        <div class="scan-done-label" id="scanDoneLabel">✓ Scan Done</div>
+                    </div>
+                    <div class="scan-controls">
+                        <button class="side-btn" onclick="alert('Flash toggle — demo only.')">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                        </button>
+                        <button class="shutter-btn" onclick="simulateScan()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>
+                        </button>
+                        <button class="side-btn" onclick="alert('Choose from gallery — demo only.')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </button>
+                    </div>
+                    <div class="manual-entry">
+                        <button onclick="simulateScan()">Enter barcode manually</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ ANALYZING ============ -->
+            <div class="screen" id="screen-analyzing">
+                <div class="screen-body">
+                    <div class="spinner-ring"></div>
+                    <p class="analyzing-title">Analyzing product…</p>
+                    <p class="analyzing-steps">
+                        <span class="done">✓ Reading barcode</span><br />
+                        <span class="done">✓ Matching database</span><br />
+                        Checking ingredients &amp; marketing claims…
+                    </p>
+                </div>
+            </div>
+
+            <!-- ============ RESULT ============ -->
+            <div class="screen" id="screen-result">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('home')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>Product Result</h1>
+                    <button class="icon-btn" onclick="alert('Share — demo only.')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.8M8.6 13.5l6.8 3.8"/></svg>
+                    </button>
+                </div>
+                <div class="screen-body">
+                    <div class="product-card">
+                        <div class="product-thumb" id="resThumb"></div>
+                        <div>
+                            <h3 id="resName">Fairness Cream</h3>
+                            <div class="meta" id="resMeta">Brand X · 50 g<br />Scanned on 12 May 2024</div>
+                        </div>
+                    </div>
+                    <div class="rating-card" id="resRatingCard">
+                        <div class="rating-badge" id="resBadge">F</div>
+                        <div>
+                            <div class="rlabel" id="resLabel">Poor</div>
+                            <div class="rsub" id="resSub">Not recommended</div>
+                        </div>
+                    </div>
+                    <p class="rating-note" id="resNote">This product contains risky ingredients and uses misleading marketing tactics.</p>
+                    <div class="stat-rows">
+                        <div class="stat-row clickable" onclick="showScreen('ingredients')">
+                            <span class="k">Risky Ingredients</span>
+                            <span class="v" id="resRiskyCount" style="color:var(--risk-high);">3</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="k">Toxicity Risk</span>
+                            <span class="tag-pill high" id="resToxicity">High</span>
+                        </div>
+                        <div class="stat-row clickable" onclick="showScreen('marketing')">
+                            <span class="k">Marketing Tricks</span>
+                            <span class="tag-pill detected" id="resMarketing">Detected</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="k">Overall Safety</span>
+                            <span class="tag-pill poor" id="resOverall">Poor</span>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <button class="btn-primary" onclick="showScreen('ingredients')">View Full Report</button>
+                        <button class="btn-outline" style="margin-top:0.6rem;" onclick="showScreen('scanner')">Scan Another Product</button>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item " onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item " onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item " onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item " onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ INGREDIENTS ============ -->
+            <div class="screen" id="screen-ingredients">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('result')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>Ingredients</h1>
+                    <span style="width:34px;"></span>
+                </div>
+                <div class="screen-body">
+                    <div class="tabs-row">
+                        <button class="tab-btn is-active" data-tab="list" onclick="showTab('list')">Ingredients List</button>
+                        <button class="tab-btn" data-tab="meaning" onclick="showTab('meaning')">What they mean?</button>
+                    </div>
+
+                    <div class="tab-pane is-active" id="tab-list">
+                        <div id="ingRiskySection"></div>
+                        <p class="ing-section-title low" style="margin-top:1rem;">Other Ingredients</p>
+                        <div id="ingOtherList"></div>
+                    </div>
+
+                    <div class="tab-pane" id="tab-meaning">
+                        <div class="whatmean-item">
+                            <p class="t">High Risk</p>
+                            <p class="d">Linked to real, documented health concerns (e.g. organ damage, hormone disruption). TOT recommends avoiding these.</p>
+                        </div>
+                        <div class="whatmean-item">
+                            <p class="t">Moderate Risk</p>
+                            <p class="d">Some evidence of concern, often dose- or frequency-dependent. Worth knowing about, not automatically a dealbreaker.</p>
+                        </div>
+                        <div class="whatmean-item">
+                            <p class="t">Low Risk</p>
+                            <p class="d">Widely considered safe for typical cosmetic use, based on current research.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item " onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item " onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item " onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item " onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ ALTERNATIVES ============ -->
+            <div class="screen" id="screen-alternatives">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('result')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>Safer Alternatives</h1>
+                    <span style="width:34px;"></span>
+                </div>
+                <div class="screen-body">
+                    <p class="alt-intro">Here are some safer choices for you.</p>
+                    <div class="alt-card">
+                        <div class="alt-thumb c1"></div>
+                        <div class="info">
+                            <h4>Minimalist 2% Alpha Arbutin Cream</h4>
+                            <div class="rating">⭐ 4.6 (1.2k)</div>
+                            <div class="tag">Low risk · Gentle on skin</div>
+                        </div>
+                        <div class="alt-badge-a">A</div>
+                    </div>
+                    <div class="alt-card">
+                        <div class="alt-thumb c2"></div>
+                        <div class="info">
+                            <h4>Derma Co 1% Kojic Acid Daily Face Cream</h4>
+                            <div class="rating">⭐ 4.4 (980)</div>
+                            <div class="tag">Low risk · Dermatologically tested</div>
+                        </div>
+                        <div class="alt-badge-a">A</div>
+                    </div>
+                    <div class="alt-card">
+                        <div class="alt-thumb c3"></div>
+                        <div class="info">
+                            <h4>Mamaearth Rice Face Cream</h4>
+                            <div class="rating">⭐ 4.5 (1.8k)</div>
+                            <div class="tag">Low risk · Natural ingredients</div>
+                        </div>
+                        <div class="alt-badge-a">A</div>
+                    </div>
+                    <div style="padding:0 1.1rem 1rem;">
+                        <button class="btn-outline" onclick="alert('This demo shows 3 sample alternatives.')">See More Alternatives</button>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item " onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item " onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item is-active" onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item " onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ HISTORY ============ -->
+            <div class="screen" id="screen-history">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('home')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>History</h1>
+                    <span style="width:34px;"></span>
+                </div>
+                <div class="screen-body">
+                    <p class="alt-intro">Everything Ishi has scanned so far.</p>
+                    <div class="hist-row" onclick="showScreen('result')">
+                        <div class="hist-thumb" style="background:linear-gradient(160deg,#d9d5c8,#b9b3a0);"></div>
+                        <div class="info">
+                            <h4>Fairness Cream</h4>
+                            <div class="sub">Brand X · Scanned 12 May 2024</div>
+                        </div>
+                        <div class="rating-mini high">F</div>
+                    </div>
+                    <div class="hist-row">
+                        <div class="hist-thumb" style="background:linear-gradient(160deg,#cfe3d6,#a8c9b3);"></div>
+                        <div class="info">
+                            <h4>Minimalist 2% Alpha Arbutin Cream</h4>
+                            <div class="sub">Minimalist · Scanned 10 May 2024</div>
+                        </div>
+                        <div class="rating-mini low">A</div>
+                    </div>
+                    <div class="hist-row">
+                        <div class="hist-thumb" style="background:linear-gradient(160deg,#f0dcb8,#dcb877);"></div>
+                        <div class="info">
+                            <h4>Everyday Vitamin C Serum</h4>
+                            <div class="sub">GlowLab · Scanned 6 May 2024</div>
+                        </div>
+                        <div class="rating-mini moderate">C</div>
+                    </div>
+                    <div class="hist-row">
+                        <div class="hist-thumb" style="background:linear-gradient(160deg,#d8c9e6,#b79fd0);"></div>
+                        <div class="info">
+                            <h4>Mineral Sunscreen SPF 50</h4>
+                            <div class="sub">SunSafe · Scanned 1 May 2024</div>
+                        </div>
+                        <div class="rating-mini low">A</div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item " onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item is-active" onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item " onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item " onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ PROFILE ============ -->
+            <div class="screen" id="screen-profile">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('home')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>Profile</h1>
+                    <button class="icon-btn" onclick="alert('Settings — demo only.')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+                    </button>
+                </div>
+                <div class="screen-body">
+                    <div class="profile-header">
+                        <div class="avatar-circle">I</div>
+                        <h3>Ishi</h3>
+                        <p>TOT Explorer · Grade 6 B</p>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat-tile">
+                            <div class="n">24</div>
+                            <div class="l">Products Scanned</div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="n">9</div>
+                            <div class="l">Safer Swaps Made</div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="n">15</div>
+                            <div class="l">Reports Read</div>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <button class="profile-menu-item" onclick="showScreen('history')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                            <span>Scan History</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                        <button class="profile-menu-item" onclick="showScreen('alternatives')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                            <span>Saved Alternatives</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                        <button class="profile-menu-item" onclick="alert('Notifications — demo only.')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                            <span>Notifications</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                        <button class="profile-menu-item" onclick="showScreen('about')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+                            <span>About TOT</span>
+                            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+    <button class="nav-item " onclick="goNav('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+    </button>
+    <button class="nav-item " onclick="goNav('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span>History</span>
+    </button>
+    <button class="nav-item nav-scan" onclick="goNav('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button class="nav-item " onclick="goNav('alt')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v14M8 3l4 4M8 3L4 7"/><path d="M16 21V7M16 21l4-4M16 21l-4-4"/></svg>
+        <span>Alternatives</span>
+    </button>
+    <button class="nav-item is-active" onclick="goNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        <span>Profile</span>
+    </button>
+</div>
+
+            </div>
+
+            <!-- ============ MARKETING ALERT ============ -->
+            <div class="screen" id="screen-marketing">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('result')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>Marketing Alert</h1>
+                    <span style="width:34px;"></span>
+                </div>
+                <div class="screen-body">
+                    <div class="alert-hero" id="mktHero">
+                        <div class="ic" id="mktIcon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 13v-2z"/><path d="M11 17l1 4"/></svg>
+                        </div>
+                        <div>
+                            <h3 id="mktTitle">Misleading Marketing Detected!</h3>
+                            <p id="mktSub">This product uses marketing tactics that may play on insecurities.</p>
+                        </div>
+                    </div>
+                    <div id="mktClaimsList">
+                        <div class="claim-card">
+                            <p class="claim">"Instant Fairness in 7 Days"</p>
+                            <p class="rebut">No scientific proof. Unrealistic claim for any skincare product.</p>
+                        </div>
+                        <div class="claim-card">
+                            <p class="claim">"Clinically Proven Fairness"</p>
+                            <p class="rebut">No valid clinical data available to back this claim.</p>
+                        </div>
+                        <div class="claim-card">
+                            <p class="claim">Uses before-after images</p>
+                            <p class="rebut">That can be digitally altered or use different lighting/filters.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ ABOUT ============ -->
+            <div class="screen" id="screen-about">
+                <div class="topbar">
+                    <button class="icon-btn" onclick="showScreen('home')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <h1>About TOT</h1>
+                    <span style="width:34px;"></span>
+                </div>
+                <div class="screen-body" style="display:flex;flex-direction:column;">
+                    <div class="about-body">
+                        <p>TOT (Truth Over Trends) is an app made to help you make informed choices by exposing harmful ingredients and misleading marketing.</p>
+                        <div class="about-pills">
+                            <div class="about-pill">
+                                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                                <span>Made by the students of Grade 6 &amp; 8 B</span>
+                            </div>
+                            <div class="about-pill">
+                                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+                                <span>School PBL Project</span>
+                            </div>
+                            <div class="about-pill">
+                                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg></span>
+                                <span>Topic: Global Challenges and Solutions</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-footer-band">
+                        <button class="btn-primary" style="width:auto;background:transparent;border:none;" onclick="showScreen('closing')">We scan. We analyze. You decide. Because facts matter. ❤</button>
+                    </div>
+                    <p class="about-copyright">© 2026 TOT — Truth Over Trends</p>
+                </div>
+            </div>
+
+            <!-- ============ CLOSING ============ -->
+            <div class="screen" id="screen-closing">
+                <div class="screen-body">
+                    <div class="closing-icon">🌍❤️</div>
+                    <h2>Be an informed consumer.<br />Be a change maker.</h2>
+                    <p>Together, let's choose Truth Over Trends.</p>
+                    <button class="btn-primary" onclick="showScreen('splash')">Restart Demo</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="presenter-panel">
+        <h4>Presenter quick-jump (not part of the app UI — for the demo only)</h4>
+        <div class="presenter-grid">
+            <button onclick="showScreen('splash')">Splash</button>
+            <button onclick="showScreen('home')">Home</button>
+            <button onclick="showScreen('scanner')">Scanner</button>
+            <button onclick="showScreen('analyzing')">Analyzing</button>
+            <button onclick="showResult('poor')">Result: Poor</button>
+            <button onclick="showResult('fair')">Result: Fair</button>
+            <button onclick="showResult('good')">Result: Good</button>
+            <button onclick="showResult('excellent')">Result: Excellent</button>
+            <button onclick="showScreen('ingredients')">Ingredients</button>
+            <button onclick="showScreen('alternatives')">Alternatives</button>
+            <button onclick="showScreen('history')">History</button>
+            <button onclick="showScreen('profile')">Profile</button>
+            <button onclick="showScreen('marketing')">Marketing Alert</button>
+            <button onclick="showScreen('about')">About</button>
+            <button onclick="showScreen('closing')">Closing</button>
+        </div>
+        <a class="offline-download-link" href="/tempproject/tot-demo-offline.html" download="TOT-Truth-Over-Trends-Demo.html">
+            ⬇ Download offline copy (single HTML file — no server or internet needed to run it)
+        </a>
+    </div>
+
+    <script>
+        var PRODUCTS = [
+            {
+                key: 'poor', name: 'Fairness Cream', brand: 'Brand X', size: '50 g', scanned: '12 May 2024',
+                thumb: 'linear-gradient(160deg, #d9d5c8, #b9b3a0)',
+                grade: 'F', gradeLabel: 'Poor', gradeSub: 'Not recommended', gradeClass: 'high',
+                note: 'This product contains risky ingredients and uses misleading marketing tactics.',
+                toxicity: 'High', marketing: 'Detected',
+                ingredients: {
+                    risky: [
+                        { name: 'Mercury', level: 'high', desc: 'Used to stop melanin production. May cause kidney damage and nervous system problems.' },
+                        { name: 'Hydroquinone', level: 'high', desc: 'Skin lightening agent. Can cause skin irritation and ochronosis.' },
+                        { name: 'Parabens (Methylparaben)', level: 'moderate', desc: 'Preservative linked to hormonal imbalance.' }
+                    ],
+                    other: ['Stearic Acid', 'Glycerin']
+                },
+                marketingClaims: [
+                    { claim: '"Instant Fairness in 7 Days"', rebut: 'No scientific proof. Unrealistic claim for any skincare product.' },
+                    { claim: '"Clinically Proven Fairness"', rebut: 'No valid clinical data available to back this claim.' },
+                    { claim: 'Uses before-after images', rebut: 'That can be digitally altered or use different lighting/filters.' }
+                ]
+            },
+            {
+                key: 'fair', name: 'Everyday Vitamin C Serum', brand: 'GlowLab', size: '30 ml', scanned: '6 May 2024',
+                thumb: 'linear-gradient(160deg, #f0dcb8, #dcb877)',
+                grade: 'C', gradeLabel: 'Fair', gradeSub: 'Use with caution', gradeClass: 'moderate',
+                note: 'Mostly safe, but has one ingredient worth watching and an exaggerated marketing claim.',
+                toxicity: 'Moderate', marketing: 'Detected',
+                ingredients: {
+                    risky: [
+                        { name: 'Fragrance (Parfum)', level: 'moderate', desc: 'Common cause of skin sensitisation and allergic reactions in some users.' }
+                    ],
+                    other: ['Ascorbic Acid', 'Aloe Vera Extract', 'Glycerin']
+                },
+                marketingClaims: [
+                    { claim: '"Brightens skin in 3 days"', rebut: 'Vitamin C can help with consistent use over weeks — a 3-day result is overstated.' }
+                ]
+            },
+            {
+                key: 'good', name: 'Derma Co 1% Kojic Acid Daily Face Cream', brand: 'Derma Co', size: '50 g', scanned: '10 May 2024',
+                thumb: 'linear-gradient(160deg, #d8c9e6, #b79fd0)',
+                grade: 'B', gradeLabel: 'Good', gradeSub: 'Generally safe', gradeClass: 'low',
+                note: 'No high-risk ingredients found. Marketing claims are reasonable and backed by evidence.',
+                toxicity: 'Low', marketing: 'Not Detected',
+                ingredients: {
+                    risky: [],
+                    other: ['Kojic Acid', 'Niacinamide', 'Glycerin', 'Phenoxyethanol']
+                },
+                marketingClaims: []
+            },
+            {
+                key: 'excellent', name: 'Minimalist 2% Alpha Arbutin Cream', brand: 'Minimalist', size: '30 ml', scanned: '1 May 2024',
+                thumb: 'linear-gradient(160deg, #cfe3d6, #a8c9b3)',
+                grade: 'A', gradeLabel: 'Excellent', gradeSub: 'Recommended', gradeClass: 'low',
+                note: 'Clean ingredient list, dermatologically tested, and no misleading marketing detected.',
+                toxicity: 'Low', marketing: 'Not Detected',
+                ingredients: {
+                    risky: [],
+                    other: ['Alpha Arbutin', 'Niacinamide', 'Hyaluronic Acid', 'Glycerin']
+                },
+                marketingClaims: []
+            }
+        ];
+        var productIndex = 0;
+
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function setPill(id, text, cls) {
+            var el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'tag-pill ' + cls;
+        }
+
+        function renderIngredients(p) {
+            var section = document.getElementById('ingRiskySection');
+            if (p.ingredients.risky.length === 0) {
+                section.innerHTML = '<div class="ing-clear-card">✓ No risky ingredients found in this product.</div>';
+            } else {
+                var html = '<p class="ing-section-title">⚠ Risky Ingredients Found</p>';
+                p.ingredients.risky.forEach(function (ing) {
+                    html += '<div class="ing-card ' + ing.level + '"><div><p class="name">' + escapeHtml(ing.name) + '</p><p class="desc">' + escapeHtml(ing.desc) + '</p></div><span class="badge">' + (ing.level === 'high' ? 'High Risk' : 'Moderate Risk') + '</span></div>';
+                });
+                section.innerHTML = html;
+            }
+            var otherHtml = '';
+            p.ingredients.other.forEach(function (name) {
+                otherHtml += '<div class="ing-card low"><div><p class="name">' + escapeHtml(name) + '</p></div><span class="badge">Low Risk</span></div>';
+            });
+            document.getElementById('ingOtherList').innerHTML = otherHtml;
+        }
+
+        function renderMarketing(p) {
+            var hero = document.getElementById('mktHero');
+            var list = document.getElementById('mktClaimsList');
+            if (p.marketingClaims.length === 0) {
+                hero.className = 'alert-hero clear';
+                document.getElementById('mktTitle').textContent = 'No Misleading Marketing Detected';
+                document.getElementById('mktSub').textContent = 'This product\'s claims are backed by reasonable evidence.';
+                list.innerHTML = '';
+            } else {
+                hero.className = 'alert-hero';
+                document.getElementById('mktTitle').textContent = 'Misleading Marketing Detected!';
+                document.getElementById('mktSub').textContent = 'This product uses marketing tactics that may play on insecurities.';
+                var html = '';
+                p.marketingClaims.forEach(function (c) {
+                    html += '<div class="claim-card"><p class="claim">' + escapeHtml(c.claim) + '</p><p class="rebut">' + escapeHtml(c.rebut) + '</p></div>';
+                });
+                list.innerHTML = html;
+            }
+        }
+
+        function renderProduct(p) {
+            document.getElementById('resThumb').style.background = p.thumb;
+            document.getElementById('resName').textContent = p.name;
+            document.getElementById('resMeta').innerHTML = escapeHtml(p.brand) + ' · ' + escapeHtml(p.size) + '<br />Scanned on ' + escapeHtml(p.scanned);
+
+            var modifier = p.gradeClass === 'high' ? '' : ' ' + p.gradeClass;
+            document.getElementById('resRatingCard').className = 'rating-card' + modifier;
+            document.getElementById('resBadge').className = 'rating-badge' + modifier;
+            document.getElementById('resBadge').textContent = p.grade;
+            document.getElementById('resLabel').textContent = p.gradeLabel;
+            document.getElementById('resSub').textContent = p.gradeSub;
+            document.getElementById('resNote').textContent = p.note;
+
+            var riskyCountEl = document.getElementById('resRiskyCount');
+            riskyCountEl.textContent = p.ingredients.risky.length;
+            riskyCountEl.style.color = p.gradeClass === 'high' ? 'var(--risk-high)' : (p.gradeClass === 'moderate' ? 'var(--risk-mod)' : 'var(--risk-low)');
+
+            setPill('resToxicity', p.toxicity, p.toxicity.toLowerCase());
+            setPill('resMarketing', p.marketing, p.marketing === 'Detected' ? 'detected' : 'clear');
+            setPill('resOverall', p.gradeLabel, p.gradeClass);
+
+            renderIngredients(p);
+            renderMarketing(p);
+        }
+
+        function showResult(key) {
+            var p = PRODUCTS.filter(function (x) { return x.key === key; })[0];
+            if (p) {
+                renderProduct(p);
+                showScreen('result');
+            }
+        }
+
+        function showScreen(name) {
+            document.querySelectorAll('.screen').forEach(function (el) { el.classList.remove('active'); });
+            var target = document.getElementById('screen-' + name);
+            if (target) target.classList.add('active');
+        }
+
+        function simulateScan() {
+            var label = document.getElementById('scanDoneLabel');
+            if (label) label.classList.add('show');
+            setTimeout(function () {
+                if (label) label.classList.remove('show');
+                showScreen('analyzing');
+                setTimeout(function () {
+                    renderProduct(PRODUCTS[productIndex % PRODUCTS.length]);
+                    productIndex++;
+                    showScreen('result');
+                }, 1600);
+            }, 700);
+        }
+
+        renderProduct(PRODUCTS[0]);
+
+        function showTab(name) {
+            document.querySelectorAll('.tab-btn').forEach(function (el) { el.classList.toggle('is-active', el.dataset.tab === name); });
+            document.querySelectorAll('.tab-pane').forEach(function (el) { el.classList.remove('is-active'); });
+            var pane = document.getElementById('tab-' + name);
+            if (pane) pane.classList.add('is-active');
+        }
+
+        function goNav(target) {
+            if (target === 'home') { showScreen('home'); return; }
+            if (target === 'scan') { showScreen('scanner'); return; }
+            if (target === 'alt') { showScreen('alternatives'); return; }
+            if (target === 'history') { showScreen('history'); return; }
+            if (target === 'profile') { showScreen('profile'); return; }
+        }
+    </script>
+</body>
+</html>

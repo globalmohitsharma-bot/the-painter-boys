@@ -13,7 +13,7 @@
 import { chromium, devices } from 'playwright';
 
 const SITE = 'https://www.thepainterboys.com';
-const API = 'https://api.thepainterboys.com';
+const API = 'https://thepainterboys-api.azurewebsites.net';
 
 const PAGES = [
   '/',

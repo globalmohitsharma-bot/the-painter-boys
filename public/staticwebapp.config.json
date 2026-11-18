@@ -1,6 +1,9 @@
 {
+  "routes": [
+    { "route": "/tempproject", "rewrite": "/tempproject/index.html" }
+  ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*", "/icon.svg", "/*.{png,jpg,jpeg,svg,ico,webp,css,js,txt,xml}"]
+    "exclude": ["/images/*", "/icon.svg", "/tempproject/*", "/*.{png,jpg,jpeg,svg,ico,webp,css,js,txt,xml}"]
   }
 }

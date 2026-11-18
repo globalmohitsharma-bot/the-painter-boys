@@ -15,7 +15,7 @@
 import { chromium } from 'playwright';
 
 const SITE = process.argv[2] || 'https://www.thepainterboys.com';
-const API = SITE.includes('localhost') ? 'http://localhost:5223' : 'https://api.thepainterboys.com';
+const API = SITE.includes('localhost') ? 'http://localhost:5223' : 'https://thepainterboys-api.azurewebsites.net';
 
 const results = [];
 function log(name, ok, detail) {
@@ -280,6 +280,25 @@ async function checkApiWake(browser) {
   }
 }
 
+// ── Feature: /tempproject TOT demo page (added 2026-11-18) ──
+// Standalone static demo (copied from the sleeping AIInterviewBot app) served
+// from public/tempproject. Must render the demo itself — not the SPA shell
+// via navigationFallback or the PWA's cached /index.html.
+async function checkTempProject(browser) {
+  const page = await browser.newPage();
+  try {
+    for (const path of ['/tempproject', '/tempproject/']) {
+      const res = await page.goto(`${SITE}${path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      const title = await page.title();
+      log(`Temp project: ${path} serves the TOT demo`, res?.status() === 200 && title.includes('Truth Over Trends'), `${res?.status()} "${title}"`);
+    }
+  } catch (e) {
+    log('Temp project: page loads', false, e.message.split('\n')[0]);
+  } finally {
+    await page.close();
+  }
+}
+
 const FEATURE_CHECKS = [
   checkTeamShareCard,
   checkTeamPartnerCopy,
@@ -287,6 +306,7 @@ const FEATURE_CHECKS = [
   checkCarpentryService,
   checkCarpentryMaterials,
   checkApiWake,
+  checkTempProject,
 ];
 
 const browser = await chromium.launch();
